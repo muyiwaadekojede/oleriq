@@ -1,0 +1,776 @@
+{
+  "source_epub": "The Pocket Universal Principles of Color_ 100 Key Concepts -- Westland, Stephen & Maggio, Maggie -- Rockport Universal, 2025 -- Quarto Publishing -- isbn13 9780760393857 -- c4d2a767b81a528776da99754dbdf5e0 -- .epub",
+  "metadata": {
+    "title": "The Pocket Universal Principles of Color",
+    "creator": "Westland, Stephen;Maggio, Maggie;",
+    "publisher": "Quarto Publishing Group USA",
+    "language": "en",
+    "identifier": "31707476"
+  },
+  "chapter_count": 109,
+  "chapters": [
+    {
+      "sequence": 1,
+      "idref": "Cover1",
+      "source_href": "OEBPS/xhtml/001_Cover.xhtml",
+      "title": "Cover",
+      "output_markdown": "chapters/001-cover.md"
+    },
+    {
+      "sequence": 2,
+      "idref": "a002_Title",
+      "source_href": "OEBPS/xhtml/002_Title.xhtml",
+      "title": "Stephen Westland\nand Maggie Maggio",
+      "output_markdown": "chapters/002-stephen-westland-and-maggie-maggio.md"
+    },
+    {
+      "sequence": 3,
+      "idref": "a003_Contents",
+      "source_href": "OEBPS/xhtml/003_Contents.xhtml",
+      "title": "CONTENTS / ALPHABETICAL",
+      "output_markdown": "chapters/003-contents-alphabetical.md"
+    },
+    {
+      "sequence": 4,
+      "idref": "a004_Pathways",
+      "source_href": "OEBPS/xhtml/004_Pathways.xhtml",
+      "title": "CONTENTS / PATHWAYS",
+      "output_markdown": "chapters/004-contents-pathways.md"
+    },
+    {
+      "sequence": 5,
+      "idref": "a005_Introduction",
+      "source_href": "OEBPS/xhtml/005_Introduction.xhtml",
+      "title": "INTRODUCTION",
+      "output_markdown": "chapters/005-introduction.md"
+    },
+    {
+      "sequence": 6,
+      "idref": "a006_Chapter001",
+      "source_href": "OEBPS/xhtml/006_Chapter001.xhtml",
+      "title": "01#THEDRESS",
+      "output_markdown": "chapters/006-01-thedress.md"
+    },
+    {
+      "sequence": 7,
+      "idref": "a007_Chapter002",
+      "source_href": "OEBPS/xhtml/007_Chapter002.xhtml",
+      "title": "02ACCESSIBILITY",
+      "output_markdown": "chapters/007-02accessibility.md"
+    },
+    {
+      "sequence": 8,
+      "idref": "a008_Chapter003",
+      "source_href": "OEBPS/xhtml/008_Chapter003.xhtml",
+      "title": "03ADDITIVE MIXTURE",
+      "output_markdown": "chapters/008-03additive-mixture.md"
+    },
+    {
+      "sequence": 9,
+      "idref": "a009_Chapter004",
+      "source_href": "OEBPS/xhtml/009_Chapter004.xhtml",
+      "title": "04ADVANCING AND RECEDING",
+      "output_markdown": "chapters/009-04advancing-and-receding.md"
+    },
+    {
+      "sequence": 10,
+      "idref": "a010_Chapter005",
+      "source_href": "OEBPS/xhtml/010_Chapter005.xhtml",
+      "title": "05ALBERS\u2019S INTERACTION OF COLOR",
+      "output_markdown": "chapters/010-05alberss-interaction-of-color.md"
+    },
+    {
+      "sequence": 11,
+      "idref": "a011_Chapter006",
+      "source_href": "OEBPS/xhtml/011_Chapter006.xhtml",
+      "title": "06ATMOSPHERIC PERSPECTIVE",
+      "output_markdown": "chapters/011-06atmospheric-perspective.md"
+    },
+    {
+      "sequence": 12,
+      "idref": "a012_Chapter007",
+      "source_href": "OEBPS/xhtml/012_Chapter007.xhtml",
+      "title": "07BALANCE",
+      "output_markdown": "chapters/012-07balance.md"
+    },
+    {
+      "sequence": 13,
+      "idref": "a013_Chapter008",
+      "source_href": "OEBPS/xhtml/013_Chapter008.xhtml",
+      "title": "08BASIC COLOR TERMS",
+      "output_markdown": "chapters/013-08basic-color-terms.md"
+    },
+    {
+      "sequence": 14,
+      "idref": "a014_Chapter009",
+      "source_href": "OEBPS/xhtml/014_Chapter009.xhtml",
+      "title": "09BAUHAUS",
+      "output_markdown": "chapters/014-09bauhaus.md"
+    },
+    {
+      "sequence": 15,
+      "idref": "a015_Chapter010",
+      "source_href": "OEBPS/xhtml/015_Chapter010.xhtml",
+      "title": "10BEZOLD EFFECT",
+      "output_markdown": "chapters/015-10bezold-effect.md"
+    },
+    {
+      "sequence": 16,
+      "idref": "a016_Chapter011",
+      "source_href": "OEBPS/xhtml/016_Chapter011.xhtml",
+      "title": "11BLACK AND WHITE",
+      "output_markdown": "chapters/016-11black-and-white.md"
+    },
+    {
+      "sequence": 17,
+      "idref": "a017_Chapter012",
+      "source_href": "OEBPS/xhtml/017_Chapter012.xhtml",
+      "title": "12BLUE LIGHT",
+      "output_markdown": "chapters/017-12blue-light.md"
+    },
+    {
+      "sequence": 18,
+      "idref": "a018_Chapter013",
+      "source_href": "OEBPS/xhtml/018_Chapter013.xhtml",
+      "title": "13BRAND COLORS",
+      "output_markdown": "chapters/018-13brand-colors.md"
+    },
+    {
+      "sequence": 19,
+      "idref": "a019_Chapter014",
+      "source_href": "OEBPS/xhtml/019_Chapter014.xhtml",
+      "title": "14CAMOUFLAGE",
+      "output_markdown": "chapters/019-14camouflage.md"
+    },
+    {
+      "sequence": 20,
+      "idref": "a020_Chapter015",
+      "source_href": "OEBPS/xhtml/020_Chapter015.xhtml",
+      "title": "15CHARACTER ZONES",
+      "output_markdown": "chapters/020-15character-zones.md"
+    },
+    {
+      "sequence": 21,
+      "idref": "a021_Chapter016",
+      "source_href": "OEBPS/xhtml/021_Chapter016.xhtml",
+      "title": "16CHEMISTRY OF CHROMOPHORES",
+      "output_markdown": "chapters/021-16chemistry-of-chromophores.md"
+    },
+    {
+      "sequence": 22,
+      "idref": "a022_Chapter017",
+      "source_href": "OEBPS/xhtml/022_Chapter017.xhtml",
+      "title": "17CHIAROSCURO",
+      "output_markdown": "chapters/022-17chiaroscuro.md"
+    },
+    {
+      "sequence": 23,
+      "idref": "a023_Chapter018",
+      "source_href": "OEBPS/xhtml/023_Chapter018.xhtml",
+      "title": "18CHROMA",
+      "output_markdown": "chapters/023-18chroma.md"
+    },
+    {
+      "sequence": 24,
+      "idref": "a024_Chapter019",
+      "source_href": "OEBPS/xhtml/024_Chapter019.xhtml",
+      "title": "19CHROMOPHOBIA",
+      "output_markdown": "chapters/024-19chromophobia.md"
+    },
+    {
+      "sequence": 25,
+      "idref": "a025_Chapter020",
+      "source_href": "OEBPS/xhtml/025_Chapter020.xhtml",
+      "title": "20CIE SYSTEM",
+      "output_markdown": "chapters/025-20cie-system.md"
+    },
+    {
+      "sequence": 26,
+      "idref": "a026_Chapter021",
+      "source_href": "OEBPS/xhtml/026_Chapter021.xhtml",
+      "title": "21CINEMATIC COLOR",
+      "output_markdown": "chapters/026-21cinematic-color.md"
+    },
+    {
+      "sequence": 27,
+      "idref": "a027_Chapter022",
+      "source_href": "OEBPS/xhtml/027_Chapter022.xhtml",
+      "title": "22CMYK",
+      "output_markdown": "chapters/027-22cmyk.md"
+    },
+    {
+      "sequence": 28,
+      "idref": "a028_Chapter023",
+      "source_href": "OEBPS/xhtml/028_Chapter023.xhtml",
+      "title": "23COLOR CONSTANCY",
+      "output_markdown": "chapters/028-23color-constancy.md"
+    },
+    {
+      "sequence": 29,
+      "idref": "a029_Chapter024",
+      "source_href": "OEBPS/xhtml/029_Chapter024.xhtml",
+      "title": "24COLOR FIELD PAINTING",
+      "output_markdown": "chapters/029-24color-field-painting.md"
+    },
+    {
+      "sequence": 30,
+      "idref": "a030_Chapter025",
+      "source_href": "OEBPS/xhtml/030_Chapter025.xhtml",
+      "title": "25COLOR FORECASTING",
+      "output_markdown": "chapters/030-25color-forecasting.md"
+    },
+    {
+      "sequence": 31,
+      "idref": "a031_Chapter026",
+      "source_href": "OEBPS/xhtml/031_Chapter026.xhtml",
+      "title": "26COLOR LITERACY",
+      "output_markdown": "chapters/031-26color-literacy.md"
+    },
+    {
+      "sequence": 32,
+      "idref": "a032_Chapter027",
+      "source_href": "OEBPS/xhtml/032_Chapter027.xhtml",
+      "title": "27COLOR MANAGEMENT",
+      "output_markdown": "chapters/032-27color-management.md"
+    },
+    {
+      "sequence": 33,
+      "idref": "a033_Chapter028",
+      "source_href": "OEBPS/xhtml/033_Chapter028.xhtml",
+      "title": "28COLOR MEANING",
+      "output_markdown": "chapters/033-28color-meaning.md"
+    },
+    {
+      "sequence": 34,
+      "idref": "a034_Chapter029",
+      "source_href": "OEBPS/xhtml/034_Chapter029.xhtml",
+      "title": "29COLOR MEASUREMENT",
+      "output_markdown": "chapters/034-29color-measurement.md"
+    },
+    {
+      "sequence": 35,
+      "idref": "a035_Chapter030",
+      "source_href": "OEBPS/xhtml/035_Chapter030.xhtml",
+      "title": "30COLOR ORDER SYSTEMS",
+      "output_markdown": "chapters/035-30color-order-systems.md"
+    },
+    {
+      "sequence": 36,
+      "idref": "a036_Chapter031",
+      "source_href": "OEBPS/xhtml/036_Chapter031.xhtml",
+      "title": "31COLOR SCALES",
+      "output_markdown": "chapters/036-31color-scales.md"
+    },
+    {
+      "sequence": 37,
+      "idref": "a037_Chapter032",
+      "source_href": "OEBPS/xhtml/037_Chapter032.xhtml",
+      "title": "32COLOR SCHEMES",
+      "output_markdown": "chapters/037-32color-schemes.md"
+    },
+    {
+      "sequence": 38,
+      "idref": "a038_Chapter033",
+      "source_href": "OEBPS/xhtml/038_Chapter033.xhtml",
+      "title": "33COLOR TEMPERATURE",
+      "output_markdown": "chapters/038-33color-temperature.md"
+    },
+    {
+      "sequence": 39,
+      "idref": "a039_Chapter034",
+      "source_href": "OEBPS/xhtml/039_Chapter034.xhtml",
+      "title": "34COLORANTS",
+      "output_markdown": "chapters/039-34colorants.md"
+    },
+    {
+      "sequence": 40,
+      "idref": "a040_Chapter035",
+      "source_href": "OEBPS/xhtml/040_Chapter035.xhtml",
+      "title": "35COLORWAYS",
+      "output_markdown": "chapters/040-35colorways.md"
+    },
+    {
+      "sequence": 41,
+      "idref": "a041_Chapter036",
+      "source_href": "OEBPS/xhtml/041_Chapter036.xhtml",
+      "title": "36COMPLEMENTARY COLORS",
+      "output_markdown": "chapters/041-36complementary-colors.md"
+    },
+    {
+      "sequence": 42,
+      "idref": "a042_Chapter037",
+      "source_href": "OEBPS/xhtml/042_Chapter037.xhtml",
+      "title": "37CONTEXT",
+      "output_markdown": "chapters/042-37context.md"
+    },
+    {
+      "sequence": 43,
+      "idref": "a043_Chapter038",
+      "source_href": "OEBPS/xhtml/043_Chapter038.xhtml",
+      "title": "38CONTRAST",
+      "output_markdown": "chapters/043-38contrast.md"
+    },
+    {
+      "sequence": 44,
+      "idref": "a044_Chapter039",
+      "source_href": "OEBPS/xhtml/044_Chapter039.xhtml",
+      "title": "39ELECTROMAGNETIC SPECTRUM",
+      "output_markdown": "chapters/044-39electromagnetic-spectrum.md"
+    },
+    {
+      "sequence": 45,
+      "idref": "a045_Chapter040",
+      "source_href": "OEBPS/xhtml/045_Chapter040.xhtml",
+      "title": "40EMOTION AND COLOR",
+      "output_markdown": "chapters/045-40emotion-and-color.md"
+    },
+    {
+      "sequence": 46,
+      "idref": "a046_Chapter041",
+      "source_href": "OEBPS/xhtml/046_Chapter041.xhtml",
+      "title": "41ENVIRONMENTAL COLOR DESIGN",
+      "output_markdown": "chapters/046-41environmental-color-design.md"
+    },
+    {
+      "sequence": 47,
+      "idref": "a047_Chapter042",
+      "source_href": "OEBPS/xhtml/047_Chapter042.xhtml",
+      "title": "42FLAT COLOR",
+      "output_markdown": "chapters/047-42flat-color.md"
+    },
+    {
+      "sequence": 48,
+      "idref": "a048_Chapter043",
+      "source_href": "OEBPS/xhtml/048_Chapter043.xhtml",
+      "title": "43FLUORESCENCE",
+      "output_markdown": "chapters/048-43fluorescence.md"
+    },
+    {
+      "sequence": 49,
+      "idref": "a049_Chapter044",
+      "source_href": "OEBPS/xhtml/049_Chapter044.xhtml",
+      "title": "44GAMUTS",
+      "output_markdown": "chapters/049-44gamuts.md"
+    },
+    {
+      "sequence": 50,
+      "idref": "a050_Chapter045",
+      "source_href": "OEBPS/xhtml/050_Chapter045.xhtml",
+      "title": "45GEOGRAPHY OF COLOR",
+      "output_markdown": "chapters/050-45geography-of-color.md"
+    },
+    {
+      "sequence": 51,
+      "idref": "a051_Chapter046",
+      "source_href": "OEBPS/xhtml/051_Chapter046.xhtml",
+      "title": "46GOETHE\u2019S THEORY OF COLOURS",
+      "output_markdown": "chapters/051-46goethes-theory-of-colours.md"
+    },
+    {
+      "sequence": 52,
+      "idref": "a052_Chapter047",
+      "source_href": "OEBPS/xhtml/052_Chapter047.xhtml",
+      "title": "47GRADIENTS",
+      "output_markdown": "chapters/052-47gradients.md"
+    },
+    {
+      "sequence": 53,
+      "idref": "a053_Chapter048",
+      "source_href": "OEBPS/xhtml/053_Chapter048.xhtml",
+      "title": "48GRISAILLE",
+      "output_markdown": "chapters/053-48grisaille.md"
+    },
+    {
+      "sequence": 54,
+      "idref": "a054_Chapter049",
+      "source_href": "OEBPS/xhtml/054_Chapter049.xhtml",
+      "title": "49HARMONY",
+      "output_markdown": "chapters/054-49harmony.md"
+    },
+    {
+      "sequence": 55,
+      "idref": "a055_Chapter050",
+      "source_href": "OEBPS/xhtml/055_Chapter050.xhtml",
+      "title": "50HUE ANGLE",
+      "output_markdown": "chapters/055-50hue-angle.md"
+    },
+    {
+      "sequence": 56,
+      "idref": "a056_Chapter051",
+      "source_href": "OEBPS/xhtml/056_Chapter051.xhtml",
+      "title": "51HUE CIRCLE",
+      "output_markdown": "chapters/056-51hue-circle.md"
+    },
+    {
+      "sequence": 57,
+      "idref": "a057_Chapter052",
+      "source_href": "OEBPS/xhtml/057_Chapter052.xhtml",
+      "title": "52HUMAN VISUAL SYSTEM",
+      "output_markdown": "chapters/057-52human-visual-system.md"
+    },
+    {
+      "sequence": 58,
+      "idref": "a058_Chapter053",
+      "source_href": "OEBPS/xhtml/058_Chapter053.xhtml",
+      "title": "53IMPRESSIONISM",
+      "output_markdown": "chapters/058-53impressionism.md"
+    },
+    {
+      "sequence": 59,
+      "idref": "a059_Chapter054",
+      "source_href": "OEBPS/xhtml/059_Chapter054.xhtml",
+      "title": "54INFOGRAPHIC COLOR",
+      "output_markdown": "chapters/059-54infographic-color.md"
+    },
+    {
+      "sequence": 60,
+      "idref": "a060_Chapter055",
+      "source_href": "OEBPS/xhtml/060_Chapter055.xhtml",
+      "title": "55INTERNATIONAL KLEIN BLUE",
+      "output_markdown": "chapters/060-55international-klein-blue.md"
+    },
+    {
+      "sequence": 61,
+      "idref": "a061_Chapter056",
+      "source_href": "OEBPS/xhtml/061_Chapter056.xhtml",
+      "title": "56ITTEN\u2019S THE ART OF COLOR",
+      "output_markdown": "chapters/061-56ittens-the-art-of-color.md"
+    },
+    {
+      "sequence": 62,
+      "idref": "a062_Chapter057",
+      "source_href": "OEBPS/xhtml/062_Chapter057.xhtml",
+      "title": "57LED COLOR",
+      "output_markdown": "chapters/062-57led-color.md"
+    },
+    {
+      "sequence": 63,
+      "idref": "a063_Chapter058",
+      "source_href": "OEBPS/xhtml/063_Chapter058.xhtml",
+      "title": "58LIGHTING",
+      "output_markdown": "chapters/063-58lighting.md"
+    },
+    {
+      "sequence": 64,
+      "idref": "a064_Chapter059",
+      "source_href": "OEBPS/xhtml/064_Chapter059.xhtml",
+      "title": "59LIGHTNESS",
+      "output_markdown": "chapters/064-59lightness.md"
+    },
+    {
+      "sequence": 65,
+      "idref": "a065_Chapter060",
+      "source_href": "OEBPS/xhtml/065_Chapter060.xhtml",
+      "title": "60LIMITED COLOR VISION",
+      "output_markdown": "chapters/065-60limited-color-vision.md"
+    },
+    {
+      "sequence": 66,
+      "idref": "a066_Chapter061",
+      "source_href": "OEBPS/xhtml/066_Chapter061.xhtml",
+      "title": "61LOCAL COLOR",
+      "output_markdown": "chapters/066-61local-color.md"
+    },
+    {
+      "sequence": 67,
+      "idref": "a067_Chapter062",
+      "source_href": "OEBPS/xhtml/067_Chapter062.xhtml",
+      "title": "62MAXWELL",
+      "output_markdown": "chapters/067-62maxwell.md"
+    },
+    {
+      "sequence": 68,
+      "idref": "a068_Chapter063",
+      "source_href": "OEBPS/xhtml/068_Chapter063.xhtml",
+      "title": "63METAMERISM",
+      "output_markdown": "chapters/068-63metamerism.md"
+    },
+    {
+      "sequence": 69,
+      "idref": "a069_Chapter064",
+      "source_href": "OEBPS/xhtml/069_Chapter064.xhtml",
+      "title": "64MONOCHROMATIC",
+      "output_markdown": "chapters/069-64monochromatic.md"
+    },
+    {
+      "sequence": 70,
+      "idref": "a070_Chapter065",
+      "source_href": "OEBPS/xhtml/070_Chapter065.xhtml",
+      "title": "65MUNSELL SYSTEM",
+      "output_markdown": "chapters/070-65munsell-system.md"
+    },
+    {
+      "sequence": 71,
+      "idref": "a071_Chapter066",
+      "source_href": "OEBPS/xhtml/071_Chapter066.xhtml",
+      "title": "66NATURAL COLOR SYSTEM",
+      "output_markdown": "chapters/071-66natural-color-system.md"
+    },
+    {
+      "sequence": 72,
+      "idref": "a072_Chapter067",
+      "source_href": "OEBPS/xhtml/072_Chapter067.xhtml",
+      "title": "67NATURE\u2019S LIGHT",
+      "output_markdown": "chapters/072-67natures-light.md"
+    },
+    {
+      "sequence": 73,
+      "idref": "a073_Chapter068",
+      "source_href": "OEBPS/xhtml/073_Chapter068.xhtml",
+      "title": "68NEAR NEUTRALS",
+      "output_markdown": "chapters/073-68near-neutrals.md"
+    },
+    {
+      "sequence": 74,
+      "idref": "a074_Chapter069",
+      "source_href": "OEBPS/xhtml/074_Chapter069.xhtml",
+      "title": "69NEWTON\u2019S OPTICKS",
+      "output_markdown": "chapters/074-69newtons-opticks.md"
+    },
+    {
+      "sequence": 75,
+      "idref": "a075_Chapter070",
+      "source_href": "OEBPS/xhtml/075_Chapter070.xhtml",
+      "title": "70OP ART",
+      "output_markdown": "chapters/075-70op-art.md"
+    },
+    {
+      "sequence": 76,
+      "idref": "a076_Chapter071",
+      "source_href": "OEBPS/xhtml/076_Chapter071.xhtml",
+      "title": "71PALETTES",
+      "output_markdown": "chapters/076-71palettes.md"
+    },
+    {
+      "sequence": 77,
+      "idref": "a077_Chapter072",
+      "source_href": "OEBPS/xhtml/077_Chapter072.xhtml",
+      "title": "72PANTONETM",
+      "output_markdown": "chapters/077-72pantonetm.md"
+    },
+    {
+      "sequence": 78,
+      "idref": "a078_Chapter073",
+      "source_href": "OEBPS/xhtml/078_Chapter073.xhtml",
+      "title": "73PARTITIVE MIXTURE",
+      "output_markdown": "chapters/078-73partitive-mixture.md"
+    },
+    {
+      "sequence": 79,
+      "idref": "a079_Chapter074",
+      "source_href": "OEBPS/xhtml/079_Chapter074.xhtml",
+      "title": "74PERCEPTION TRIANGLE",
+      "output_markdown": "chapters/079-74perception-triangle.md"
+    },
+    {
+      "sequence": 80,
+      "idref": "a080_Chapter075",
+      "source_href": "OEBPS/xhtml/080_Chapter075.xhtml",
+      "title": "75PERMANENCE",
+      "output_markdown": "chapters/080-75permanence.md"
+    },
+    {
+      "sequence": 81,
+      "idref": "a081_Chapter076",
+      "source_href": "OEBPS/xhtml/081_Chapter076.xhtml",
+      "title": "76POINTILLISM",
+      "output_markdown": "chapters/081-76pointillism.md"
+    },
+    {
+      "sequence": 82,
+      "idref": "a082_Chapter077",
+      "source_href": "OEBPS/xhtml/082_Chapter077.xhtml",
+      "title": "77PRIMARY COLORS",
+      "output_markdown": "chapters/082-77primary-colors.md"
+    },
+    {
+      "sequence": 83,
+      "idref": "a083_Chapter078",
+      "source_href": "OEBPS/xhtml/083_Chapter078.xhtml",
+      "title": "78RAYLEIGH SCATTERING",
+      "output_markdown": "chapters/083-78rayleigh-scattering.md"
+    },
+    {
+      "sequence": 84,
+      "idref": "a084_Chapter079",
+      "source_href": "OEBPS/xhtml/084_Chapter079.xhtml",
+      "title": "79RGB",
+      "output_markdown": "chapters/084-79rgb.md"
+    },
+    {
+      "sequence": 85,
+      "idref": "a085_Chapter080",
+      "source_href": "OEBPS/xhtml/085_Chapter080.xhtml",
+      "title": "80SAFETY COLORS",
+      "output_markdown": "chapters/085-80safety-colors.md"
+    },
+    {
+      "sequence": 86,
+      "idref": "a086_Chapter081",
+      "source_href": "OEBPS/xhtml/086_Chapter081.xhtml",
+      "title": "81SHADOWS",
+      "output_markdown": "chapters/086-81shadows.md"
+    },
+    {
+      "sequence": 87,
+      "idref": "a087_Chapter082",
+      "source_href": "OEBPS/xhtml/087_Chapter082.xhtml",
+      "title": "82SIMULTANEOUS CONTRAST",
+      "output_markdown": "chapters/087-82simultaneous-contrast.md"
+    },
+    {
+      "sequence": 88,
+      "idref": "a088_Chapter083",
+      "source_href": "OEBPS/xhtml/088_Chapter083.xhtml",
+      "title": "83SPECTRAL HUES",
+      "output_markdown": "chapters/088-83spectral-hues.md"
+    },
+    {
+      "sequence": 89,
+      "idref": "a089_Chapter084",
+      "source_href": "OEBPS/xhtml/089_Chapter084.xhtml",
+      "title": "84STRUCTURAL COLOR",
+      "output_markdown": "chapters/089-84structural-color.md"
+    },
+    {
+      "sequence": 90,
+      "idref": "a090_Chapter085",
+      "source_href": "OEBPS/xhtml/090_Chapter085.xhtml",
+      "title": "85SUBTRACTIVE MIXTURE",
+      "output_markdown": "chapters/090-85subtractive-mixture.md"
+    },
+    {
+      "sequence": 91,
+      "idref": "a091_Chapter086",
+      "source_href": "OEBPS/xhtml/091_Chapter086.xhtml",
+      "title": "86SUCCESSIVE CONTRAST",
+      "output_markdown": "chapters/091-86successive-contrast.md"
+    },
+    {
+      "sequence": 92,
+      "idref": "a092_Chapter087",
+      "source_href": "OEBPS/xhtml/092_Chapter087.xhtml",
+      "title": "87SUSTAINABLE COLOR",
+      "output_markdown": "chapters/092-87sustainable-color.md"
+    },
+    {
+      "sequence": 93,
+      "idref": "a093_Chapter088",
+      "source_href": "OEBPS/xhtml/093_Chapter088.xhtml",
+      "title": "88SYMBOLIC COLOR",
+      "output_markdown": "chapters/093-88symbolic-color.md"
+    },
+    {
+      "sequence": 94,
+      "idref": "a094_Chapter089",
+      "source_href": "OEBPS/xhtml/094_Chapter089.xhtml",
+      "title": "89SYNESTHESIA",
+      "output_markdown": "chapters/094-89synesthesia.md"
+    },
+    {
+      "sequence": 95,
+      "idref": "a095_Chapter090",
+      "source_href": "OEBPS/xhtml/095_Chapter090.xhtml",
+      "title": "90TECHNICOLOR",
+      "output_markdown": "chapters/095-90technicolor.md"
+    },
+    {
+      "sequence": 96,
+      "idref": "a096_Chapter091",
+      "source_href": "OEBPS/xhtml/096_Chapter091.xhtml",
+      "title": "91TEXTURE",
+      "output_markdown": "chapters/096-91texture.md"
+    },
+    {
+      "sequence": 97,
+      "idref": "a097_Chapter092",
+      "source_href": "OEBPS/xhtml/097_Chapter092.xhtml",
+      "title": "92THREE DIMENSIONS OF COLOR",
+      "output_markdown": "chapters/097-92three-dimensions-of-color.md"
+    },
+    {
+      "sequence": 98,
+      "idref": "a098_Chapter093",
+      "source_href": "OEBPS/xhtml/098_Chapter093.xhtml",
+      "title": "93TINT, SHADE, AND TONE",
+      "output_markdown": "chapters/098-93tint-shade-and-tone.md"
+    },
+    {
+      "sequence": 99,
+      "idref": "a099_Chapter094",
+      "source_href": "OEBPS/xhtml/099_Chapter094.xhtml",
+      "title": "94TRADITIONAL COLOR THEORY",
+      "output_markdown": "chapters/099-94traditional-color-theory.md"
+    },
+    {
+      "sequence": 100,
+      "idref": "a100_Chapter095",
+      "source_href": "OEBPS/xhtml/100_Chapter095.xhtml",
+      "title": "95TRANSPARENCY EFFECT",
+      "output_markdown": "chapters/100-95transparency-effect.md"
+    },
+    {
+      "sequence": 101,
+      "idref": "a101_Chapter096",
+      "source_href": "OEBPS/xhtml/101_Chapter096.xhtml",
+      "title": "96TRICHROMACY",
+      "output_markdown": "chapters/101-96trichromacy.md"
+    },
+    {
+      "sequence": 102,
+      "idref": "a102_Chapter097",
+      "source_href": "OEBPS/xhtml/102_Chapter097.xhtml",
+      "title": "97UNDERTONE",
+      "output_markdown": "chapters/102-97undertone.md"
+    },
+    {
+      "sequence": 103,
+      "idref": "a103_Chapter098",
+      "source_href": "OEBPS/xhtml/103_Chapter098.xhtml",
+      "title": "98UNIQUE HUES",
+      "output_markdown": "chapters/103-98unique-hues.md"
+    },
+    {
+      "sequence": 104,
+      "idref": "a104_Chapter099",
+      "source_href": "OEBPS/xhtml/104_Chapter099.xhtml",
+      "title": "99WARM AND COOL",
+      "output_markdown": "chapters/104-99warm-and-cool.md"
+    },
+    {
+      "sequence": 105,
+      "idref": "a105_Chapter100",
+      "source_href": "OEBPS/xhtml/105_Chapter100.xhtml",
+      "title": "100WHITE BALANCE",
+      "output_markdown": "chapters/105-100white-balance.md"
+    },
+    {
+      "sequence": 106,
+      "idref": "a106_Acknowledgments",
+      "source_href": "OEBPS/xhtml/106_Acknowledgments.xhtml",
+      "title": "Acknowledgments",
+      "output_markdown": "chapters/106-acknowledgments.md"
+    },
+    {
+      "sequence": 107,
+      "idref": "a107_Author",
+      "source_href": "OEBPS/xhtml/107_Author.xhtml",
+      "title": "About the Authors",
+      "output_markdown": "chapters/107-about-the-authors.md"
+    },
+    {
+      "sequence": 108,
+      "idref": "a108_Credits",
+      "source_href": "OEBPS/xhtml/108_Credits.xhtml",
+      "title": "Photo Credits",
+      "output_markdown": "chapters/108-photo-credits.md"
+    },
+    {
+      "sequence": 109,
+      "idref": "a109_Copyright",
+      "source_href": "OEBPS/xhtml/109_Copyright.xhtml",
+      "title": "Copyright",
+      "output_markdown": "chapters/109-copyright.md"
+    }
+  ]
+}

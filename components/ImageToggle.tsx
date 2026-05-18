@@ -5,6 +5,7 @@ import type { ImageMode } from '@/lib/types';
 type ImageToggleProps = {
   value: ImageMode;
   onChange: (value: ImageMode) => void;
+  ariaLabelledBy?: string;
 };
 
 const OPTIONS: Array<{ label: string; value: ImageMode }> = [
@@ -13,9 +14,13 @@ const OPTIONS: Array<{ label: string; value: ImageMode }> = [
   { label: 'Captions', value: 'captions' },
 ];
 
-export function ImageToggle({ value, onChange }: ImageToggleProps) {
+export function ImageToggle({ value, onChange, ariaLabelledBy }: ImageToggleProps) {
   return (
-    <div className="rounded-xl border border-[var(--preview-border)] bg-[var(--preview-bg)] p-1">
+    <div
+      role="group"
+      aria-labelledby={ariaLabelledBy}
+      className="rounded-xl border border-[var(--preview-border)] bg-[var(--preview-bg)] p-1"
+    >
       <div className="grid grid-cols-3 gap-1">
         {OPTIONS.map((option) => {
           const active = option.value === value;

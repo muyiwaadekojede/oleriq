@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Clearpage Article Fixture</title>
+  </head>
+  <body>
+    <article>
+      <h1>Clearpage Article Fixture</h1>
+      <p>
+        Clearpage converts long web pages into documents people can actually use. This fixture exists to
+        give the automated extraction tests a stable source with enough text to prove that the parser,
+        readability pass, and export pipeline are all working together instead of succeeding by accident.
+      </p>
+      <p>
+        A reliable article fixture matters because external pages change, rate limit clients, or disappear
+        without warning. When that happens, a failing end to end test stops telling us whether the product
+        is broken and starts telling us that the internet was inconsistent. That is a weak signal, so this
+        page keeps the signal strong.
+      </p>
+      <p>
+        The text is intentionally plain. It has headings, paragraphs, and enough words to exercise the
+        content scoring logic while still being easy to inspect when a test captures output. It is also
+        short enough to keep the suite fast, which matters when the user wants repeated verification after
+        each meaningful change and then a full suite pass at the end.
+      </p>
+      <p>
+        The fixture also represents the product promise. A user pastes a URL because they want clean,
+        readable output, clearer structure, and a download they can trust. If those promises are not visible
+        in the extracted result, the failure should be obvious. That is the kind of deterministic baseline a
+        product test should prefer.
+      </p>
+    </article>
+  </body>
+</html>

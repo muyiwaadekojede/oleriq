@@ -5,7 +5,15 @@ import db from '@/lib/db';
 import { convertDocumentBuffer, isSupportedDocumentFilename, MAX_DOCUMENT_BATCH_BYTES, MAX_DOCUMENT_BATCH_FILES } from '@/lib/documentConversion';
 import { storeExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
-import type { BatchDocumentUploadInput, BatchInputMode, ExportFormat, ExtractErrorCode, ImageMode, ReaderSettings } from '@/lib/types';
+import type {
+  BatchDocumentUploadInput,
+  BatchInputMode,
+  ExportFormat,
+  ExtractErrorCode,
+  ExtractResultState,
+  ImageMode,
+  ReaderSettings,
+} from '@/lib/types';
 
 export type BatchJobStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 export type BatchItemStatus = 'pending' | 'running' | 'success' | 'failure';
@@ -23,6 +31,7 @@ export type BatchJobRow = {
   successCount: number;
   failureCount: number;
   averageDurationMs: number | null;
+  degradedCount: number;
   createdAt: string;
   startedAt: string | null;
   completedAt: string | null;
@@ -37,6 +46,8 @@ export type BatchItemRow = {
   position: number;
   url: string;
   status: BatchItemStatus;
+  qualityState: ExtractResultState | null;
+  warnings: string[];
   durationMs: number;
   extractionId: string | null;
   sourceUrl: string | null;
@@ -53,6 +64,18 @@ export type BatchItemRow = {
   startedAt: string | null;
   completedAt: string | null;
 };
+
+function parseWarningJson(value: unknown): string[] {
+  if (!value || typeof value !== 'string') return [];
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((entry) => String(entry)).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
 
 export const MAX_BATCH_JOB_URLS = 50_000;
 const DEFAULT_MS_PER_URL = 9_000;
@@ -230,6 +253,7 @@ function mapJobRow(row: Record<string, unknown>): BatchJobRow {
     successCount: Number(row.successCount || 0),
     failureCount: Number(row.failureCount || 0),
     averageDurationMs: row.averageDurationMs === null || row.averageDurationMs === undefined ? null : Number(row.averageDurationMs),
+    degradedCount: Number(row.degradedCount || 0),
     createdAt: String(row.createdAt),
     startedAt: row.startedAt ? String(row.startedAt) : null,
     completedAt: row.completedAt ? String(row.completedAt) : null,
@@ -246,6 +270,8 @@ function mapItemRow(row: Record<string, unknown>): BatchItemRow {
     position: Number(row.position || 0),
     url: String(row.url),
     status: String(row.status) as BatchItemStatus,
+    qualityState: row.qualityState ? (String(row.qualityState) as ExtractResultState) : null,
+    warnings: parseWarningJson(row.warningJson),
     durationMs: Number(row.durationMs || 0),
     extractionId: row.extractionId ? String(row.extractionId) : null,
     sourceUrl: row.sourceUrl ? String(row.sourceUrl) : null,
@@ -310,6 +336,8 @@ export function getBatchJobItems(jobId: string, limit: number, offset: number): 
         position,
         url,
         status,
+        quality_state AS qualityState,
+        warning_json AS warningJson,
         duration_ms AS durationMs,
         extraction_id AS extractionId,
         source_url AS sourceUrl,
@@ -346,6 +374,8 @@ export function getBatchJobItem(jobId: string, itemId: number): BatchItemRow | n
         position,
         url,
         status,
+        quality_state AS qualityState,
+        warning_json AS warningJson,
         duration_ms AS durationMs,
         extraction_id AS extractionId,
         source_url AS sourceUrl,
@@ -614,10 +644,12 @@ function claimNextPendingItem(jobId: string): BatchItemRow | null {
         SELECT
           id,
           job_id AS jobId,
-          position,
-          url,
-          status,
-          duration_ms AS durationMs,
+        position,
+        url,
+        status,
+        quality_state AS qualityState,
+        warning_json AS warningJson,
+        duration_ms AS durationMs,
           extraction_id AS extractionId,
           source_url AS sourceUrl,
           title,
@@ -660,6 +692,8 @@ function markItemSuccess(input: {
   jobId: string;
   itemId: number;
   durationMs: number;
+  qualityState: ExtractResultState;
+  warnings: string[];
   extractionId: string | null;
   sourceUrl: string | null;
   title: string;
@@ -676,6 +710,8 @@ function markItemSuccess(input: {
       SET
         status = 'success',
         duration_ms = ?,
+        quality_state = ?,
+        warning_json = ?,
         extraction_id = ?,
         source_url = ?,
         title = ?,
@@ -689,6 +725,8 @@ function markItemSuccess(input: {
       `,
     ).run(
       input.durationMs,
+      input.qualityState,
+      JSON.stringify(input.warnings),
       input.extractionId,
       input.sourceUrl,
       input.title,
@@ -736,6 +774,8 @@ function markItemFailure(input: {
       SET
         status = 'failure',
         duration_ms = ?,
+        quality_state = NULL,
+        warning_json = NULL,
         extraction_id = NULL,
         source_url = NULL,
         title = NULL,
@@ -866,6 +906,8 @@ async function runUrlJob(jobId: string, config: { imagesMode: ImageMode }): Prom
               jobId,
               itemId: item.id,
               durationMs: Date.now() - startedAt,
+              qualityState: 'usable',
+              warnings: [],
               extractionId: null,
               sourceUrl: item.url,
               title: getTitleFromUrl(item.url),
@@ -899,6 +941,8 @@ async function runUrlJob(jobId: string, config: { imagesMode: ImageMode }): Prom
           jobId,
           itemId: item.id,
           durationMs: Date.now() - startedAt,
+          qualityState: result.resultState,
+          warnings: result.warnings,
           extractionId,
           sourceUrl: result.sourceUrl,
           title: result.title,
@@ -932,7 +976,7 @@ async function runUrlJob(jobId: string, config: { imagesMode: ImageMode }): Prom
 
 async function runDocumentJob(
   jobId: string,
-  config: { exportFormat: ExportFormat; settingsJson: string | null; sessionId: string | null },
+  config: { exportFormat: ExportFormat; imagesMode: ImageMode; settingsJson: string | null; sessionId: string | null },
 ): Promise<void> {
   const settings = resolveReaderSettings(config.settingsJson);
 
@@ -953,6 +997,7 @@ async function runDocumentJob(
         rawFilename: item.originalFilename,
         contentType: item.contentType,
         format: config.exportFormat,
+        imagesMode: config.imagesMode,
         sourceLabel: `upload://${item.originalFilename}`,
         settings,
       });
@@ -972,6 +1017,8 @@ async function runDocumentJob(
         jobId,
         itemId: item.id,
         durationMs: Date.now() - startedAt,
+        qualityState: converted.resultState,
+        warnings: converted.warnings,
         extractionId: null,
         sourceUrl: null,
         title: converted.title,
@@ -1145,11 +1192,23 @@ export function getBatchJobDetail(input: {
   if (!job) return null;
 
   const items = getBatchJobItems(job.id, input.limit || 200, input.offset || 0);
+  const degradedRow = db
+    .prepare(
+      `
+      SELECT COUNT(*) AS count
+      FROM batch_job_items
+      WHERE job_id = ? AND status = 'success' AND quality_state = 'degraded'
+      `,
+    )
+    .get(job.id) as { count: number };
   const remaining = Math.max(0, job.totalUrls - job.processedUrls);
   const msPerUrl = job.averageDurationMs && job.averageDurationMs > 0 ? job.averageDurationMs : DEFAULT_MS_PER_URL;
 
   return {
-    job,
+    job: {
+      ...job,
+      degradedCount: Number(degradedRow.count || 0),
+    },
     items,
     estimatedRemainingMs: remaining * msPerUrl,
   };

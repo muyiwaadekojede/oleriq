@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { upload } from '@vercel/blob/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { BatchBelowFoldContent } from '@/components/BatchBelowFoldContent';
 import { BatchDocumentPanel, type DocumentUploadItem } from '@/components/BatchDocumentPanel';
 import { BatchUrlPanel, type BatchItemResult } from '@/components/BatchUrlPanel';
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
@@ -19,6 +19,7 @@ type BatchJobApi = {
   processedUrls: number;
   successCount: number;
   failureCount: number;
+  degradedCount: number;
   averageDurationMs: number | null;
   startedAt: string | null;
   completedAt: string | null;
@@ -28,6 +29,8 @@ type BatchItemApi = {
   id: number;
   url: string;
   status: 'pending' | 'running' | 'success' | 'failure';
+  qualityState: 'usable' | 'degraded' | null;
+  warnings: string[];
   durationMs: number;
   extractionId: string | null;
   sourceUrl: string | null;
@@ -85,7 +88,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
 const DEFAULT_UPLOAD_CONFIG: UploadConfig = {
   success: true,
   mode: 'filesystem',
-  accept: '.pdf,.docx,.txt,.md,.html,.htm,.csv,.tsv,.json,.xml,.yaml,.yml,.log,.rst',
+  accept: '.pdf,.docx,.epub,.txt,.md,.html,.htm,.csv,.tsv,.json,.xml,.yaml,.yml,.log,.rst',
   limits: {
     maxFileBytes: 60 * 1024 * 1024,
     maxFiles: 500,
@@ -93,6 +96,7 @@ const DEFAULT_UPLOAD_CONFIG: UploadConfig = {
     retentionHours: 24,
   },
 };
+const DOCUMENT_IMAGE_CAPABLE_EXTENSIONS = new Set(['.pdf', '.epub', '.html', '.htm', '.docx']);
 
 function parseBatchUrls(value: string): string[] {
   const tokens = value
@@ -157,6 +161,14 @@ function sanitizePathSegment(value: string): string {
   return value.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'file';
 }
 
+function hasImageCapableDocument(filename: string): boolean {
+  const lowerName = filename.trim().toLowerCase();
+  for (const extension of DOCUMENT_IMAGE_CAPABLE_EXTENSIONS) {
+    if (lowerName.endsWith(extension)) return true;
+  }
+  return false;
+}
+
 function filenameFromContentDisposition(header: string | null, fallback: string): string {
   const contentDisposition = header || '';
   const match = contentDisposition.match(/filename="?([^"]+)"?/i);
@@ -168,6 +180,8 @@ function mapBatchItem(item: BatchItemApi): BatchItemResult {
     id: item.id,
     url: item.url,
     status: item.status,
+    qualityState: item.qualityState || undefined,
+    warnings: Array.isArray(item.warnings) ? item.warnings : [],
     durationMs: Number(item.durationMs || 0),
     extractionId: item.extractionId || undefined,
     sourceUrl: item.sourceUrl || undefined,
@@ -198,8 +212,10 @@ export default function BatchPage() {
   const [batchTotalCount, setBatchTotalCount] = useState(0);
   const [batchSuccessCount, setBatchSuccessCount] = useState(0);
   const [batchFailureCount, setBatchFailureCount] = useState(0);
+  const [batchDegradedCount, setBatchDegradedCount] = useState(0);
   const [batchEtaMs, setBatchEtaMs] = useState(0);
   const [batchRunMessage, setBatchRunMessage] = useState('');
+  const [batchRetryingFailed, setBatchRetryingFailed] = useState(false);
 
   const [documentFormat, setDocumentFormat] = useState<ExportFormat>('pdf');
   const [documentUploads, setDocumentUploads] = useState<DocumentUploadEntry[]>([]);
@@ -212,8 +228,11 @@ export default function BatchPage() {
   const [documentTotalCount, setDocumentTotalCount] = useState(0);
   const [documentSuccessCount, setDocumentSuccessCount] = useState(0);
   const [documentFailureCount, setDocumentFailureCount] = useState(0);
+  const [documentDegradedCount, setDocumentDegradedCount] = useState(0);
   const [documentEtaMs, setDocumentEtaMs] = useState(0);
   const [documentRunMessage, setDocumentRunMessage] = useState('');
+  const [documentImageMode, setDocumentImageMode] = useState<ImageMode>('off');
+  const [documentRetryingFailed, setDocumentRetryingFailed] = useState(false);
 
   const sessionIdRef = useRef('');
   const imagesRef = useRef<ImageMode>('off');
@@ -253,6 +272,24 @@ export default function BatchPage() {
     const count = documentSuccessCount > 0 ? documentSuccessCount : documentUploads.length;
     return count * DOWNLOAD_ESTIMATED_MS_PER_URL[documentFormat];
   }, [documentFormat, documentSuccessCount, documentUploads.length]);
+  const selectedDocumentHasImageCapableFiles = useMemo(
+    () => documentUploads.some((item) => hasImageCapableDocument(item.name)),
+    [documentUploads],
+  );
+  const selectedDocumentHasMixedImageSupport = useMemo(
+    () =>
+      selectedDocumentHasImageCapableFiles &&
+      documentUploads.some((item) => !hasImageCapableDocument(item.name)),
+    [documentUploads, selectedDocumentHasImageCapableFiles],
+  );
+  const uploadedDocumentHasImageCapableFiles = useMemo(
+    () =>
+      documentUploads.some(
+        (item) => item.status === 'uploaded' && item.uploadRef && hasImageCapableDocument(item.name),
+      ),
+    [documentUploads],
+  );
+  const effectiveDocumentImageMode: ImageMode = uploadedDocumentHasImageCapableFiles ? documentImageMode : 'off';
 
   const batchProcessing = batchJobStatus === 'queued' || batchJobStatus === 'running';
   const documentProcessing = documentJobStatus === 'queued' || documentJobStatus === 'running';
@@ -291,6 +328,7 @@ export default function BatchPage() {
       setTotalCount: (value: number) => void;
       setSuccessCount: (value: number) => void;
       setFailureCount: (value: number) => void;
+      setDegradedCount: (value: number) => void;
       setEtaMs: (value: number) => void;
       setResults: (rows: BatchItemResult[]) => void;
       setRunMessage: (value: string) => void;
@@ -326,6 +364,7 @@ export default function BatchPage() {
     handlers.setTotalCount(Number(json.job.totalUrls || 0));
     handlers.setSuccessCount(Number(json.job.successCount || 0));
     handlers.setFailureCount(Number(json.job.failureCount || 0));
+    handlers.setDegradedCount(Number(json.job.degradedCount || 0));
     handlers.setEtaMs(Math.max(0, Number(json.estimatedRemainingMs || 0)));
     handlers.setResults((json.items || []).map(mapBatchItem));
 
@@ -338,7 +377,7 @@ export default function BatchPage() {
           ? completedAtMs - startedAtMs
           : Number(json.job.averageDurationMs || 0) * Number(json.job.processedUrls || 0);
 
-      const message = `Completed in ${formatDuration(durationMs)}. ${Number(json.job.successCount || 0).toLocaleString()} succeeded, ${Number(json.job.failureCount || 0).toLocaleString()} failed.`;
+      const message = `Completed in ${formatDuration(durationMs)}. ${Number(json.job.successCount || 0).toLocaleString()} usable or degraded, ${Number(json.job.degradedCount || 0).toLocaleString()} degraded, ${Number(json.job.failureCount || 0).toLocaleString()} failed.`;
       handlers.setRunMessage(message);
 
       void trackClientEvent({
@@ -350,6 +389,7 @@ export default function BatchPage() {
           jobId: json.job.id,
           count: Number(json.job.totalUrls || 0),
           successCount: Number(json.job.successCount || 0),
+          degradedCount: Number(json.job.degradedCount || 0),
           failureCount: Number(json.job.failureCount || 0),
           format: handlers.selectedFormat,
           inputMode: json.job.inputMode,
@@ -379,6 +419,7 @@ export default function BatchPage() {
           setTotalCount: setBatchTotalCount,
           setSuccessCount: setBatchSuccessCount,
           setFailureCount: setBatchFailureCount,
+          setDegradedCount: setBatchDegradedCount,
           setEtaMs: setBatchEtaMs,
           setResults: setBatchResults,
           setRunMessage: setBatchRunMessage,
@@ -417,6 +458,7 @@ export default function BatchPage() {
           setTotalCount: setDocumentTotalCount,
           setSuccessCount: setDocumentSuccessCount,
           setFailureCount: setDocumentFailureCount,
+          setDegradedCount: setDocumentDegradedCount,
           setEtaMs: setDocumentEtaMs,
           setResults: setDocumentResults,
           setRunMessage: setDocumentRunMessage,
@@ -465,17 +507,6 @@ export default function BatchPage() {
     requestedFormat: ExportFormat = batchFormat,
   ): Promise<void> {
     if (row.status !== 'success') return;
-
-    if (row.outputObjectKey && row.id && documentJobId) {
-      const response = await fetch(
-        `/api/batch-jobs/download?jobId=${encodeURIComponent(documentJobId)}&itemId=${row.id}`,
-        {
-          headers: buildHeaders(),
-        },
-      );
-      await downloadBlobResponse(response, row.outputFilename || `batch-document.${row.outputFormat || 'pdf'}`);
-      return;
-    }
 
     if (!row.extractionId && row.sourceUrl) {
       const response = await fetch('/api/direct-file', {
@@ -535,7 +566,19 @@ export default function BatchPage() {
     );
   }
 
-  async function getAllSuccessfulBatchRows(jobId: string): Promise<BatchItemResult[]> {
+  async function downloadDocumentBatchItem(row: BatchItemResult): Promise<void> {
+    if (row.status !== 'success' || !row.outputObjectKey || !row.id || !documentJobId) return;
+
+    const response = await fetch(
+      `/api/batch-jobs/download?jobId=${encodeURIComponent(documentJobId)}&itemId=${row.id}`,
+      {
+        headers: buildHeaders(),
+      },
+    );
+    await downloadBlobResponse(response, row.outputFilename || `batch-document.${row.outputFormat || 'pdf'}`);
+  }
+
+  async function getAllBatchRows(jobId: string): Promise<BatchItemResult[]> {
     const output: BatchItemResult[] = [];
     const limit = 1000;
     let offset = 0;
@@ -564,7 +607,7 @@ export default function BatchPage() {
       }
 
       const rows = (json.items || []).map(mapBatchItem);
-      output.push(...rows.filter((item) => item.status === 'success'));
+      output.push(...rows);
 
       offset += rows.length;
       guard += 1;
@@ -573,6 +616,11 @@ export default function BatchPage() {
     }
 
     return output;
+  }
+
+  async function getAllSuccessfulBatchRows(jobId: string): Promise<BatchItemResult[]> {
+    const rows = await getAllBatchRows(jobId);
+    return rows.filter((item) => item.status === 'success');
   }
 
   async function handleDownloadAllBatch(): Promise<void> {
@@ -599,13 +647,176 @@ export default function BatchPage() {
     try {
       const rows = await getAllSuccessfulBatchRows(documentJobId);
       for (const row of rows.filter((item) => item.outputObjectKey)) {
-        await downloadBatchItem(row);
+        await downloadDocumentBatchItem(row);
         await new Promise((resolve) => setTimeout(resolve, 220));
       }
     } catch (error) {
       setDocumentRunMessage(error instanceof Error ? error.message : 'Failed to download converted files.');
     } finally {
       setDocumentDownloadingAll(false);
+    }
+  }
+
+  function uploadIdFromBatchRow(row: BatchItemResult): string | null {
+    if (!row.url.startsWith('upload://')) return null;
+    const uploadId = row.url.slice('upload://'.length).trim();
+    return uploadId || null;
+  }
+
+  async function retryFailedUrlBatch(): Promise<void> {
+    if (!batchJobId || batchRetryingFailed || batchProcessing) return;
+
+    setBatchRetryingFailed(true);
+    try {
+      const rows = await getAllBatchRows(batchJobId);
+      const failedUrls = Array.from(
+        new Set(rows.filter((row) => row.status === 'failure').map((row) => row.url).filter(Boolean)),
+      );
+
+      if (failedUrls.length === 0) {
+        setBatchRunMessage('No failed URLs are available to retry.');
+        return;
+      }
+
+      void trackClientEvent({
+        eventName: 'batch_extract_submit',
+        eventGroup: 'extract',
+        status: 'attempt',
+        pagePath: '/batch',
+        metadata: {
+          count: failedUrls.length,
+          format: batchFormat,
+          images: imagesRef.current,
+          inputMode: 'url',
+          retryOriginJobId: batchJobId,
+        },
+      });
+
+      const response = await fetch('/api/batch-jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...buildHeaders(),
+        },
+        body: JSON.stringify({
+          inputMode: 'url',
+          urls: failedUrls,
+          format: batchFormat,
+          images: imagesRef.current,
+          settings: DEFAULT_SETTINGS,
+        }),
+      });
+
+      const json = (await response.json()) as {
+        success: boolean;
+        error?: string;
+        job?: {
+          jobId: string;
+          totalUrls: number;
+          status: BatchJobStatus;
+          estimatedProcessingMs: number;
+        };
+      };
+
+      if (!response.ok || !json.success || !json.job) {
+        throw new Error(json.error || 'Retry batch creation failed.');
+      }
+
+      setBatchResults([]);
+      setBatchJobId(json.job.jobId);
+      setBatchJobStatus((json.job.status as BatchJobStatus) || 'queued');
+      setBatchProcessedCount(0);
+      setBatchTotalCount(Number(json.job.totalUrls || failedUrls.length));
+      setBatchSuccessCount(0);
+      setBatchFailureCount(0);
+      setBatchDegradedCount(0);
+      setBatchEtaMs(Number(json.job.estimatedProcessingMs || 0));
+      setBatchRunMessage(`Retry job queued (${json.job.jobId.slice(0, 8)}) from ${failedUrls.length.toLocaleString()} failed URLs.`);
+    } catch (error) {
+      setBatchRunMessage(error instanceof Error ? error.message : 'Retry batch creation failed.');
+    } finally {
+      setBatchRetryingFailed(false);
+    }
+  }
+
+  async function retryFailedDocumentBatch(): Promise<void> {
+    if (!documentJobId || documentRetryingFailed || documentProcessing) return;
+
+    setDocumentRetryingFailed(true);
+    try {
+      const rows = await getAllBatchRows(documentJobId);
+      const failedFiles = Array.from(
+        new Set(
+          rows
+            .filter((row) => row.status === 'failure')
+            .map((row) => uploadIdFromBatchRow(row))
+            .filter((uploadId): uploadId is string => Boolean(uploadId)),
+        ),
+      ).map((uploadId) => ({ uploadId }));
+
+      if (failedFiles.length === 0) {
+        setDocumentRunMessage('No failed files are available to retry.');
+        return;
+      }
+
+      void trackClientEvent({
+        eventName: 'batch_extract_submit',
+        eventGroup: 'extract',
+        status: 'attempt',
+        pagePath: '/batch',
+        metadata: {
+          count: failedFiles.length,
+          format: documentFormat,
+          images: effectiveDocumentImageMode,
+          inputMode: 'document',
+          retryOriginJobId: documentJobId,
+        },
+      });
+
+      const response = await fetch('/api/batch-jobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...buildHeaders(),
+        },
+        body: JSON.stringify({
+          inputMode: 'document',
+          files: failedFiles,
+          format: documentFormat,
+          images: effectiveDocumentImageMode,
+          settings: DEFAULT_SETTINGS,
+        }),
+      });
+
+      const json = (await response.json()) as {
+        success: boolean;
+        error?: string;
+        job?: {
+          jobId: string;
+          totalUrls: number;
+          status: BatchJobStatus;
+          estimatedProcessingMs: number;
+        };
+      };
+
+      if (!response.ok || !json.success || !json.job) {
+        throw new Error(json.error || 'Retry document batch creation failed.');
+      }
+
+      setDocumentResults([]);
+      setDocumentJobId(json.job.jobId);
+      setDocumentJobStatus((json.job.status as BatchJobStatus) || 'queued');
+      setDocumentProcessedCount(0);
+      setDocumentTotalCount(Number(json.job.totalUrls || failedFiles.length));
+      setDocumentSuccessCount(0);
+      setDocumentFailureCount(0);
+      setDocumentDegradedCount(0);
+      setDocumentEtaMs(Number(json.job.estimatedProcessingMs || 0));
+      setDocumentRunMessage(`Retry job queued (${json.job.jobId.slice(0, 8)}) from ${failedFiles.length.toLocaleString()} failed files.`);
+    } catch (error) {
+      setDocumentRunMessage(error instanceof Error ? error.message : 'Retry document batch creation failed.');
+    } finally {
+      setDocumentRetryingFailed(false);
     }
   }
 
@@ -628,6 +839,7 @@ export default function BatchPage() {
     setBatchTotalCount(urls.length);
     setBatchSuccessCount(0);
     setBatchFailureCount(0);
+    setBatchDegradedCount(0);
     setBatchEtaMs(urls.length * BATCH_ESTIMATED_MS_PER_URL);
     setBatchJobStatus('queued');
 
@@ -916,6 +1128,7 @@ export default function BatchPage() {
     setDocumentTotalCount(uploadedFiles.length);
     setDocumentSuccessCount(0);
     setDocumentFailureCount(0);
+    setDocumentDegradedCount(0);
     setDocumentEtaMs(uploadedFiles.length * BATCH_ESTIMATED_MS_PER_URL);
     setDocumentJobStatus('queued');
     setDocumentRunMessage('Submitting document batch...');
@@ -928,6 +1141,7 @@ export default function BatchPage() {
       metadata: {
         count: uploadedFiles.length,
         format: documentFormat,
+        images: effectiveDocumentImageMode,
         inputMode: 'document',
       },
     });
@@ -943,7 +1157,7 @@ export default function BatchPage() {
           inputMode: 'document',
           files: uploadedFiles,
           format: documentFormat,
-          images: imagesRef.current,
+          images: effectiveDocumentImageMode,
           settings: DEFAULT_SETTINGS,
         }),
       });
@@ -975,39 +1189,20 @@ export default function BatchPage() {
   }
 
   return (
-    <main className="cp-shell cp-enter mx-auto w-full max-w-5xl px-6 py-12">
-      <div className="mx-auto max-w-4xl">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <h1 className="logo-mark text-5xl font-semibold text-[var(--color-ink)]">Batch Workspace</h1>
-
-          <Link
-            href="/"
-            className="rounded-lg border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-          >
-            Back to Homepage
-          </Link>
+    <main className="cp-shell cp-enter flex min-h-screen items-start justify-center px-6 py-10">
+      <div className="w-full max-w-4xl">
+        <div className="text-center">
+          <h1 className="logo-mark text-6xl font-semibold text-[var(--color-ink)]">Batch convert URLs and documents</h1>
+          <p className="mx-auto mt-2 max-w-2xl text-lg text-[var(--color-muted)]">
+            Convert many links or files into clean, readable Markdown, TXT, DOCX, or PDF.
+          </p>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {(['url', 'document'] as BatchInputMode[]).map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setMode(value)}
-              className={`h-10 rounded-lg border px-4 text-sm font-semibold transition ${
-                mode === value
-                  ? 'border-[var(--color-accent)] bg-white text-[var(--color-accent)]'
-                  : 'border-[var(--color-border)] bg-white text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]'
-              }`}
-            >
-              {value === 'url' ? 'URLs' : 'Documents'}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-6">
+        <div>
           {mode === 'url' ? (
             <BatchUrlPanel
+              mode={mode}
+              onModeChange={setMode}
               urlsInput={batchUrlsInput}
               onUrlsInputChange={setBatchUrlsInput}
               onSubmit={() => void handleBatchSubmit()}
@@ -1022,6 +1217,7 @@ export default function BatchPage() {
               totalCount={batchTotalCount}
               successCount={batchSuccessCount}
               failureCount={batchFailureCount}
+              degradedCount={batchDegradedCount}
               etaText={formatDuration(batchEtaMs)}
               downloadEstimateText={formatDuration(batchDownloadEstimateMs)}
               runMessage={batchRunMessage}
@@ -1034,13 +1230,21 @@ export default function BatchPage() {
                 )
               }
               onDownloadAll={() => void handleDownloadAllBatch()}
+              onRetryFailed={() => void retryFailedUrlBatch()}
+              retryingFailed={batchRetryingFailed}
             />
           ) : (
             <BatchDocumentPanel
+              mode={mode}
+              onModeChange={setMode}
               accept={uploadConfig.accept}
               files={documentUploads}
               format={documentFormat}
               onFormatChange={setDocumentFormat}
+              imageMode={documentImageMode}
+              onImageModeChange={setDocumentImageMode}
+              showImageModeToggle={selectedDocumentHasImageCapableFiles}
+              showMixedImageSupportNote={selectedDocumentHasMixedImageSupport}
               onSelectFiles={(files) => void handleSelectDocumentFiles(files)}
               onRemoveFile={removeDocumentUpload}
               onSubmit={() => void handleDocumentBatchSubmit()}
@@ -1052,6 +1256,7 @@ export default function BatchPage() {
               totalCount={documentTotalCount}
               successCount={documentSuccessCount}
               failureCount={documentFailureCount}
+              degradedCount={documentDegradedCount}
               etaText={formatDuration(documentEtaMs)}
               runMessage={
                 documentProcessing || documentSuccessCount > 0
@@ -1063,16 +1268,20 @@ export default function BatchPage() {
               maxBatchBytes={uploadConfig.limits.maxBatchBytes}
               results={documentResults}
               onDownloadOne={(row) =>
-                void downloadBatchItem(row).catch((error) =>
+                void downloadDocumentBatchItem(row).catch((error) =>
                   setDocumentRunMessage(
                     error instanceof Error ? error.message : 'Failed to download selected file.',
                   ),
                 )
               }
               onDownloadAll={() => void handleDownloadAllDocuments()}
+              onRetryFailed={() => void retryFailedDocumentBatch()}
+              retryingFailed={documentRetryingFailed}
             />
           )}
         </div>
+
+        <BatchBelowFoldContent />
       </div>
     </main>
   );

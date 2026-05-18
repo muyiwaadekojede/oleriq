@@ -1,0 +1,38 @@
+subject,evidence_rows,onboarding_gap_rows,pricing_rows,output_trust_rows,public_proof_risk_rows,agent_setup_rows,buyer_trust_profile
+firecrawl,29,4,4,6,1,0,fast_pitch_fragile_second_step; output_trust_risk; cost_confidence_risk
+webclaw,23,1,2,5,9,2,cost_confidence_risk; low_independent_proof
+browser-use,20,3,2,6,1,0,fast_pitch_fragile_second_step; output_trust_risk; cost_confidence_risk
+crawl4ai,20,3,0,14,1,1,fast_pitch_fragile_second_step; output_trust_risk
+crw,17,1,1,1,8,0,low_independent_proof
+jina-reader,17,3,2,7,1,1,fast_pitch_fragile_second_step; output_trust_risk; cost_confidence_risk
+scrapegraphai,14,3,0,5,1,0,fast_pitch_fragile_second_step
+playwright-mcp,13,0,0,0,0,8,agent_setup_burden
+trafilatura,10,0,0,9,0,0,output_trust_risk
+webpeel,10,1,1,0,8,0,low_independent_proof
+browserpilot,9,0,1,3,0,0,mixed_or_thin_signal
+mozilla-readability,9,0,0,7,0,0,output_trust_risk
+teracrawl,8,0,0,3,0,0,mixed_or_thin_signal
+crawl4ai-mcp-server,7,0,0,3,1,3,agent_setup_burden
+crawl4ai-mcp,6,0,0,0,1,5,agent_setup_burden
+apify-crawlee,4,0,0,0,0,0,mixed_or_thin_signal
+apify/crawlee,4,3,1,0,0,0,fast_pitch_fragile_second_step
+firecrawl_vs_crawl4ai,4,0,0,0,0,0,mixed_or_thin_signal
+adjacent,3,0,0,1,0,1,mixed_or_thin_signal
+authenticated_pages_and_session_reuse,3,0,0,0,0,0,mixed_or_thin_signal
+pdf_and_office_document_extraction,3,0,0,3,0,0,mixed_or_thin_signal
+web_to_markdown_fidelity,3,0,0,3,0,0,mixed_or_thin_signal
+webustler,3,0,0,0,2,0,mixed_or_thin_signal
+batch_jobs_retries_and_observability,2,0,0,0,0,0,mixed_or_thin_signal
+bot_protection_and_cloudflare,2,0,0,0,0,0,mixed_or_thin_signal
+crawl4ai_vs_firecrawl,2,0,0,1,0,0,mixed_or_thin_signal
+document_parsing,2,0,0,2,0,0,mixed_or_thin_signal
+ocr_user_discussion,2,0,0,2,0,0,mixed_or_thin_signal
+selector_capture_replayability_and_deterministic_handoff,2,0,0,1,0,0,mixed_or_thin_signal
+browser_agent_tasks,1,0,0,0,0,0,mixed_or_thin_signal
+browser_scraping_agents,1,0,0,1,0,0,mixed_or_thin_signal
+document_intelligence_vs_scraping,1,0,0,1,0,0,mixed_or_thin_signal
+firecrawl_crawl4ai_jina,1,0,0,1,0,0,mixed_or_thin_signal
+js_heavy_pages_and_spa_timing,1,0,0,1,0,0,mixed_or_thin_signal
+multilingual_docs,1,0,0,0,0,0,mixed_or_thin_signal
+screenshot_cleanliness_and_visual_verification,1,0,0,0,0,0,mixed_or_thin_signal
+token_cost_output_size_and_multilingual_overhead,1,0,1,0,0,0,mixed_or_thin_signal

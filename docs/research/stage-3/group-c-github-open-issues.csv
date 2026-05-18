@@ -1,0 +1,5 @@
+"slug","title","html_url","created_at","updated_at","comments","labels"
+"scrapegraphai","📋 Documentation Enhancement Suggestion","https://github.com/ScrapeGraphAI/Scrapegraph-ai/issues/1073","5/14/2026 7:10:59 AM","5/14/2026 7:13:02 AM","0","documentation"
+"scrapegraphai","📝 Integration Proposal: CAJAL — Scientific Paper Agent for ScrapeGraphAI","https://github.com/ScrapeGraphAI/Scrapegraph-ai/issues/1068","5/4/2026 4:39:17 PM","5/4/2026 4:42:12 PM","0","feature request"
+"browser-use","Feature Request: Too strict dependency version pinning (`==`) causes dependency conflicts in complex projects","https://github.com/browser-use/browser-use/issues/4824","5/12/2026 2:17:52 PM","5/15/2026 6:08:36 PM","7","enhancement"
+"browser-use","Bug: Unable to complete task using browser use(GPT5.1/5.2/5.3/5.4)","https://github.com/browser-use/browser-use/issues/4786","5/5/2026 11:59:28 AM","5/14/2026 8:54:31 PM","2","bug"

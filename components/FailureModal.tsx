@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 
+import { nextStepGuidanceForErrorCode } from '@/lib/trustGuidance';
 import type { ExtractErrorCode } from '@/lib/types';
 
 const REASONS = [
@@ -51,6 +52,7 @@ export function FailureModal({
   const [submitted, setSubmitted] = useState(false);
 
   const subtext = useMemo(() => ERROR_MESSAGES[errorCode], [errorCode]);
+  const nextStep = useMemo(() => nextStepGuidanceForErrorCode(errorCode), [errorCode]);
 
   if (!open) return null;
 
@@ -97,6 +99,11 @@ export function FailureModal({
       <div className="max-h-full w-full max-w-2xl overflow-y-auto rounded-2xl border border-[var(--color-border)] bg-white p-6">
         <h2 className="text-3xl font-semibold text-[var(--color-ink)]">We couldn&apos;t extract this page</h2>
         <p className="mt-2 text-sm text-[var(--color-muted)]">{subtext}</p>
+        {nextStep ? (
+          <p className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-ink)]">
+            Next step: {nextStep}
+          </p>
+        ) : null}
 
         {submitted ? (
           <div className="mt-6 rounded-lg border border-[var(--color-border)] bg-white p-4 text-sm text-[var(--color-ink)]">

@@ -4,7 +4,7 @@ import { Agent as UndiciAgent } from 'undici';
 
 import { getBrowser } from './browser';
 import { sanitizeHtml } from './sanitise';
-import type { ExtractErrorCode, ExtractResponse, ImageMode } from './types';
+import type { ExtractErrorCode, ExtractionPath, ExtractResponse, ImageMode } from './types';
 
 const PAYWALL_MARKERS = [
   'subscriber-only',
@@ -128,6 +128,19 @@ function normalizeUrlForMatch(value: string): string {
     return `${parsed.protocol}//${parsed.hostname.toLowerCase()}${pathname}`;
   } catch {
     return value.trim().toLowerCase().replace(/\/+$/, '');
+  }
+}
+
+function warningsForExtractionPath(extractionPath: ExtractionPath): string[] {
+  switch (extractionPath) {
+    case 'browser_fallback':
+      return ['This page required browser rendering, so the extracted document may differ slightly from the original layout.'];
+    case 'rsc_fallback':
+      return ['This page used a React Server Components fallback, so structure may be less complete than the original page.'];
+    case 'syndication_fallback':
+      return ['This page used a syndication fallback, so the extracted document may not include every part of the original page.'];
+    default:
+      return [];
   }
 }
 
@@ -833,6 +846,7 @@ function getHostSiteName(inputUrl: URL): string {
 async function buildResponseFromFallbackContent(input: {
   sourceUrl: URL;
   images: ImageMode;
+  extractionPath: ExtractionPath;
   title: string;
   byline?: string;
   siteName?: string;
@@ -866,6 +880,9 @@ async function buildResponseFromFallbackContent(input: {
 
   return {
     success: true,
+    resultState: 'degraded',
+    extractionPath: input.extractionPath,
+    warnings: warningsForExtractionPath(input.extractionPath),
     title: normalizeExtractText(input.title) || 'Untitled Article',
     byline: normalizeExtractText(input.byline) || 'Unknown',
     siteName: normalizeExtractText(input.siteName) || getHostSiteName(input.sourceUrl),
@@ -929,6 +946,7 @@ async function trySyndicationFallback(url: URL, images: ImageMode): Promise<Extr
         const fallbackResponse = await buildResponseFromFallbackContent({
           sourceUrl: url,
           images,
+          extractionPath: 'syndication_fallback',
           title: entry.querySelector('title')?.textContent || 'Untitled Article',
           byline:
             entry.querySelector('author > name')?.textContent ||
@@ -1002,6 +1020,7 @@ async function tryRscPayloadFallback(
     return await buildResponseFromFallbackContent({
       sourceUrl: url,
       images,
+      extractionPath: 'rsc_fallback',
       title,
       siteName,
       excerpt,
@@ -1121,6 +1140,7 @@ export async function extractFromUrl(
   try {
     let html = '';
     let usedBrowserFallback = false;
+    let extractionPath: ExtractionPath = 'readability';
 
     try {
       html = await fetchHtmlWithTimeout(parsedUrl.toString(), 20_000);
@@ -1131,6 +1151,7 @@ export async function extractFromUrl(
 
       html = await fetchRenderedHtml(parsedUrl.toString());
       usedBrowserFallback = true;
+      extractionPath = 'browser_fallback';
     }
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -1138,6 +1159,7 @@ export async function extractFromUrl(
         if (!usedBrowserFallback) {
           html = await fetchRenderedHtml(parsedUrl.toString());
           usedBrowserFallback = true;
+          extractionPath = 'browser_fallback';
           continue;
         }
 
@@ -1162,6 +1184,7 @@ export async function extractFromUrl(
           if (!usedBrowserFallback && likelyNeedsBrowserRendering(html)) {
             html = await fetchRenderedHtml(parsedUrl.toString());
             usedBrowserFallback = true;
+            extractionPath = 'browser_fallback';
             continue;
           }
 
@@ -1190,6 +1213,7 @@ export async function extractFromUrl(
           if (!usedBrowserFallback) {
             html = await fetchRenderedHtml(parsedUrl.toString());
             usedBrowserFallback = true;
+            extractionPath = 'browser_fallback';
             continue;
           }
 
@@ -1214,6 +1238,7 @@ export async function extractFromUrl(
           if (!usedBrowserFallback && likelyNeedsBrowserRendering(html)) {
             html = await fetchRenderedHtml(parsedUrl.toString());
             usedBrowserFallback = true;
+            extractionPath = 'browser_fallback';
             continue;
           }
 
@@ -1245,6 +1270,9 @@ export async function extractFromUrl(
 
         return {
           success: true,
+          resultState: extractionPath === 'readability' ? 'usable' : 'degraded',
+          extractionPath,
+          warnings: warningsForExtractionPath(extractionPath),
           title: deriveBestTitle(
             normalizeExtractText(article.title),
             article.content || '',

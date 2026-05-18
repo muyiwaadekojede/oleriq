@@ -1,0 +1,9 @@
+# Acknowledgments
+
+At Rockport Publishers, we must thank many people, especially Joy Aquilino for suggesting we coauthor this book, Jonathan Simcosky and John Gettings for keeping us on track, and David Martinell for his immense help during the layout process. A book on color would not be complete without images to accompany the text, so we need to give a huge thank-you to the many designers, artists, architects, and photographers who gave us permission to include their work in the book. A special thank-you to the members of the Joint ISCC/AIC Colour Literacy Project team for their contributions to the book and to Robert Hirschler, Luanne Stovall, and Karen Triedman who reviewed drafts and provided critical feedback.
+
+Maggie Maggio and Stephen Westland
+
+I would like to thank all my students over the years who asked questions I could not answer. Their curiosity inspired my deep dive into the universe of color. I would like to thank Stephen Westland for inviting me to coauthor this book. I am grateful for his wide-ranging expertise on the complex subject of color, his dedication to dispelling misconceptions, and his commitment to expanding our understanding of color to meet the evolving needs of the twenty-first century. Working together over the past two years has been a pleasure. Finally, I must thank my husband, Chuck Maggio, for his support and patience during the times when the deadlines loomed large and all my attention was focused on this book. —MM
+
+I would like to thank Maggie Maggio for making the hard work and long hours that went into putting this book together enjoyable and rewarding. Without Maggie I could never have written this book. I would also like to thank all of my students over the many years from whom I have learned so much; it is, with them in mind, that I have written this book. Finally, I must thank Jane and Tyler for their endless patience during the many evenings when I needed to engage with Zoom calls. —SW

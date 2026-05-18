@@ -9,7 +9,7 @@ import {
   MAX_DOCUMENT_BATCH_BYTES,
   MAX_DOCUMENT_BATCH_FILES,
 } from '@/lib/documentConversion';
-import type { ExportFormat, ReaderSettings } from '@/lib/types';
+import type { ExportFormat, ExtractResultState, ReaderSettings } from '@/lib/types';
 
 type DurableJobStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 type DurableItemStatus = 'pending' | 'running' | 'success' | 'failure';
@@ -32,6 +32,8 @@ type DurableDocumentBatchItem = {
   position: number;
   url: string;
   status: DurableItemStatus;
+  qualityState: ExtractResultState | null;
+  warnings: string[];
   durationMs: number;
   extractionId: string | null;
   sourceUrl: string | null;
@@ -198,14 +200,20 @@ function cloneDetail(
   limit = 200,
   offset = 0,
 ): {
-  job: DurableDocumentBatchManifest['job'];
+  job: DurableDocumentBatchManifest['job'] & { degradedCount: number };
   items: DurableDocumentBatchItem[];
   estimatedRemainingMs: number;
 } {
   const safeLimit = Math.max(1, Math.min(1000, Math.floor(limit) || 200));
   const safeOffset = Math.max(0, Math.floor(offset) || 0);
+  const degradedCount = manifest.items.filter(
+    (item) => item.status === 'success' && item.qualityState === 'degraded',
+  ).length;
   return {
-    job: manifest.job,
+    job: {
+      ...manifest.job,
+      degradedCount,
+    },
     items: manifest.items.slice(safeOffset, safeOffset + safeLimit),
     estimatedRemainingMs: estimateRemainingMs(manifest.job),
   };
@@ -293,6 +301,8 @@ export async function createDurableDocumentBatchJob(input: {
       position: index,
       url: `upload://${upload.uploadId}`,
       status: 'pending',
+      qualityState: null,
+      warnings: [],
       durationMs: 0,
       extractionId: null,
       sourceUrl: null,
@@ -369,6 +379,7 @@ async function progressManifest(manifest: DurableDocumentBatchManifest): Promise
         rawFilename: item.originalFilename,
         contentType: item.contentType,
         format: manifest.job.exportFormat,
+        imagesMode: manifest.job.imagesMode,
         sourceLabel: item.url,
         settings,
       });
@@ -386,6 +397,8 @@ async function progressManifest(manifest: DurableDocumentBatchManifest): Promise
 
       const durationMs = Date.now() - startedAt;
       item.status = 'success';
+      item.qualityState = converted.resultState;
+      item.warnings = converted.warnings;
       item.durationMs = durationMs;
       item.title = converted.title;
       item.outputObjectKey = stored.objectKey;
@@ -408,6 +421,8 @@ async function progressManifest(manifest: DurableDocumentBatchManifest): Promise
       const durationMs = Date.now() - startedAt;
       const message = error instanceof Error ? error.message : 'Failed to convert file.';
       item.status = 'failure';
+      item.qualityState = null;
+      item.warnings = [];
       item.durationMs = durationMs;
       item.outputObjectKey = null;
       item.outputFilename = null;
@@ -451,7 +466,7 @@ export async function getDurableDocumentBatchDetail(input: {
   | {
       kind: 'ok';
       detail: {
-        job: DurableDocumentBatchManifest['job'];
+        job: DurableDocumentBatchManifest['job'] & { degradedCount: number };
         items: DurableDocumentBatchItem[];
         estimatedRemainingMs: number;
       };

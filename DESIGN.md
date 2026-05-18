@@ -85,6 +85,27 @@ rounded:
 
 ---
 
+## Companion Files and Precedence
+
+`DESIGN.md` is the constitutional layer for Clearpage UI. It defines the hard rules, prohibitions, and visual constraints that companion files are not allowed to overrule.
+
+The companion files are:
+
+- [`PRODUCT.md`](./PRODUCT.md) — product register, users, route classes, tone, and product-level design priorities
+- [`docs/design/playbooks/external-systems.md`](./docs/design/playbooks/external-systems.md) — how external systems such as Impeccable, Open Design, Taste Skill, and source corpora may be used safely
+- [`docs/research/design-sources/color-book/`](./docs/research/design-sources/color-book/) — extracted source corpus for long-form color theory reference
+
+**Precedence order:**
+
+1. `DESIGN.md`
+2. `PRODUCT.md`
+3. `docs/design/playbooks/external-systems.md`
+4. Source corpora under `docs/research/design-sources/`
+
+Companion files may expand judgment, workflow, critique quality, and theory support. They may not override hard bans in this file unless this file itself changes.
+
+---
+
 ## 0. The Design Philosophy
 
 **Clearpage does one thing per screen. With nothing to distract from it.**
@@ -94,6 +115,24 @@ This is not a preference. It is the product's identity. Every layout decision fl
 The canonical reference for all design decisions is the **first homepage screenshot** on record: a centred, full-viewport layout, a flat warm background, a large heading, a single subtitle line, and one input paired with one action button. Nothing else on the page.
 
 This is not a "hero section". This IS the page. Keep that distinction in mind at all times.
+
+Later product pages may carry more information than the homepage, but they do not get to invent a different page-level grammar by default. The homepage is the visual baseline for page framing, rhythm, and first-screen composure.
+
+### 0.1 Attention and Surface Discipline
+
+The first screen of any page must make the first action obvious.
+
+Users should not have to negotiate with several equal-weight boxes before they understand what to do. If the first screen presents multiple bordered sections that compete for attention, the composition is wrong.
+
+**Rules:**
+- Every page must have one clearly dominant interactive surface on first view.
+- Supporting information such as limits, tips, status, help, activity, and metadata must live inside that dominant surface, stay visually subordinate to it, or remain hidden until relevant.
+- Do not create a new bordered section just because the content type changes. New information should first try to fit inside the existing surface.
+- Empty downstream containers are banned on first load unless hiding them would make the task less understandable.
+- If a page feels noisy, fix sequencing, grouping, spacing, and copy first. Do not solve an attention problem by adding more interface.
+- Lead page copy with the user job and the trust promise, not an abstract workspace label, whenever the route performs a concrete task.
+- Content selection must start from user intent and product truth first. SEO shaping is allowed only after the page already explains the real job clearly.
+- Derived product pages must inherit homepage page-level grammar unless the job truly requires a stronger separation boundary.
 
 ---
 
@@ -120,6 +159,8 @@ The flat background is not a compromise. It is a deliberate editorial choice. It
 
 The colour palette is small. That is intentional. Restraint is the design.
 
+Colour is not decoration here. It is functional, contextual, and relational. The same hue can feel different depending on contrast, surrounding neutrals, and the amount of surface it occupies. Any colour decision that ignores context is a bad colour decision.
+
 **Rules:**
 - The `primary` token is the **only accent colour**. It appears on the CTA button and on input focus borders. Nowhere else.
 - Do not introduce a second accent colour.
@@ -127,6 +168,10 @@ The colour palette is small. That is intentional. Restraint is the design.
 - Colour must not be used to create visual interest. Visual interest comes from typography and space.
 - Every new colour introduced must have a written justification committed alongside the code change.
 - Error and success colours are **semantic only** — they communicate state, never decoration.
+- Contrast decisions start with **lightness**, not hue. If text and background are close in lightness, the combination is wrong even if the hues are different.
+- Never rely on colour alone to communicate meaning. If a state matters, pair colour with text, structure, iconography, or placement.
+- Use the existing text and surface tokens instead of introducing raw fallback blacks, grays, or whites inline.
+- If a derived neutral is ever introduced for a secondary surface, it must stay very close to the current palette and clearly relate back to the existing accent and neutral system.
 
 ---
 
@@ -202,6 +247,11 @@ For pages beyond the homepage that group denser content:
 - Border radius: `rounded.panel` token
 - No shadow on the panel. The border is sufficient.
 - Left-align content within the panel. Centre the panel on the page.
+- Do not stack multiple equal-weight panels on first load unless each one represents a genuinely separate task or state.
+- If two bordered sections can be merged without hurting comprehension, they should be merged.
+- Downstream result panels should stay hidden until there is real state to show, unless the empty state is necessary to explain the workflow.
+- Utility-page headings must describe the task directly. Generic labels such as `workspace`, `console`, or `hub` are banned when the page can name the concrete job instead.
+- Page-level cards are not allowed on derived product surfaces when the homepage does not use them for the same framing job.
 
 ### 5.4 Modals / Dialogs
 
@@ -261,9 +311,13 @@ Never implement any of the following. No exceptions without a written, committed
 
 ### On layout
 - Multiple sections stacked on the homepage
+- Interface fragmentation where several bordered sections compete before the first task is clear
+- Empty activity, status, or help panels that appear before the user has done anything unless they are required for comprehension
 - Sidebar navigation
 - Inline analytics, counters, or trust widgets on the homepage
 - Marketing copy or "product features" sections on functional pages
+- SEO-first copy that weakens job clarity or hides the real task behind generic product language
+- New page-level framing logic on derived product pages when the homepage grammar already solves the job
 - Appending a secondary feature below a primary one — create a route instead
 
 ### On components
@@ -290,11 +344,13 @@ Never implement any of the following. No exceptions without a written, committed
 Before writing any UI code for a new feature:
 
 1. Re-read Section 6. Determine if this feature needs a new route.
-2. Confirm the page will use the `background` token — flat, no gradient.
-3. Confirm the typography hierarchy matches what is defined in the YAML tokens.
-4. Confirm the layout centres the content group on the viewport.
-5. Use only components described in Section 5. If a genuinely new component type is needed, design it to match the restraint of what exists, add it to Section 5 of this file, and commit it alongside the implementation.
-6. Before opening a PR, run through the checklist in Section 10.
+2. Read [`PRODUCT.md`](./PRODUCT.md) and identify the route class: core tool surface, product workflow surface, or narrative surface.
+3. Read [`docs/design/playbooks/external-systems.md`](./docs/design/playbooks/external-systems.md) and confirm which external-system ideas are allowed for that route class.
+4. Confirm the page will use the `background` token — flat, no gradient on core product surfaces unless this file changes.
+5. Confirm the typography hierarchy matches what is defined in the YAML tokens.
+6. Confirm the layout choice matches the surface class and does not smuggle narrative structure into a task-first route.
+7. Use only components described in Section 5. If a genuinely new component type is needed, design it to match the restraint of what exists, add it to Section 5 of this file, and commit it alongside the implementation.
+8. Before opening a PR, run through the checklist in Section 10.
 
 ---
 
@@ -306,8 +362,8 @@ Add the following to the project `README.md`:
 
 ```markdown
 ## Design
-All UI decisions are governed by [DESIGN.md](./DESIGN.md).
-Read it before writing any frontend code. No exceptions.
+All UI decisions are governed by [DESIGN.md](./DESIGN.md), [PRODUCT.md](./PRODUCT.md), and [docs/design/playbooks/external-systems.md](./docs/design/playbooks/external-systems.md).
+Read them before writing any frontend code. No exceptions.
 ```
 
 ### CLAUDE.md (if using Claude Code)

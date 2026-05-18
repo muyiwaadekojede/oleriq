@@ -1,9 +1,10 @@
 const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 const sessionId = `e2e-batch-${Date.now()}`;
+const articleUrl = `${baseUrl}/test-fixtures/article-source.html`;
 
 const urls = [
-  'https://httpbin.org/html',
-  'https://example.com',
+  `${articleUrl}?variant=1`,
+  `${articleUrl}?variant=2`,
   'https://example.invalid',
 ];
 
@@ -79,8 +80,21 @@ if (job.successCount < 1) {
   throw new Error('Batch expected at least one successful extraction.');
 }
 
+if (typeof job.degradedCount !== 'number') {
+  throw new Error(`Batch detail is missing degradedCount: ${JSON.stringify(job)}`);
+}
+
 if (!Array.isArray(detail.items)) {
   throw new Error('Batch detail is missing items array.');
+}
+
+const successfulRow = detail.items.find((item) => item.status === 'success');
+if (!successfulRow) {
+  throw new Error('Batch detail is missing a successful row.');
+}
+
+if (!Array.isArray(successfulRow.warnings)) {
+  throw new Error(`Successful batch rows must include warnings arrays: ${JSON.stringify(successfulRow)}`);
 }
 
 console.log('e2e-batch passed');

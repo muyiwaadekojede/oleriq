@@ -26,18 +26,6 @@ type ExtractFailurePayload = {
   errorMessage?: string;
 };
 
-type PublicMetricsPayload = {
-  success: boolean;
-  metrics?: {
-    totalUsers: number;
-    usersLast7Days: number;
-    pagesParsedTotal: number;
-    pagesParsedLast7Days: number;
-    docsExportedTotal: number;
-    docsExportedLast7Days: number;
-  };
-};
-
 function initialThemeFromSystem(): ReaderSettings['colorTheme'] {
   if (typeof window === 'undefined') return 'light';
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -49,6 +37,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   lineSpacing: 1.6,
   colorTheme: 'light',
 };
+const HOME_PROGRESS_STAGES = ['Connecting', 'Reading page', 'Building document'] as const;
 
 export default function Page() {
   const [url, setUrl] = useState('');
@@ -62,14 +51,7 @@ export default function Page() {
   const [directFileUrl, setDirectFileUrl] = useState('');
   const [directFileFormat, setDirectFileFormat] = useState<ExportFormat>('md');
   const [directFileDownloading, setDirectFileDownloading] = useState(false);
-  const [usageMetrics, setUsageMetrics] = useState<{
-    totalUsers: number;
-    usersLast7Days: number;
-    pagesParsedTotal: number;
-    pagesParsedLast7Days: number;
-    docsExportedTotal: number;
-    docsExportedLast7Days: number;
-  } | null>(null);
+  const [progressStageIndex, setProgressStageIndex] = useState(0);
 
   const sessionIdRef = useRef<string>('');
 
@@ -89,46 +71,18 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    let active = true;
-
-    async function loadTrustCount(): Promise<void> {
-      try {
-        const response = await fetch('/api/public-metrics');
-        if (!response.ok) return;
-
-        const json = (await response.json()) as PublicMetricsPayload;
-        if (!active || !json.success || !json.metrics) return;
-
-        const nextTotalUsers = Number(json.metrics.totalUsers || 0);
-        const nextUsersLast7Days = Number(json.metrics.usersLast7Days || 0);
-        const nextPagesParsedTotal = Number(json.metrics.pagesParsedTotal || 0);
-        const nextPagesParsedLast7Days = Number(json.metrics.pagesParsedLast7Days || 0);
-        const nextDocsExportedTotal = Number(json.metrics.docsExportedTotal || 0);
-        const nextDocsExportedLast7Days = Number(json.metrics.docsExportedLast7Days || 0);
-
-        setUsageMetrics({
-          totalUsers: Number.isFinite(nextTotalUsers) ? nextTotalUsers : 0,
-          usersLast7Days: Number.isFinite(nextUsersLast7Days) ? nextUsersLast7Days : 0,
-          pagesParsedTotal: Number.isFinite(nextPagesParsedTotal) ? nextPagesParsedTotal : 0,
-          pagesParsedLast7Days: Number.isFinite(nextPagesParsedLast7Days) ? nextPagesParsedLast7Days : 0,
-          docsExportedTotal: Number.isFinite(nextDocsExportedTotal) ? nextDocsExportedTotal : 0,
-          docsExportedLast7Days: Number.isFinite(nextDocsExportedLast7Days) ? nextDocsExportedLast7Days : 0,
-        });
-      } catch {
-        // Trust count is supplemental content and should not block UX.
-      }
+    if (!extracting) {
+      setProgressStageIndex(0);
+      return;
     }
 
-    void loadTrustCount();
-    const interval = setInterval(() => {
-      void loadTrustCount();
-    }, 300_000);
+    setProgressStageIndex(0);
+    const intervalId = window.setInterval(() => {
+      setProgressStageIndex((current) => (current + 1) % HOME_PROGRESS_STAGES.length);
+    }, 1100);
 
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, []);
+    return () => window.clearInterval(intervalId);
+  }, [extracting]);
 
   const transformedContent = useMemo(() => {
     if (!result) return '';
@@ -348,6 +302,9 @@ export default function Page() {
           siteName: json.siteName,
           wordCount: json.wordCount,
           imageCount: json.imageCount,
+          resultState: json.resultState,
+          extractionPath: json.extractionPath,
+          warningCount: json.warnings.length,
         },
       });
 
@@ -542,14 +499,16 @@ export default function Page() {
             }}
             onSubmit={(submittedUrl) => void handleExtract(submittedUrl)}
             loading={extracting}
-            subtitle="Paste any URL. Get a clean, exportable document."
+            subtitle="Turn any URL into a clean, readable document in Markdown, TXT, DOCX, or PDF."
             statusMessage={inputStatusMessage}
+            progressLabel={HOME_PROGRESS_STAGES[progressStageIndex]}
+            progressStep={progressStageIndex}
+            progressTotalSteps={HOME_PROGRESS_STAGES.length}
             directFileUrl={directFileUrl}
             directFileFormat={directFileFormat}
             directFileDownloading={directFileDownloading}
             onDirectFileFormatChange={(format) => setDirectFileFormat(format)}
             onDirectFileDownload={() => void handleDirectFileDownload()}
-            usageMetrics={usageMetrics}
           />
         </div>
       ) : (
@@ -563,6 +522,9 @@ export default function Page() {
             publishedTime={result.publishedTime}
             wordCount={result.wordCount}
             imageCount={result.imageCount}
+            resultState={result.resultState}
+            extractionPath={result.extractionPath}
+            warnings={result.warnings}
             images={images}
             onImagesChange={handleImagesChange}
             settings={settings}

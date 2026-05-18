@@ -197,6 +197,8 @@ ensureColumn('batch_job_items', 'source_object_key', 'TEXT');
 ensureColumn('batch_job_items', 'output_object_key', 'TEXT');
 ensureColumn('batch_job_items', 'output_filename', 'TEXT');
 ensureColumn('batch_job_items', 'output_format', 'TEXT');
+ensureColumn('batch_job_items', 'quality_state', 'TEXT');
+ensureColumn('batch_job_items', 'warning_json', 'TEXT');
 
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_batch_jobs_status_created

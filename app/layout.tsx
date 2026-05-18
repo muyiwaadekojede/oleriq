@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Clearpage',
-  description: 'Paste any URL. Get a clean, exportable document.',
+  description: 'Turn any URL into a clean, readable document in Markdown, TXT, DOCX, or PDF.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

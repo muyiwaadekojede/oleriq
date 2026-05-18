@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useRef } from 'react';
 
 type UrlInputProps = {
@@ -10,28 +9,15 @@ type UrlInputProps = {
   loading: boolean;
   subtitle: string;
   statusMessage?: string;
+  progressLabel?: string;
+  progressStep?: number;
+  progressTotalSteps?: number;
   directFileUrl?: string;
   directFileFormat?: 'pdf' | 'txt' | 'md' | 'docx';
   directFileDownloading?: boolean;
   onDirectFileFormatChange?: (format: 'pdf' | 'txt' | 'md' | 'docx') => void;
   onDirectFileDownload?: () => void;
-  usageMetrics?: {
-    totalUsers: number;
-    usersLast7Days: number;
-    pagesParsedTotal: number;
-    pagesParsedLast7Days: number;
-    docsExportedTotal: number;
-    docsExportedLast7Days: number;
-  } | null;
 };
-
-function fmt(value: number): string {
-  return Math.max(0, Number(value || 0)).toLocaleString();
-}
-
-function wordForCount(value: number, singular: string, plural: string): string {
-  return Number(value) === 1 ? singular : plural;
-}
 
 export function UrlInput({
   url,
@@ -40,33 +26,31 @@ export function UrlInput({
   loading,
   subtitle,
   statusMessage,
+  progressLabel,
+  progressStep = 0,
+  progressTotalSteps = 3,
   directFileUrl,
   directFileFormat,
   directFileDownloading,
   onDirectFileFormatChange,
   onDirectFileDownload,
-  usageMetrics,
 }: UrlInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const hasUsageData =
-    !!usageMetrics &&
-    (usageMetrics.totalUsers > 0 || usageMetrics.pagesParsedTotal > 0 || usageMetrics.docsExportedTotal > 0);
-  const hasAnyGrowth =
-    !!usageMetrics &&
-    (usageMetrics.usersLast7Days > 0 ||
-      usageMetrics.pagesParsedLast7Days > 0 ||
-      usageMetrics.docsExportedLast7Days > 0);
 
   function submitCurrentUrl(): void {
     const currentValue = inputRef.current?.value ?? url;
     onSubmit(currentValue);
   }
 
+  const stageCount = Math.max(1, progressTotalSteps);
+  const activeStage = Math.max(0, Math.min(progressStep + 1, stageCount));
+  const stageWidth = `${(activeStage / stageCount) * 100}%`;
+
   return (
     <div className="cp-shell cp-enter flex min-h-screen items-center justify-center px-6 py-10">
       <div className="w-full max-w-3xl text-center">
         <h1 className="logo-mark text-6xl font-semibold text-[var(--color-ink)]">Clearpage</h1>
-        <p className="mt-2 text-lg text-[var(--color-muted)]">{subtitle}</p>
+        <p className="mx-auto mt-2 max-w-2xl text-lg text-[var(--color-muted)]">{subtitle}</p>
 
         <div className="mt-12 flex flex-col gap-4 md:flex-row md:items-center">
           <label htmlFor="url-input" className="sr-only">
@@ -93,13 +77,32 @@ export function UrlInput({
             disabled={loading}
             className="h-16 min-w-48 rounded-xl bg-[var(--color-accent)] px-8 text-base font-semibold text-white transition hover:bg-[var(--color-accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {loading ? 'Extracting...' : 'Read & Export'}
+            {loading ? 'Converting...' : 'Convert URL'}
           </button>
         </div>
 
         <p className="mt-3 min-h-5 text-sm text-[var(--color-muted)]">
-          {loading ? 'Fetching page and extracting content...' : statusMessage || ''}
+          {loading ? 'Converting page into a clean document...' : statusMessage || ''}
         </p>
+        {loading ? (
+          <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-[var(--color-border)] bg-white/90 p-4 text-left">
+            <div className="flex items-center justify-between gap-4 text-sm">
+              <span className="font-semibold text-[var(--color-ink)]">Conversion progress</span>
+              <span className="text-[var(--color-muted)]">{progressLabel || 'Connecting'}</span>
+            </div>
+            <div
+              className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--color-surface)]"
+              role="progressbar"
+              aria-valuetext={progressLabel || 'Connecting'}
+              aria-busy="true"
+            >
+              <div
+                className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-700 ease-out"
+                style={{ width: stageWidth }}
+              />
+            </div>
+          </div>
+        ) : null}
         {directFileUrl ? (
           <div className="mt-2 flex flex-wrap items-center justify-center gap-2 text-sm">
             <span className="text-[var(--color-muted)]">Direct file detected</span>
@@ -126,40 +129,6 @@ export function UrlInput({
           </div>
         ) : null}
 
-        {hasUsageData && usageMetrics ? (
-          <p className="mt-2 text-sm text-[var(--color-muted)]">
-            <span>
-              <span className="font-semibold text-[var(--color-ink)]">{fmt(usageMetrics.totalUsers)}</span>{' '}
-              {wordForCount(usageMetrics.totalUsers, 'user', 'users')}
-              {usageMetrics.usersLast7Days > 0 ? (
-                <span className="text-[var(--color-accent)]"> (+{fmt(usageMetrics.usersLast7Days)})</span>
-              ) : null}
-            </span>
-            <span aria-hidden="true"> · </span>
-            <span>
-              <span className="font-semibold text-[var(--color-ink)]">{fmt(usageMetrics.pagesParsedTotal)}</span>{' '}
-              {wordForCount(usageMetrics.pagesParsedTotal, 'page', 'pages')} parsed
-              {usageMetrics.pagesParsedLast7Days > 0 ? (
-                <span className="text-[var(--color-accent)]"> (+{fmt(usageMetrics.pagesParsedLast7Days)})</span>
-              ) : null}
-            </span>
-            <span aria-hidden="true"> · </span>
-            <span>
-              <span className="font-semibold text-[var(--color-ink)]">{fmt(usageMetrics.docsExportedTotal)}</span>{' '}
-              {wordForCount(usageMetrics.docsExportedTotal, 'export', 'exports')}
-              {usageMetrics.docsExportedLast7Days > 0 ? (
-                <span className="text-[var(--color-accent)]"> (+{fmt(usageMetrics.docsExportedLast7Days)})</span>
-              ) : null}
-            </span>
-            {hasAnyGrowth ? <span className="ml-2 text-xs">7d</span> : null}
-          </p>
-        ) : null}
-
-        <p className="mt-5 text-sm text-[var(--color-muted)]">
-          <Link href="/batch" className="text-[var(--color-accent)] hover:underline">
-            Need bulk processing? Open Batch Workspace
-          </Link>
-        </p>
       </div>
     </div>
   );

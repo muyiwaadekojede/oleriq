@@ -4,7 +4,8 @@ import type { CSSProperties } from 'react';
 
 import { ExportButton } from '@/components/ExportButton';
 import { ImageToggle } from '@/components/ImageToggle';
-import type { ExportFormat, ImageMode, ReaderSettings } from '@/lib/types';
+import { extractionPathLabel } from '@/lib/trustGuidance';
+import type { ExportFormat, ExtractResultState, ExtractionPath, ImageMode, ReaderSettings } from '@/lib/types';
 
 type SettingsSidebarProps = {
   title: string;
@@ -13,6 +14,9 @@ type SettingsSidebarProps = {
   publishedTime: string;
   wordCount: number;
   imageCount: number;
+  resultState: ExtractResultState;
+  extractionPath: ExtractionPath;
+  warnings: string[];
   images: ImageMode;
   onImagesChange: (value: ImageMode) => void;
   settings: ReaderSettings;
@@ -29,6 +33,9 @@ export function SettingsSidebar({
   publishedTime,
   wordCount,
   imageCount,
+  resultState,
+  extractionPath,
+  warnings,
   images,
   onImagesChange,
   settings,
@@ -53,6 +60,9 @@ export function SettingsSidebar({
           publishedTime={publishedTime}
           wordCount={wordCount}
           imageCount={imageCount}
+          resultState={resultState}
+          extractionPath={extractionPath}
+          warnings={warnings}
           images={images}
           onImagesChange={onImagesChange}
           settings={settings}
@@ -76,6 +86,9 @@ export function SettingsSidebar({
               publishedTime={publishedTime}
               wordCount={wordCount}
               imageCount={imageCount}
+              resultState={resultState}
+              extractionPath={extractionPath}
+              warnings={warnings}
               images={images}
               onImagesChange={onImagesChange}
               settings={settings}
@@ -98,6 +111,9 @@ type SidebarBodyProps = {
   publishedTime: string;
   wordCount: number;
   imageCount: number;
+  resultState: ExtractResultState;
+  extractionPath: ExtractionPath;
+  warnings: string[];
   images: ImageMode;
   onImagesChange: (value: ImageMode) => void;
   settings: ReaderSettings;
@@ -114,6 +130,9 @@ function SidebarBody({
   publishedTime,
   wordCount,
   imageCount,
+  resultState,
+  extractionPath,
+  warnings,
   images,
   onImagesChange,
   settings,
@@ -155,6 +174,27 @@ function SidebarBody({
             </dd>
           </div>
         </dl>
+      </section>
+
+      <section>
+        <h3 className="mb-2 text-sm font-semibold">Result trust</h3>
+        <div className="rounded-xl border border-[var(--preview-border)] bg-[var(--preview-panel)] p-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-semibold text-[var(--preview-text)]">
+              {resultState === 'usable' ? 'Usable result' : 'Degraded result'}
+            </span>
+            <span className="text-[var(--preview-muted)]">{extractionPathLabel(extractionPath)}</span>
+          </div>
+          {warnings.length > 0 ? (
+            <ul className="mt-2 space-y-1 text-[var(--preview-muted)]">
+              {warnings.map((warning) => (
+                <li key={warning}>{warning}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-[var(--preview-muted)]">Primary extraction succeeded without fallback warnings.</p>
+          )}
+        </div>
       </section>
 
       <section>
