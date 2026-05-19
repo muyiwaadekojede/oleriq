@@ -6,10 +6,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 
 const appPagePath = path.join(repoRoot, 'app', 'page.tsx');
+const appLayoutPath = path.join(repoRoot, 'app', 'layout.tsx');
 const urlInputPath = path.join(repoRoot, 'components', 'UrlInput.tsx');
 
-const [appPageSource, urlInputSource] = await Promise.all([
+const [appPageSource, appLayoutSource, urlInputSource] = await Promise.all([
   readFile(appPagePath, 'utf8'),
+  readFile(appLayoutPath, 'utf8'),
   readFile(urlInputPath, 'utf8'),
 ]);
 
@@ -47,6 +49,10 @@ if (!urlInputSource.includes('Conversion progress')) {
 
 if (!urlInputSource.includes('role="progressbar"')) {
   failures.push('Homepage loading surface must expose a progressbar role.');
+}
+
+if (!appLayoutSource.includes('data-font-system="newsreader-geist"')) {
+  failures.push('Root layout must expose the Newsreader + Geist font-system contract.');
 }
 
 if (failures.length > 0) {

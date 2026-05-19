@@ -61,13 +61,13 @@ colors:
 
 typography:
   # Fill in from the fonts already loaded in the project.
-  # Do not add new fonts. Do not guess. Check the codebase.
+  # If the codebase adopts a new font system intentionally, update this file in the same change.
   heading:
-    fontFamily: "\"Cormorant Garamond\", Georgia, serif"
+    fontFamily: "\"Newsreader\", Georgia, serif"
     fontWeight: "600"
     fontSize:   "3.75rem (text-6xl)"
   body:
-    fontFamily: "\"Source Sans 3\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+    fontFamily: "\"Geist\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
     fontWeight: "400"
     fontSize:   "1rem (16px)"
 
@@ -177,9 +177,9 @@ Colour is not decoration here. It is functional, contextual, and relational. The
 
 ## 3. Typography
 
-**Do not change the fonts.** Check the codebase, identify what is already loaded and in use, and work with those. The font values in the YAML block must come from the existing codebase — not from a preference, not from a recommendation.
+**The current Clearpage font system is locked to `Newsreader` for display headings and `Geist Sans` for UI and body text.** Preserve that pairing unless the design law itself changes in the same committed decision.
 
-If the codebase has a heading font and a body font, use them as-is. If it only has one font across both, use it consistently for both. The role of typography here is to be calm, legible, and authoritative — not decorative.
+Typography here should feel calm, legible, and exact. `Newsreader` carries reading credibility. `Geist Sans` carries product clarity. Neither should be used in a decorative or nostalgic way.
 
 **Rules:**
 - The heading (product name / page title) must always be the largest typographic element on the page by a significant margin.

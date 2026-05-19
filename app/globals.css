@@ -10,8 +10,8 @@
 }
 
 :root {
-  --font-display: "Cormorant Garamond", Georgia, serif;
-  --font-ui: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: Georgia, serif;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -25,9 +25,12 @@ body {
 }
 
 body {
+  --font-display: var(--font-newsreader), Georgia, serif;
+  --font-ui: var(--font-geist), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   font-family: var(--font-ui);
   color: var(--color-ink);
   background: var(--color-canvas);
+  line-height: 1.5;
 }
 
 h1,
@@ -69,15 +72,15 @@ button {
   }
 }
 
-
 .reading-prose h1,
 .reading-prose h2,
 .reading-prose h3,
 .reading-prose h4,
 .reading-prose h5,
 .reading-prose h6 {
-  line-height: 1.2;
-  margin: 1.4em 0 0.55em;
+  line-height: 1.12;
+  margin: 1.15em 0 0.45em;
+  letter-spacing: -0.015em;
 }
 
 .reading-prose h1 {
@@ -86,13 +89,13 @@ button {
 }
 
 .reading-prose h2 {
-  font-size: 1.7em;
-  font-weight: 650;
+  font-size: 1.68em;
+  font-weight: 640;
 }
 
 .reading-prose h3 {
-  font-size: 1.4em;
-  font-weight: 640;
+  font-size: 1.28em;
+  font-weight: 630;
 }
 
 .reading-prose p {
@@ -136,6 +139,303 @@ button {
   padding: 0;
 }
 
+.batch-guide {
+  max-width: 760px;
+}
+
+.batch-guide > section + section {
+  margin-top: 3.5rem;
+  padding-top: 3rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
+}
+
+.batch-guide__lead {
+  margin-bottom: 1.25rem;
+  max-width: 40rem;
+  font-size: 1.07rem;
+  line-height: 1.72;
+  color: var(--color-muted);
+}
+
+.batch-guide__index {
+  margin: 1.4rem 0 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.batch-guide__index-list {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.batch-guide__index-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 0.85rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 84%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, white 72%, var(--color-canvas));
+}
+
+.batch-guide__index-number,
+.batch-guide__chip-label,
+.batch-guide__eyebrow,
+.batch-guide__status-name,
+.batch-guide__process-step,
+.batch-guide__workload-label,
+.batch-guide__faq-question {
+  font-family: var(--font-ui);
+}
+
+.batch-guide__index-number {
+  min-width: 2rem;
+  font-size: 0.85rem;
+  font-weight: 650;
+  line-height: 1;
+  color: var(--color-accent);
+}
+
+.batch-guide__index-title {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+.batch-guide__index-copy {
+  display: block;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--color-muted);
+}
+
+.batch-guide__chip-row {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.batch-guide__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 86%, transparent);
+  background: color-mix(in srgb, white 68%, var(--color-canvas));
+  font-size: 0.82rem;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+.batch-guide__chip-dot {
+  width: 0.48rem;
+  height: 0.48rem;
+  border-radius: 999px;
+  background: var(--color-accent);
+  flex: 0 0 auto;
+}
+
+.batch-guide__eyebrow {
+  margin-bottom: 0.7rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-muted);
+}
+
+.batch-guide__intro {
+  max-width: 38rem;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.batch-guide__matrix,
+.batch-guide__status-rail,
+.batch-guide__process-rail,
+.batch-guide__workload-rail {
+  margin-top: 1.35rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.batch-guide__matrix {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.batch-guide__panel {
+  padding: 1.25rem;
+  border-radius: 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 84%, transparent);
+  background: color-mix(in srgb, white 76%, var(--color-canvas));
+}
+
+.batch-guide__panel h3,
+.batch-guide__status-card h3,
+.batch-guide__workload-card h3 {
+  margin-top: 0;
+}
+
+.batch-guide__panel p,
+.batch-guide__status-card p,
+.batch-guide__workload-card p,
+.batch-guide__faq-answer {
+  color: var(--color-muted);
+}
+
+.batch-guide__list {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.batch-guide__list li + li {
+  margin-top: 0.7rem;
+}
+
+.batch-guide__list-label {
+  display: block;
+  margin-bottom: 0.15rem;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--color-ink);
+}
+
+.batch-guide__list-copy {
+  display: block;
+  font-size: 0.93rem;
+  line-height: 1.55;
+  color: var(--color-muted);
+}
+
+.batch-guide__status-rail {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.batch-guide__status-card,
+.batch-guide__workload-card {
+  position: relative;
+  padding: 1.15rem 1.15rem 1.2rem 1.2rem;
+  border-radius: 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 84%, transparent);
+  background: color-mix(in srgb, white 74%, var(--color-canvas));
+  overflow: hidden;
+}
+
+.batch-guide__status-card::before,
+.batch-guide__workload-card::before,
+.batch-guide__faq-item::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--color-accent);
+}
+
+.batch-guide__status-name,
+.batch-guide__workload-label,
+.batch-guide__faq-question {
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 0.55rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-accent-strong);
+}
+
+.batch-guide__status-trust {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 74%, transparent);
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.batch-guide__process-rail {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.batch-guide__process-card {
+  padding: 1rem 0.95rem 1.1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.batch-guide__process-card:first-child {
+  border-top: none;
+}
+
+.batch-guide__process-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-bottom: 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--color-accent-strong);
+}
+
+.batch-guide__process-count {
+  display: inline-grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 78%, transparent);
+  background: color-mix(in srgb, white 74%, var(--color-canvas));
+  color: var(--color-accent);
+}
+
+.batch-guide__process-title {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+}
+
+.batch-guide__process-copy {
+  margin: 0;
+  font-size: 0.93rem;
+  line-height: 1.6;
+  color: var(--color-muted);
+}
+
+.batch-guide__workload-rail {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.batch-guide__faq-list {
+  margin-top: 1.35rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.batch-guide__faq-item {
+  position: relative;
+  padding: 1rem 1rem 1rem 1.2rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-border) 84%, transparent);
+  background: color-mix(in srgb, white 76%, var(--color-canvas));
+}
+
+.batch-guide__faq-item h3 {
+  margin-top: 0;
+  margin-bottom: 0.4rem;
+}
+
+.batch-guide__faq-item p:last-child,
+.batch-guide__panel p:last-child,
+.batch-guide__status-card p:last-child,
+.batch-guide__workload-card p:last-child {
+  margin-bottom: 0;
+}
+
 .theme-light {
   --preview-bg: #faf9f6;
   --preview-text: #111519;
@@ -158,6 +458,21 @@ button {
   --preview-muted: #635447;
   --preview-panel: #f8eedb;
   --preview-border: #cdbb9f;
+}
+
+@media (min-width: 720px) {
+  .batch-guide__index-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 959px) {
+  .batch-guide__matrix,
+  .batch-guide__status-rail,
+  .batch-guide__process-rail,
+  .batch-guide__workload-rail {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

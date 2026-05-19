@@ -42,6 +42,11 @@ Voice and tone implications:
 - helpful without hype
 - confident without marketing theatrics
 
+Typography implications:
+- `Newsreader` carries display and editorial headings
+- `Geist Sans` carries body copy, controls, labels, and UI state text
+- the pairing should feel current and exact, not literary or ornamental
+
 ## Anti-references
 
 Clearpage should not look or sound like:

@@ -8,7 +8,7 @@ function resolveFont(fontFace: ReaderSettings['fontFace']): string {
   if (fontFace === 'serif') return "'Source Serif 4', Georgia, 'Times New Roman', serif";
   if (fontFace === 'monospace') return "'IBM Plex Mono', 'Fira Code', Consolas, monospace";
   if (fontFace === 'dyslexic') return "'OpenDyslexic', 'Atkinson Hyperlegible', Arial, sans-serif";
-  return "'Source Sans 3', 'Helvetica Neue', Arial, sans-serif";
+  return "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 }
 
 function resolveTheme(theme: ReaderSettings['colorTheme']): { bg: string; text: string; code: string; border: string } {

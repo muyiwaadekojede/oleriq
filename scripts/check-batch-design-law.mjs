@@ -27,6 +27,11 @@ const page = await browser.newPage();
 try {
   await page.goto(`${baseUrl}/batch`, { waitUntil: 'networkidle' });
 
+  const bodyFontSystem = await page.locator('body').getAttribute('data-font-system');
+  if (bodyFontSystem !== 'newsreader-geist') {
+    fail(`Expected body data-font-system to be newsreader-geist, found ${bodyFontSystem || 'null'}.`);
+  }
+
   await assertText(page, 'Batch convert URLs and documents');
   await assertText(page, 'Convert many links or files into clean, readable Markdown, TXT, DOCX, or PDF.');
   await assertText(page, 'Batch convert many URLs or files into readable documents');
@@ -56,6 +61,23 @@ try {
   const articleSection = page.locator('section[aria-labelledby="batch-search-guidance-heading"]');
   await articleSection.waitFor({ timeout: 30_000 });
 
+  const articleContract = page.locator('[data-batch-guide]');
+  await articleContract.waitFor({ timeout: 30_000 });
+
+  for (const selector of [
+    '[data-batch-guide-nav]',
+    '[data-batch-guide-preservation]',
+    '[data-batch-guide-status]',
+    '[data-batch-guide-progress]',
+    '[data-batch-guide-workloads]',
+    '[data-batch-guide-faq]',
+  ]) {
+    const count = await page.locator(selector).count();
+    if (count !== 1) {
+      fail(`Expected exactly one ${selector} element, found ${count}.`);
+    }
+  }
+
   const visibleArticleCount = await articleSection.evaluateAll((elements) =>
     elements.filter((element) => {
       const style = window.getComputedStyle(element);
@@ -65,6 +87,11 @@ try {
 
   if (visibleArticleCount !== 1) {
     fail(`Expected exactly one visible /batch below-fold article body, found ${visibleArticleCount}.`);
+  }
+
+  const accordionCount = await page.locator('[data-batch-guide-faq] details').count();
+  if (accordionCount !== 0) {
+    fail(`Expected inline FAQ blocks, found ${accordionCount} accordion details elements.`);
   }
 
   const visibleMainLinks = await page.locator('main a').count();
