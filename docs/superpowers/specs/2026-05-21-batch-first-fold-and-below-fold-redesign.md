@@ -377,6 +377,7 @@ The final implementation should be judged against these checks:
 - uses the four-state truth model
 - remains subordinate to the first fold
 - avoids repeated equal-weight mini-cards and slab FAQ stacks
+- utility-section headings should not be artificially boxed into hero-style narrow measures on desktop; they should introduce the section in a calmer, wider read
 - on desktop, paired proof chapters must not leave stranded vertical gutters from unequal column heights; if a support block is needed, it should drop into its own full-width continuation row
 
 ## Supersession Note
