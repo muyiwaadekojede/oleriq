@@ -47,15 +47,10 @@ async function assertRowTitles(page, expectedTitles) {
 async function assertSetupState(page) {
   await page.goto(`${baseUrl}/batch`, { waitUntil: 'networkidle' });
 
-  const bodyFontSystem = await page.locator('body').getAttribute('data-font-system');
-  if (bodyFontSystem !== 'newsreader-geist') {
-    fail(`Expected body data-font-system to be newsreader-geist, found ${bodyFontSystem || 'null'}.`);
-  }
-
   await assertText(page, 'Batch convert URLs and documents');
   await assertText(page, 'Convert many links or files into clean, readable Markdown, TXT, DOCX, or PDF.');
   await assertText(page, 'Batch convert URLs and documents');
-  await assertText(page, 'Review what actually came back.');
+  await assertText(page, 'One finished run should not hide what actually came back.');
   await assertTextAbsent(page, 'Batch Workspace');
   await assertTextAbsent(page, 'Prepare batch');
   await assertSingleWorkingSurface(page);
@@ -63,6 +58,12 @@ async function assertSetupState(page) {
 
   const surface = page.locator(setupSurfaceSelector);
   const surfaceText = await surface.innerText();
+  if (surfaceText.includes('Batch convert many links into one clean output.')) {
+    fail('URL setup should not repeat the route headline inside the primary panel.');
+  }
+  if (surfaceText.includes('Choose the input, choose the output, then start.')) {
+    fail('URL setup should not repeat the route helper copy inside the primary panel.');
+  }
   if (surfaceText.includes('Import')) {
     fail('URL setup should keep Import inside More options.');
   }
@@ -88,6 +89,13 @@ async function assertSetupState(page) {
   await page.getByRole('button', { name: 'Documents' }).click();
   await assertStage(page, 'setup');
   await assertText(page, 'Drop documents here or choose files.');
+  const documentSurfaceText = await surface.innerText();
+  if (documentSurfaceText.includes('Batch convert many files into one clean output.')) {
+    fail('Document setup should not repeat the route headline inside the primary panel.');
+  }
+  if (documentSurfaceText.includes('Choose the input, choose the output, then start.')) {
+    fail('Document setup should not repeat the route helper copy inside the primary panel.');
+  }
   await assertTextAbsent(page, 'Document images');
   await assertTextAbsent(page, '60 MB per file');
 
@@ -105,11 +113,9 @@ async function assertBelowFoldGuide(page) {
   await guide.waitFor({ timeout: 30_000 });
 
   const requiredSections = [
-    'route-proof',
+    'truth-surface',
     'structure-proof',
-    'status-truth',
     'run-recovery',
-    'workload-fit',
     'faq',
   ];
 
@@ -125,16 +131,58 @@ async function assertBelowFoldGuide(page) {
     fail(`Expected at least 3 real /batch proof artifacts, found ${proofImageCount}.`);
   }
 
+  const removedSections = ['route-proof', 'status-truth', 'workload-fit'];
+  for (const section of removedSections) {
+    const count = await guide.locator(`[data-batch-guide-section="${section}"]`).count();
+    if (count !== 0) {
+      fail(`Expected legacy below-fold section ${section} to be removed, found ${count}.`);
+    }
+  }
+
+  const supportCardCount = await guide.locator('[data-batch-guide-card]').count();
+  if (supportCardCount > 6) {
+    fail(`Expected the reduced below-fold pass to keep support cards at 6 or fewer, found ${supportCardCount}.`);
+  }
+
+  await assertText(page, 'One finished run should not hide what actually came back.');
   await assertText(page, 'Readable structure can still flatten.');
-  await assertText(page, 'Usable, partial, degraded, and failed stay separate.');
-  await assertText(page, 'Longer runs stay inspectable and recoverable.');
-  await assertText(page, 'When /batch is the right route.');
+  await assertText(page, 'Longer runs stay legible and recoverable.');
+  await assertText(page, 'Use /batch when repeated work needs one output target and one review surface.');
   await assertText(page, 'Questions that matter before a bigger run.');
+  await assertText(page, 'Truth surface');
+  await assertText(page, 'Structure proof');
+  await assertText(page, 'Run recovery');
 
   await assertTextAbsent(page, 'What Clearpage tries to preserve during batch conversion');
   await assertTextAbsent(page, 'How batch results are reported');
   await assertTextAbsent(page, 'Progress, retries, and trust during longer runs');
   await assertTextAbsent(page, 'Workloads this route is built for');
+
+  const faqItems = guide.locator('[data-batch-faq-item]');
+  const faqCount = await faqItems.count();
+  if (faqCount !== 4) {
+    fail(`Expected 4 collapsible FAQ items, found ${faqCount}.`);
+  }
+
+  for (let index = 0; index < faqCount; index += 1) {
+    const item = faqItems.nth(index);
+    const open = await item.getAttribute('open');
+    if (open !== null) {
+      fail(`Expected FAQ item ${index} to be collapsed by default.`);
+    }
+  }
+
+  const hiddenAnswerText = 'Yes. That is why the route keeps partial and degraded separate instead of flattening every finished row into one clean-looking state.';
+  const visibleGuideText = (await guide.innerText()).toLowerCase();
+  if (visibleGuideText.includes(hiddenAnswerText.toLowerCase())) {
+    fail('FAQ answers should not be visible before expansion.');
+  }
+
+  await faqItems.nth(0).locator('summary').click();
+  const expandedText = (await guide.innerText()).toLowerCase();
+  if (!expandedText.includes(hiddenAnswerText.toLowerCase())) {
+    fail('FAQ answer did not become visible after expansion.');
+  }
 }
 
 async function assertRunningState(browser) {
