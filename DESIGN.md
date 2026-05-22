@@ -187,6 +187,7 @@ Any future font change requires an explicit design-law amendment committed along
 **Rules:**
 - The heading (product name / page title) must always be the largest typographic element on the page by a significant margin.
 - The subtitle is always smaller, always lighter in colour, and always constrained in line length (~60 characters max).
+- Heading hierarchy must be visible in the rendered UI. Semantic tags alone are not enough if adjacent heading levels still look visually interchangeable.
 - No bold on body copy unless it is a functional label.
 - No underlines except on links, and only on hover.
 - No tracking (letter-spacing) unless the font demonstrably requires it.
@@ -255,6 +256,7 @@ For pages beyond the homepage that group denser content:
 - Downstream result panels should stay hidden until there is real state to show, unless the empty state is necessary to explain the workflow.
 - Workflow surfaces that move through setup, running, and review states must reveal those states progressively inside one dominant surface. Do not let progress or review break out into a second equal-weight panel by default.
 - If a functional route keeps an explanatory section below the fold, that section must prove real route behavior with product artifacts and exact workflow truth. Generic article walls and decorative marketing copy are banned on those surfaces.
+- Desktop proof chapters must not strand large vertical voids because one column is much shorter than the other. If a chapter needs a secondary support block, break it into an explicit second row that spans the shared width instead of leaving dead space beside a shorter artifact or text stack.
 - Utility-page headings must describe the task directly. Generic labels such as `workspace`, `console`, or `hub` are banned when the page can name the concrete job instead.
 - Page-level cards are not allowed on derived product surfaces when the homepage does not use them for the same framing job.
 

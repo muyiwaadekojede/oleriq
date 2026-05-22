@@ -40,6 +40,8 @@ const runSteps = [
   'Open only the row that needs inspection.',
 ] as const;
 
+const chapterHeadingClass = 'max-w-[13ch] text-[2.35rem] leading-[0.95] md:text-[3rem]';
+
 const faqStructuredData = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
@@ -83,7 +85,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p
       data-batch-guide-kicker
-      className="text-[0.95rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-muted)]"
+      className="text-[1rem] font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]"
     >
       {children}
     </p>
@@ -135,7 +137,7 @@ export function BatchBelowFoldContent() {
           <div className="grid gap-8 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-end">
             <div className="space-y-5 xl:pr-6">
               <SectionLabel>Truth surface</SectionLabel>
-              <h2 id="batch-guide-heading" className="max-w-[13ch] text-[2.3rem] leading-[0.95] md:text-[3rem]">
+              <h2 id="batch-guide-heading" className={chapterHeadingClass}>
                 One finished run should not hide what actually came back.
               </h2>
               <p>
@@ -168,92 +170,94 @@ export function BatchBelowFoldContent() {
           </p>
         </section>
 
-        <section
-          data-batch-guide-section="structure-proof"
-          className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-center"
-        >
-          <ProofArtifact
-            section="structure-proof"
-            src="/proof/batch/batch-structure-proof.png"
-            alt="Real /batch row detail showing a partial result and structure-loss guidance on the affected row."
-            caption="Real route state: structure warnings stay on the row that needs review instead of hiding behind a finished run."
-            sizes="(min-width: 1280px) 56vw, (min-width: 1024px) 50vw, 100vw"
-          />
+        <section data-batch-guide-section="structure-proof" className="space-y-8">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,0.96fr)_minmax(0,1.04fr)] xl:items-start">
+            <ProofArtifact
+              section="structure-proof"
+              src="/proof/batch/batch-structure-proof.png"
+              alt="Real /batch row detail showing a partial result and structure-loss guidance on the affected row."
+              caption="Real route state: structure warnings stay on the row that needs review instead of hiding behind a finished run."
+              sizes="(min-width: 1280px) 56vw, (min-width: 1024px) 50vw, 100vw"
+            />
 
-          <div className="space-y-5">
-            <SectionLabel>Structure proof</SectionLabel>
-            <h2 className="text-[2rem] leading-[1] md:text-[2.65rem]">Readable structure can still flatten.</h2>
-            <p>
-              Clean output you can actually use is more than getting words back. Structure still decides whether the
-              result is safe to trust, reuse, or pass to another system.
-            </p>
-            <div
-              data-batch-guide-card="structure-split"
-              className="grid overflow-hidden rounded-[24px] border border-[var(--color-border)] md:grid-cols-2"
-            >
-              {structureColumns.map((column, index) => (
-                <div
-                  key={column.title}
-                  className={index === 0 ? 'border-b border-[var(--color-border)] px-5 py-5 md:border-b-0 md:border-r' : 'px-5 py-5'}
-                >
-                  <p className="font-semibold">{column.title}</p>
-                  <ul className="mt-3 space-y-2 pl-5 text-sm leading-6 text-[var(--color-muted)]">
-                    {column.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
+            <div className="space-y-5 xl:pt-2">
+              <SectionLabel>Structure proof</SectionLabel>
+              <h2 className={chapterHeadingClass}>Readable structure can still flatten.</h2>
+              <p>
+                Clean output you can actually use is more than getting words back. Structure still decides whether the
+                result is safe to trust, reuse, or pass to another system.
+              </p>
             </div>
+          </div>
+
+          <div
+            data-batch-guide-card="structure-split"
+            className="grid overflow-hidden rounded-[24px] border border-[var(--color-border)] md:grid-cols-2"
+          >
+            {structureColumns.map((column, index) => (
+              <div
+                key={column.title}
+                className={index === 0 ? 'border-b border-[var(--color-border)] px-5 py-6 md:border-b-0 md:border-r' : 'px-5 py-6'}
+              >
+                <p className="text-[1.22rem] font-semibold leading-8">{column.title}</p>
+                <ul className="mt-3 space-y-2 pl-5 text-base leading-8 text-[var(--color-muted)]">
+                  {column.items.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
         </section>
 
-        <section
-          data-batch-guide-section="run-recovery"
-          className="grid gap-8 xl:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] xl:items-center"
-        >
-          <div className="space-y-5 xl:pr-4">
-            <SectionLabel>Run recovery</SectionLabel>
-            <h2 className="text-[2rem] leading-[1] md:text-[2.65rem]">Longer runs stay legible and recoverable.</h2>
-            <p>
-              Progress stays primary while work is moving. Review only steps forward once there is real settled output
-              to inspect, and failed rows keep their retry path instead of forcing a full rerun.
-            </p>
-            <div
-              data-batch-guide-card="run-steps"
-              className="rounded-[24px] border border-[var(--color-border)] px-5 py-5"
-            >
-              <ol className="space-y-4">
-                {runSteps.map((step, index) => (
-                  <li key={step} className="space-y-1">
-                    <p className="font-semibold">
-                      {index + 1}. {step}
-                    </p>
-                    <p className="text-sm leading-6 text-[var(--color-muted)]">
-                      {index === 0
-                        ? 'The route keeps one output format per run so the review surface stays coherent.'
-                        : index === 1
-                          ? 'The progress state stays quiet, direct, and tied to the same surface.'
-                          : 'Details, downloads, and retry actions stay hidden until you open the specific row.'}
-                    </p>
-                  </li>
-                ))}
-              </ol>
+        <section data-batch-guide-section="run-recovery" className="space-y-8">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] xl:items-start">
+            <div className="space-y-5 xl:pr-4 xl:pt-2">
+              <SectionLabel>Run recovery</SectionLabel>
+              <h2 className={chapterHeadingClass}>Longer runs stay legible and recoverable.</h2>
+              <p>
+                Progress stays primary while work is moving. Review only steps forward once there is real settled output
+                to inspect, and failed rows keep their retry path instead of forcing a full rerun.
+              </p>
             </div>
+
+            <ProofArtifact
+              section="run-recovery"
+              src="/proof/batch/batch-running-proof.png"
+              alt="Real /batch running state showing progress as the primary signal while review stays secondary until there is settled work to inspect."
+              caption="Real route state: the run stays legible while work is still moving."
+              sizes="(min-width: 1280px) 58vw, (min-width: 1024px) 52vw, 100vw"
+            />
           </div>
 
-          <ProofArtifact
-            section="run-recovery"
-            src="/proof/batch/batch-running-proof.png"
-            alt="Real /batch running state showing progress as the primary signal while review stays secondary until there is settled work to inspect."
-            caption="Real route state: the run stays legible while work is still moving."
-            sizes="(min-width: 1280px) 58vw, (min-width: 1024px) 52vw, 100vw"
-          />
+          <div
+            data-batch-guide-card="run-steps"
+            className="rounded-[24px] border border-[var(--color-border)] px-5 py-6"
+          >
+            <ol className="grid gap-6 md:grid-cols-3">
+              {runSteps.map((step, index) => (
+                <li key={step} className="space-y-2">
+                  <p className="text-[1.2rem] font-semibold leading-8">
+                    {index + 1}. {step}
+                  </p>
+                  <p className="text-base leading-8 text-[var(--color-muted)]">
+                    {index === 0
+                      ? 'The route keeps one output format per run so the review surface stays coherent.'
+                      : index === 1
+                        ? 'The progress state stays quiet, direct, and tied to the same surface.'
+                        : 'Details, downloads, and retry actions stay hidden until you open the specific row.'}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </div>
         </section>
 
         <section data-batch-guide-section="faq" className="space-y-5">
           <SectionLabel>FAQ</SectionLabel>
-          <h2 className="text-[2rem] leading-[1] md:text-[2.65rem]">Questions that matter before a bigger run.</h2>
+          <h2 className="max-w-[16ch] text-[2.1rem] leading-[0.98] md:text-[2.8rem]">
+            Questions that matter before a bigger run.
+          </h2>
           <div className="grid gap-x-10 gap-y-2 lg:grid-cols-2">
             {faqItems.map((item) => (
               <details
@@ -261,7 +265,7 @@ export function BatchBelowFoldContent() {
                 data-batch-faq-item
                 className="group border-t border-[var(--color-border)] pt-4"
               >
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-[1.18rem] font-semibold leading-8 marker:hidden">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-[1.22rem] font-semibold leading-8 marker:hidden">
                   <span>{item.question}</span>
                   <span
                     aria-hidden="true"
@@ -270,7 +274,7 @@ export function BatchBelowFoldContent() {
                     +
                   </span>
                 </summary>
-                <p className="mt-3 max-w-[62ch] text-base leading-8 text-[var(--color-muted)]">{item.answer}</p>
+                <p className="mt-3 max-w-[62ch] text-[1.02rem] leading-8 text-[var(--color-muted)]">{item.answer}</p>
               </details>
             ))}
           </div>
