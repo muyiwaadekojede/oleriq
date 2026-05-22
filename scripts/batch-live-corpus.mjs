@@ -14,7 +14,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'Azure sample PDF',
     imageCapable: true,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/Azure-Samples/cognitive-services-sample-data-files/master/ComputerVision/Images/MultiPageHandwrittenForm.pdf',
+    url: 'https://raw.githubusercontent.com/Azure-Samples/cognitive-services-sample-data-files/65af3b93cab5f45c76594f3265210646d4b3809e/ComputerVision/Images/MultiPageHandwrittenForm.pdf',
     contentType: 'application/pdf',
   },
   {
@@ -24,7 +24,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'docx demo asset',
     imageCapable: true,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/dolanmiu/docx/master/demo/assets/field-trip.docx',
+    url: 'https://raw.githubusercontent.com/dolanmiu/docx/9439c73871e3ac9af5a5889978b7fbea9f3b6a2f/demo/assets/field-trip.docx',
     contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   },
   {
@@ -34,7 +34,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'minimal EPUB sample',
     imageCapable: true,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/thansen0/sample-epub-minimal/master/minimal.epub',
+    url: 'https://raw.githubusercontent.com/thansen0/sample-epub-minimal/8e7d6cdd91030c991a0e637a3470f286d8735437/minimal.epub',
     contentType: 'application/epub+zip',
   },
   {
@@ -54,7 +54,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'TypeScript README',
     imageCapable: false,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/microsoft/TypeScript/main/README.md',
+    url: 'https://raw.githubusercontent.com/microsoft/TypeScript/e5509e211f5df999f54527daefaf47bc7bc1b1eb/README.md',
     contentType: 'text/plain; charset=utf-8',
   },
   {
@@ -84,7 +84,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'CS109 countries CSV',
     imageCapable: false,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv',
+    url: 'https://raw.githubusercontent.com/cs109/2014_data/6f0562016d4287185bb330c876b0cf117c4a3ab5/countries.csv',
     contentType: 'text/csv; charset=utf-8',
   },
   {
@@ -104,7 +104,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'Typicode demo JSON',
     imageCapable: false,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/typicode/demo/master/db.json',
+    url: 'https://raw.githubusercontent.com/typicode/demo/f0b44972443d306e32eed093910687d26cd9f3f1/db.json',
     contentType: 'application/json',
   },
   {
@@ -114,7 +114,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'Apache Maven pom.xml',
     imageCapable: false,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/apache/maven/master/pom.xml',
+    url: 'https://raw.githubusercontent.com/apache/maven/da5bf8b5fef41d8613bfdfd9a847c721c306716f/pom.xml',
     contentType: 'application/xml',
   },
   {
@@ -124,7 +124,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'Kubernetes YAML example',
     imageCapable: false,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/application/shell-demo.yaml',
+    url: 'https://raw.githubusercontent.com/kubernetes/website/58c31560177dc09e3a67eb62e664b65bb1fb4e59/content/en/examples/application/shell-demo.yaml',
     contentType: 'text/plain; charset=utf-8',
   },
   {
@@ -134,7 +134,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'GitHub Actions starter workflow',
     imageCapable: false,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/actions/starter-workflows/main/ci/node.js.yml',
+    url: 'https://raw.githubusercontent.com/actions/starter-workflows/53d347c66d8b0618d2e4616e1b841b649349c6d7/ci/node.js.yml',
     contentType: 'text/plain; charset=utf-8',
   },
   {
@@ -144,7 +144,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'LogHub Apache log sample',
     imageCapable: false,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/logpai/loghub/master/Apache/Apache_2k.log',
+    url: 'https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Apache/Apache_2k.log',
     contentType: 'text/plain; charset=utf-8',
   },
   {
@@ -154,7 +154,7 @@ export const BATCH_LIVE_DOCUMENT_SOURCES = [
     label: 'SQLObject README.rst',
     imageCapable: false,
     sourceKind: 'direct',
-    url: 'https://raw.githubusercontent.com/sqlobject/sqlobject/master/README.rst',
+    url: 'https://raw.githubusercontent.com/sqlobject/sqlobject/847875ade0f1af75c95ed9f9f3546a49b23204cd/README.rst',
     contentType: 'text/plain; charset=utf-8',
   },
 ];
@@ -210,6 +210,15 @@ async function downloadBytes(url) {
 
 function sha256(buffer) {
   return crypto.createHash('sha256').update(buffer).digest('hex');
+}
+
+async function readJsonFile(filePath) {
+  const raw = await fs.readFile(filePath, 'utf8');
+  return JSON.parse(raw);
+}
+
+async function statOrNull(filePath) {
+  return fs.stat(filePath).catch(() => null);
 }
 
 async function resolveDirectDocument(source) {
@@ -328,12 +337,47 @@ export async function refreshBatchLiveCorpus(options = {}) {
   };
 }
 
-async function readJsonFile(filePath) {
-  const raw = await fs.readFile(filePath, 'utf8');
-  return JSON.parse(raw);
+async function ensureDocumentFixtureMaterialized(documentFixture, manifestPath) {
+  const absolutePath = path.join(path.dirname(manifestPath), String(documentFixture.relativePath));
+  const sourceUrl = String(documentFixture.sourceUrl || '').trim();
+  const expectedSha = String(documentFixture.sha256 || '').trim().toLowerCase();
+  const expectedByteSize = Number(documentFixture.byteSize);
+
+  const existingStat = await statOrNull(absolutePath);
+  if (existingStat?.isFile() && existingStat.size > 0) {
+    const existingBytes = await fs.readFile(absolutePath);
+    const existingSha = sha256(existingBytes).toLowerCase();
+    if (
+      (!Number.isFinite(expectedByteSize) || existingBytes.length === expectedByteSize) &&
+      (!expectedSha || existingSha === expectedSha)
+    ) {
+      return absolutePath;
+    }
+  }
+
+  if (!sourceUrl) {
+    fail(`Batch live corpus fixture is missing sourceUrl and cannot be re-materialized: ${JSON.stringify(documentFixture)}`);
+  }
+
+  await ensureDir(path.dirname(absolutePath));
+  const downloaded = await downloadBytes(sourceUrl);
+  const downloadedSha = sha256(downloaded.buffer).toLowerCase();
+
+  if (Number.isFinite(expectedByteSize) && downloaded.buffer.length !== expectedByteSize) {
+    fail(
+      `Batch live corpus fixture byte size drifted for ${sourceUrl}: expected ${expectedByteSize}, got ${downloaded.buffer.length}`,
+    );
+  }
+
+  if (expectedSha && downloadedSha !== expectedSha) {
+    fail(`Batch live corpus fixture hash drifted for ${sourceUrl}: expected ${expectedSha}, got ${downloadedSha}`);
+  }
+
+  await fs.writeFile(absolutePath, downloaded.buffer);
+  return absolutePath;
 }
 
-export async function resolveActiveBatchLiveCorpus() {
+export async function ensureActiveBatchLiveCorpusMaterialized() {
   const active = await readJsonFile(BATCH_LIVE_CORPUS_ACTIVE_POINTER).catch(() => null);
   if (!active || typeof active !== 'object') {
     fail(`Missing active batch live corpus pointer: ${BATCH_LIVE_CORPUS_ACTIVE_POINTER}`);
@@ -351,16 +395,18 @@ export async function resolveActiveBatchLiveCorpus() {
   }
 
   const documents = Array.isArray(manifest.documents)
-    ? manifest.documents.map((documentFixture) => {
-        const absolutePath = path.join(path.dirname(manifestPath), String(documentFixture.relativePath));
-        return {
-          ...documentFixture,
-          localPath: absolutePath,
-          contentType: String(documentFixture.contentType || ''),
-          inputExt: String(documentFixture.inputExt || ''),
-          imageCapable: Boolean(documentFixture.imageCapable),
-        };
-      })
+    ? await Promise.all(
+        manifest.documents.map(async (documentFixture) => {
+          const localPath = await ensureDocumentFixtureMaterialized(documentFixture, manifestPath);
+          return {
+            ...documentFixture,
+            localPath,
+            contentType: String(documentFixture.contentType || ''),
+            inputExt: String(documentFixture.inputExt || ''),
+            imageCapable: Boolean(documentFixture.imageCapable),
+          };
+        }),
+      )
     : [];
   const urls = Array.isArray(manifest.urls) ? manifest.urls : [];
 
@@ -371,4 +417,8 @@ export async function resolveActiveBatchLiveCorpus() {
     documents,
     urls,
   };
+}
+
+export async function resolveActiveBatchLiveCorpus() {
+  return ensureActiveBatchLiveCorpusMaterialized();
 }

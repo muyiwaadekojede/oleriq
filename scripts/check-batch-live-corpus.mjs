@@ -1,8 +1,5 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
+import { ensureActiveBatchLiveCorpusMaterialized } from './batch-live-corpus.mjs';
 
-const corpusRoot = path.join(process.cwd(), 'tests documents', 'live-corpus');
-const activePointerPath = path.join(corpusRoot, 'ACTIVE.json');
 const requiredExtensions = [
   '.pdf',
   '.docx',
@@ -25,31 +22,13 @@ function fail(message) {
   throw new Error(message);
 }
 
-async function readJson(filePath) {
-  const raw = await fs.readFile(filePath, 'utf8');
-  return JSON.parse(raw);
-}
-
 async function main() {
-  let active;
-  try {
-    active = await readJson(activePointerPath);
-  } catch {
-    fail(`Missing active batch live corpus pointer: ${activePointerPath}`);
-  }
-
-  const manifestRelativePath = String(active.manifestRelativePath || '').trim();
-  if (!manifestRelativePath) {
-    fail(`Active batch live corpus pointer is missing manifestRelativePath: ${JSON.stringify(active)}`);
-  }
-
-  const manifestPath = path.join(corpusRoot, manifestRelativePath);
-  let manifest;
-  try {
-    manifest = await readJson(manifestPath);
-  } catch {
-    fail(`Missing active batch live corpus manifest: ${manifestPath}`);
-  }
+  const corpus = await ensureActiveBatchLiveCorpusMaterialized();
+  const manifestPath = corpus.manifestPath;
+  const manifest = {
+    documents: corpus.documents,
+    urls: corpus.urls,
+  };
 
   if (!Array.isArray(manifest.documents)) {
     fail(`Active batch live corpus manifest is missing documents[]: ${manifestPath}`);
@@ -67,12 +46,6 @@ async function main() {
     const inputExt = String(documentFixture.inputExt || '').trim();
     if (!relativePath || !filename || !inputExt) {
       fail(`Batch live corpus document entry is incomplete: ${JSON.stringify(documentFixture)}`);
-    }
-
-    const absolutePath = path.join(path.dirname(manifestPath), relativePath);
-    const stat = await fs.stat(absolutePath).catch(() => null);
-    if (!stat || stat.size === 0) {
-      fail(`Batch live corpus fixture is missing or empty: ${absolutePath}`);
     }
 
     extensions.add(inputExt.toLowerCase());

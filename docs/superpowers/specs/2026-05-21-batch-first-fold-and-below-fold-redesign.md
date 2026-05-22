@@ -381,6 +381,6 @@ The final implementation should be judged against these checks:
 
 ## Supersession Note
 
-This spec supersedes the older below-fold-only redesign direction in `2026-05-19-batch-proof-led-below-fold-redesign.md`.
+This spec supersedes the older below-fold-only redesign direction from 2026-05-19.
 
-That older file should be treated as historical context, not as the current route-design source of truth.
+That earlier draft should be treated as Git history, not as the current route-design source of truth.

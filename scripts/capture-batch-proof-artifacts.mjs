@@ -179,8 +179,9 @@ async function captureReviewProof(browser) {
     await page.getByRole('button', { name: 'Start Batch' }).click();
     await page.locator('[data-batch-surface="primary"][data-batch-stage="review"]').waitFor({ timeout: 30_000 });
 
-    await page.locator('[data-batch-surface="primary"]').screenshot({ path: path.join(outputDir, 'batch-route-proof-review.png') });
-    await page.locator('[data-batch-review-list]').screenshot({ path: path.join(outputDir, 'batch-status-proof.png') });
+    await page
+      .locator('[data-batch-surface="primary"]')
+      .screenshot({ path: path.join(outputDir, 'batch-route-proof-review.png') });
 
     const partialRow = page.locator('[data-batch-row]').filter({ hasText: 'MDN table reference' }).first();
     await partialRow.getByRole('button', { name: /Expand/i }).click();

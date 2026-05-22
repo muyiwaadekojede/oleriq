@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "snapshotId": "2026-05-20-external-v1",
-  "generatedAt": "2026-05-20T20:06:10.719Z",
+  "snapshotId": "2026-05-22-external-v3",
+  "generatedAt": "2026-05-22T17:39:35.971Z",
   "documents": [
     {
       "id": "pdf",
@@ -10,7 +10,7 @@
       "inputExt": ".pdf",
       "imageCapable": true,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/Azure-Samples/cognitive-services-sample-data-files/master/ComputerVision/Images/MultiPageHandwrittenForm.pdf",
+      "sourceUrl": "https://raw.githubusercontent.com/Azure-Samples/cognitive-services-sample-data-files/65af3b93cab5f45c76594f3265210646d4b3809e/ComputerVision/Images/MultiPageHandwrittenForm.pdf",
       "contentType": "application/pdf",
       "relativePath": "documents/handwritten-form-sample.pdf",
       "byteSize": 187203,
@@ -23,7 +23,7 @@
       "inputExt": ".docx",
       "imageCapable": true,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/dolanmiu/docx/master/demo/assets/field-trip.docx",
+      "sourceUrl": "https://raw.githubusercontent.com/dolanmiu/docx/9439c73871e3ac9af5a5889978b7fbea9f3b6a2f/demo/assets/field-trip.docx",
       "contentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "relativePath": "documents/field-trip-sample.docx",
       "byteSize": 25543,
@@ -36,7 +36,7 @@
       "inputExt": ".epub",
       "imageCapable": true,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/thansen0/sample-epub-minimal/master/minimal.epub",
+      "sourceUrl": "https://raw.githubusercontent.com/thansen0/sample-epub-minimal/8e7d6cdd91030c991a0e637a3470f286d8735437/minimal.epub",
       "contentType": "application/epub+zip",
       "relativePath": "documents/minimal-ebook.epub",
       "byteSize": 7061,
@@ -62,7 +62,7 @@
       "inputExt": ".md",
       "imageCapable": false,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/microsoft/TypeScript/main/README.md",
+      "sourceUrl": "https://raw.githubusercontent.com/microsoft/TypeScript/e5509e211f5df999f54527daefaf47bc7bc1b1eb/README.md",
       "contentType": "text/plain; charset=utf-8",
       "relativePath": "documents/typescript-readme.md",
       "byteSize": 3532,
@@ -78,8 +78,8 @@
       "sourceUrl": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/article",
       "contentType": "text/html; charset=utf-8",
       "relativePath": "documents/mdn-article-element.html",
-      "byteSize": 184724,
-      "sha256": "755723aab50c4fbae02a734624789dee9b13f7a507fab0b3b35a0434103c5c8b"
+      "byteSize": 184722,
+      "sha256": "fa96652854bfb7e79eb2eaef738eb3868b61898db27d2b969b55f4ecc3ffb74d"
     },
     {
       "id": "htm",
@@ -91,8 +91,8 @@
       "sourceUrl": "https://www.rfc-editor.org/rfc/rfc9110.html",
       "contentType": "text/html; charset=utf-8",
       "relativePath": "documents/rfc9110-reference.htm",
-      "byteSize": 1187556,
-      "sha256": "2fac45d1ade51c54e5acbc986dc82d1918b5bf7a7e2544c9aea1fdec7022b706"
+      "byteSize": 1187554,
+      "sha256": "d431760660ea44e130f6e919dab216df2d0b3a490567a98089267523368fe1e5"
     },
     {
       "id": "csv",
@@ -101,7 +101,7 @@
       "inputExt": ".csv",
       "imageCapable": false,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/cs109/2014_data/master/countries.csv",
+      "sourceUrl": "https://raw.githubusercontent.com/cs109/2014_data/6f0562016d4287185bb330c876b0cf117c4a3ab5/countries.csv",
       "contentType": "text/csv; charset=utf-8",
       "relativePath": "documents/countries.csv",
       "byteSize": 3393,
@@ -127,7 +127,7 @@
       "inputExt": ".json",
       "imageCapable": false,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/typicode/demo/master/db.json",
+      "sourceUrl": "https://raw.githubusercontent.com/typicode/demo/f0b44972443d306e32eed093910687d26cd9f3f1/db.json",
       "contentType": "application/json",
       "relativePath": "documents/typicode-demo-db.json",
       "byteSize": 299,
@@ -140,11 +140,11 @@
       "inputExt": ".xml",
       "imageCapable": false,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/apache/maven/master/pom.xml",
+      "sourceUrl": "https://raw.githubusercontent.com/apache/maven/da5bf8b5fef41d8613bfdfd9a847c721c306716f/pom.xml",
       "contentType": "application/xml",
       "relativePath": "documents/apache-maven-pom.xml",
-      "byteSize": 46018,
-      "sha256": "05f6c6c54e32b00b524bc7a822346a1888ac5b0943741b45abff562a03c34ecb"
+      "byteSize": 46104,
+      "sha256": "a1a685ce8c4dc41d1cdb3696035e6f13b13b55753025117b7048494a2381c744"
     },
     {
       "id": "yaml",
@@ -153,7 +153,7 @@
       "inputExt": ".yaml",
       "imageCapable": false,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/application/shell-demo.yaml",
+      "sourceUrl": "https://raw.githubusercontent.com/kubernetes/website/58c31560177dc09e3a67eb62e664b65bb1fb4e59/content/en/examples/application/shell-demo.yaml",
       "contentType": "text/plain; charset=utf-8",
       "relativePath": "documents/kubernetes-shell-demo.yaml",
       "byteSize": 279,
@@ -166,7 +166,7 @@
       "inputExt": ".yml",
       "imageCapable": false,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/actions/starter-workflows/main/ci/node.js.yml",
+      "sourceUrl": "https://raw.githubusercontent.com/actions/starter-workflows/53d347c66d8b0618d2e4616e1b841b649349c6d7/ci/node.js.yml",
       "contentType": "text/plain; charset=utf-8",
       "relativePath": "documents/github-actions-nodejs.yml",
       "byteSize": 882,
@@ -179,7 +179,7 @@
       "inputExt": ".log",
       "imageCapable": false,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/logpai/loghub/master/Apache/Apache_2k.log",
+      "sourceUrl": "https://raw.githubusercontent.com/logpai/loghub/dd61d0952749ee7963bde24220d1be5ede023033/Apache/Apache_2k.log",
       "contentType": "text/plain; charset=utf-8",
       "relativePath": "documents/apache-2k.log",
       "byteSize": 171239,
@@ -192,7 +192,7 @@
       "inputExt": ".rst",
       "imageCapable": false,
       "sourceKind": "direct",
-      "sourceUrl": "https://raw.githubusercontent.com/sqlobject/sqlobject/master/README.rst",
+      "sourceUrl": "https://raw.githubusercontent.com/sqlobject/sqlobject/847875ade0f1af75c95ed9f9f3546a49b23204cd/README.rst",
       "contentType": "text/plain; charset=utf-8",
       "relativePath": "documents/sqlobject-readme.rst",
       "byteSize": 1907,
@@ -204,22 +204,25 @@
       "id": "rfc9110-html",
       "label": "RFC 9110 HTTP Semantics",
       "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
-      "contentType": "text/html; charset=UTF-8",
-      "verifiedAt": "2026-05-20T20:06:10.299Z"
+      "contentType": "text/html",
+      "verificationMethod": "clearpage-html-fetch-signature",
+      "verifiedAt": "2026-05-22T17:39:33.740Z"
     },
     {
       "id": "mdn-article-element",
       "label": "MDN HTML article element",
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/article",
       "contentType": "text/html",
-      "verifiedAt": "2026-05-20T20:06:10.438Z"
+      "verificationMethod": "clearpage-html-fetch-signature",
+      "verifiedAt": "2026-05-22T17:39:34.959Z"
     },
     {
-      "id": "w3c-wcag-overview",
-      "label": "W3C WCAG overview",
-      "url": "https://www.w3.org/WAI/standards-guidelines/wcag/",
-      "contentType": "text/html; charset=utf-8",
-      "verifiedAt": "2026-05-20T20:06:10.719Z"
+      "id": "iana-example-domains",
+      "label": "IANA example domains explainer",
+      "url": "https://www.iana.org/help/example-domains",
+      "contentType": "text/html; charset=UTF-8",
+      "verificationMethod": "clearpage-html-fetch-signature",
+      "verifiedAt": "2026-05-22T17:39:35.971Z"
     }
   ]
 }
