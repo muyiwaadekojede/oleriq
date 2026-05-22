@@ -114,15 +114,6 @@ export function BatchUrlPanel({
 
         {stage === 'setup' ? (
           <>
-            <div className="space-y-3">
-              <h2 className="logo-mark max-w-[12ch] text-5xl font-semibold leading-[0.95] text-[var(--color-ink)]">
-                Batch convert many links into one clean output.
-              </h2>
-              <p className="max-w-xl text-lg leading-8 text-[var(--color-muted)]">
-                Choose the input, choose the output, then start. Everything else stays quiet until it matters.
-              </p>
-            </div>
-
             <div className="space-y-4">
               <label htmlFor="batch-urls" className="sr-only">
                 Paste URLs
