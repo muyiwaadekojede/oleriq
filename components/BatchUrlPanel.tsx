@@ -1,31 +1,11 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { BatchModeSwitch } from '@/components/BatchModeSwitch';
-import { nextStepGuidanceForErrorCode } from '@/lib/trustGuidance';
-import type { BatchInputMode, ExportFormat, ExtractResultState } from '@/lib/types';
-
-export type BatchItemResult = {
-  id?: number;
-  url: string;
-  status: 'pending' | 'running' | 'success' | 'failure';
-  qualityState?: ExtractResultState;
-  warnings?: string[];
-  durationMs: number;
-  extractionId?: string;
-  sourceUrl?: string;
-  title?: string;
-  originalFilename?: string;
-  contentType?: string;
-  byteSize?: number;
-  sourceObjectKey?: string;
-  outputObjectKey?: string;
-  outputFilename?: string;
-  outputFormat?: string;
-  errorCode?: string;
-  errorMessage?: string;
-};
+import { BatchReviewList } from '@/components/BatchReviewList';
+import type { BatchItemResult, BatchSurfaceStage } from '@/components/batchTypes';
+import type { BatchInputMode, ExportFormat } from '@/lib/types';
 
 type BatchUrlPanelProps = {
   mode: BatchInputMode;
@@ -45,8 +25,10 @@ type BatchUrlPanelProps = {
   successCount: number;
   failureCount: number;
   degradedCount: number;
+  usableCount: number;
+  emptyOutputCount: number;
+  partialOutputCount: number;
   etaText: string;
-  downloadEstimateText: string;
   runMessage: string;
   results: BatchItemResult[];
   onDownloadOne: (item: BatchItemResult) => void;
@@ -57,20 +39,17 @@ type BatchUrlPanelProps = {
 
 const EXPORT_FORMATS: ExportFormat[] = ['pdf', 'txt', 'md', 'docx'];
 
-function formatMs(value: number): string {
-  if (!Number.isFinite(value) || value <= 0) return '0s';
-
-  const seconds = Math.round(value / 1000);
-  if (seconds < 60) return `${seconds}s`;
-
-  const minutes = Math.floor(seconds / 60);
-  const rest = seconds % 60;
-  return `${minutes}m ${rest}s`;
-}
-
 function progressFill(processedCount: number, totalCount: number): number {
   if (totalCount <= 0) return 0;
   return Math.min(100, Math.round((processedCount / totalCount) * 100));
+}
+
+function settledRows(results: BatchItemResult[]): BatchItemResult[] {
+  return results.filter((item) => item.status === 'success' || item.status === 'failure');
+}
+
+function currentStage(processing: boolean, results: BatchItemResult[]): BatchSurfaceStage {
+  return settledRows(results).length > 0 ? 'review' : processing ? 'running' : 'setup';
 }
 
 export function BatchUrlPanel({
@@ -91,8 +70,9 @@ export function BatchUrlPanel({
   successCount,
   failureCount,
   degradedCount,
+  usableCount,
+  partialOutputCount,
   etaText,
-  downloadEstimateText,
   runMessage,
   results,
   onDownloadOne,
@@ -101,16 +81,20 @@ export function BatchUrlPanel({
   retryingFailed,
 }: BatchUrlPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
+
   const fill = progressFill(processedCount, totalCount);
+  const stage = currentStage(processing, results);
   const tooManyUrls = parsedCount > maxUrls;
-  const visibleResults = results.slice(0, 400);
-  const visibleSuccessCount = visibleResults.filter((row) => row.status === 'success').length;
-  const visibleDegradedCount = visibleResults.filter(
-    (row) => row.status === 'success' && row.qualityState === 'degraded',
-  ).length;
-  const showProgress = totalCount > 0 || processedCount > 0 || results.length > 0;
-  const showActivity =
-    processing || Boolean(runMessage) || totalCount > 0 || successCount > 0 || failureCount > 0 || results.length > 0;
+  const hasOutput = successCount > 0 || partialOutputCount > 0 || degradedCount > 0;
+  const currentCount = totalCount > 0 ? totalCount : parsedCount;
+  const currentContextLabel = `${currentCount.toLocaleString()} ${currentCount === 1 ? 'link' : 'links'} · ${format.toUpperCase()} output`;
+
+  useEffect(() => {
+    if (stage !== 'setup') {
+      setShowMoreOptions(false);
+    }
+  }, [stage]);
 
   async function importUrlsFromFile(file: File): Promise<void> {
     const text = await file.text();
@@ -119,250 +103,187 @@ export function BatchUrlPanel({
   }
 
   return (
-    <section className="mt-7 rounded-2xl border border-[var(--color-border)] bg-white p-5 text-left">
-      <div className="space-y-4">
+    <section
+      data-batch-surface="primary"
+      data-batch-mode="url"
+      data-batch-stage={stage}
+      className="mt-7 rounded-[2rem] border border-[var(--color-border)] bg-white p-6 text-left shadow-[0_1px_0_rgba(15,23,42,0.03)]"
+    >
+      <div className="space-y-6">
         <BatchModeSwitch mode={mode} onModeChange={onModeChange} />
 
-        <div className="grid gap-3">
-          <label htmlFor="batch-urls" className="sr-only">
-            URLs
-          </label>
-          <textarea
-            id="batch-urls"
-            value={urlsInput}
-            onChange={(event) => onUrlsInputChange(event.target.value)}
-            placeholder="https://example.com/article-1&#10;https://example.com/article-2"
-            rows={6}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm leading-6 text-[var(--color-ink)] outline-none transition focus:border-[var(--color-accent)]"
-          />
+        {stage === 'setup' ? (
+          <>
+            <div className="space-y-3">
+              <h2 className="logo-mark max-w-[12ch] text-5xl font-semibold leading-[0.95] text-[var(--color-ink)]">
+                Batch convert many links into one clean output.
+              </h2>
+              <p className="max-w-xl text-lg leading-8 text-[var(--color-muted)]">
+                Choose the input, choose the output, then start. Everything else stays quiet until it matters.
+              </p>
+            </div>
 
-          {tooManyUrls ? (
-            <p className="text-xs font-medium text-red-700">
-              URL count exceeds the batch cap. Remove some links before starting.
-            </p>
-          ) : null}
-
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <label htmlFor="batch-format" className="text-sm font-medium text-[var(--color-ink)]">
-                Format
+            <div className="space-y-4">
+              <label htmlFor="batch-urls" className="sr-only">
+                Paste URLs
               </label>
-              <select
-                id="batch-format"
-                value={format}
-                onChange={(event) => onFormatChange(event.target.value as ExportFormat)}
-                className="h-10 rounded-lg border border-[var(--color-border)] bg-white px-3 text-sm outline-none focus:border-[var(--color-accent)]"
-              >
-                {EXPORT_FORMATS.map((item) => (
-                  <option key={item} value={item}>
-                    {item.toUpperCase()}
-                  </option>
-                ))}
-              </select>
-            </div>
+              <textarea
+                id="batch-urls"
+                value={urlsInput}
+                onChange={(event) => onUrlsInputChange(event.target.value)}
+                placeholder="Paste URLs"
+                rows={8}
+                className="w-full rounded-[1.75rem] border border-[var(--color-border)] bg-white px-5 py-4 text-base leading-7 text-[var(--color-ink)] outline-none transition focus:border-[var(--color-accent)]"
+              />
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".txt,.csv,.md,.json"
-              className="hidden"
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                void importUrlsFromFile(file);
-                event.currentTarget.value = '';
-              }}
-            />
-
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="h-10 rounded-lg border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-              >
-                Import
-              </button>
-
-              <button
-                type="button"
-                onClick={onSubmit}
-                disabled={processing || parsedCount === 0 || tooManyUrls}
-                className="h-10 rounded-lg bg-[var(--color-accent)] px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {processing ? 'Processing Batch...' : 'Start Batch'}
-              </button>
-
-              <button
-                type="button"
-                onClick={onDownloadAll}
-                disabled={processing || downloadingAll || successCount === 0}
-                className="h-10 rounded-lg border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {downloadingAll ? 'Downloading...' : `Download ${successCount.toLocaleString()}`}
-              </button>
-            </div>
-
-            <div className="ml-auto flex flex-wrap items-center justify-end gap-2 text-xs text-[var(--color-muted)]">
-              <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
-                Limit {maxUrls.toLocaleString()} URLs
-              </span>
-              <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
-                Parsed {parsedCount.toLocaleString()}
-              </span>
-              {jobId ? (
-                <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
-                  Job {jobId.slice(0, 8)}
-                </span>
+              {tooManyUrls ? (
+                <p className="text-sm font-medium text-red-700">
+                  URL count exceeds the batch cap. Remove some links before starting.
+                </p>
               ) : null}
-              {processing ? (
-                <span className="rounded-full border border-[var(--color-border)] px-3 py-1">ETA {etaText}</span>
-              ) : null}
-              {!processing && successCount > 0 ? (
-                <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
-                  Download est. {downloadEstimateText}
-                </span>
-              ) : null}
-              {showProgress ? (
-                <div className="grid min-w-20 place-items-center rounded-xl border border-[var(--color-border)] px-4 py-3 text-center">
-                  <span className="text-lg font-semibold text-[var(--color-ink)]">{fill}%</span>
-                  <span className="text-[11px] uppercase tracking-[0.14em] text-[var(--color-muted)]">progress</span>
-                </div>
-              ) : null}
-            </div>
-          </div>
 
-          {showProgress ? (
-            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-muted)]">
-                <span className="font-semibold text-[var(--color-ink)]">Batch progress</span>
-                <span>
-                  {processedCount.toLocaleString()} / {Math.max(totalCount, processedCount).toLocaleString()}
-                </span>
+              {runMessage ? <p className="text-sm text-[var(--color-muted)]">{runMessage}</p> : null}
+
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  aria-label="Output format"
+                  value={format}
+                  onChange={(event) => onFormatChange(event.target.value as ExportFormat)}
+                  className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-base text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
+                >
+                  {EXPORT_FORMATS.map((item) => (
+                    <option key={item} value={item}>
+                      {item.toUpperCase()} output
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={onSubmit}
+                  disabled={processing || parsedCount === 0 || tooManyUrls}
+                  className="h-12 rounded-2xl bg-[var(--color-accent)] px-6 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {processing ? 'Processing Batch...' : 'Start Batch'}
+                </button>
+
+                <button
+                  type="button"
+                  aria-expanded={showMoreOptions ? 'true' : 'false'}
+                  aria-controls="batch-url-more-options"
+                  onClick={() => setShowMoreOptions((current) => !current)}
+                  className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-5 text-base font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                >
+                  More options
+                </button>
               </div>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={fill}>
+
+              <div
+                id="batch-url-more-options"
+                data-batch-more-options
+                data-batch-more-options-open={showMoreOptions ? 'true' : 'false'}
+                className={showMoreOptions ? 'block' : 'hidden'}
+              >
+                <div className="grid gap-4 rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".txt,.csv,.md,.json"
+                    className="hidden"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (!file) return;
+                      void importUrlsFromFile(file);
+                      event.currentTarget.value = '';
+                    }}
+                  />
+
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="space-y-1">
+                      <p className="text-sm font-semibold text-[var(--color-ink)]">Import</p>
+                      <p className="text-sm text-[var(--color-muted)]">
+                        Bring in a TXT, CSV, Markdown, or JSON list when the links are easier to gather outside the page.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="rounded-full border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                    >
+                      Import
+                    </button>
+                  </div>
+
+                  <p className="text-sm text-[var(--color-muted)]">Limit {maxUrls.toLocaleString()} URLs</p>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="space-y-3">
+              <h2 className="logo-mark max-w-[12ch] text-5xl font-semibold leading-[0.95] text-[var(--color-ink)]">
+                {stage === 'running' ? 'Run in progress.' : 'Review what actually came back.'}
+              </h2>
+              <p className="max-w-xl text-lg leading-8 text-[var(--color-muted)]">
+                {stage === 'running'
+                  ? 'The current run becomes the only thing asking for attention.'
+                  : 'The finished run reveals row-level truth only after the batch has completed enough work to review.'}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xl font-semibold text-[var(--color-ink)]">{currentContextLabel}</p>
+                  <p className="text-lg text-[var(--color-muted)]">
+                    {processedCount.toLocaleString()} of {Math.max(totalCount, processedCount).toLocaleString()} checked
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-semibold text-[var(--color-ink)]">{fill}%</p>
+                  {processing ? <p className="text-sm text-[var(--color-muted)]">ETA {etaText}</p> : null}
+                </div>
+              </div>
+
+              <div
+                className="h-3 overflow-hidden rounded-full bg-[var(--color-surface)]"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={fill}
+              >
                 <div
                   className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-500 ease-out"
                   style={{ width: `${fill}%` }}
                 />
               </div>
             </div>
-          ) : null}
-        </div>
+          </>
+        )}
 
-        {showActivity ? (
-          <div className="border-t border-[var(--color-border)] pt-5">
-            <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  Activity
-                </p>
-                <h3 className="text-lg font-semibold text-[var(--color-ink)]">Batch activity</h3>
-              </div>
-              {failureCount > 0 ? (
-                <button
-                  type="button"
-                  onClick={onRetryFailed}
-                  disabled={processing || retryingFailed}
-                  className="h-10 rounded-lg border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {retryingFailed ? 'Retrying...' : `Retry failed URLs (${failureCount.toLocaleString()})`}
-                </button>
-              ) : null}
-            </div>
-
-            {results.length > 0 ? (
-              <div className="rounded-xl border border-[var(--color-border)] bg-white p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-muted)]">
-                  <span>Successful: {successCount.toLocaleString()}</span>
-                  <span>Degraded: {degradedCount.toLocaleString()}</span>
-                  <span>Failed: {failureCount.toLocaleString()}</span>
-                  <span>Visible: {visibleResults.length.toLocaleString()}</span>
-                </div>
-
-                <div className="max-h-64 space-y-2 overflow-auto pr-1">
-                  {visibleResults.map((row) => (
-                    <article
-                      key={row.url}
-                      className="rounded-lg border border-[var(--color-border)] bg-white p-2 text-xs"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p className="min-w-0 flex-1 truncate font-semibold text-[var(--color-ink)]" title={row.url}>
-                          {row.url}
-                        </p>
-                        <span
-                          className={`rounded-full px-2 py-0.5 font-semibold ${
-                            row.status === 'success' && row.qualityState === 'degraded'
-                              ? 'border border-amber-600 bg-white text-amber-700'
-                              : row.status === 'success'
-                              ? 'border border-[var(--color-accent)] bg-white text-[var(--color-accent)]'
-                              : row.status === 'failure'
-                                ? 'border border-red-700 bg-white text-red-700'
-                                : row.status === 'running'
-                                  ? 'border border-[var(--color-border)] bg-white text-[var(--color-ink)]'
-                                  : 'border border-[var(--color-border)] bg-white text-[var(--color-muted)]'
-                          }`}
-                        >
-                          {row.status === 'success' && row.qualityState === 'degraded' ? 'degraded' : row.status}
-                        </span>
-                      </div>
-
-                      <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[var(--color-muted)]">
-                        <span>{formatMs(row.durationMs)}</span>
-                        {row.status === 'success' && (row.extractionId || row.sourceUrl) ? (
-                          <button
-                            type="button"
-                            onClick={() => onDownloadOne(row)}
-                            className="rounded-md border border-[var(--color-border)] px-2 py-1 font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-                          >
-                            Download
-                          </button>
-                        ) : null}
-                      </div>
-
-                      {row.status === 'success' && row.qualityState === 'degraded' && row.warnings?.length ? (
-                        <div className="mt-1 space-y-1 text-[11px] text-amber-700">
-                          {row.warnings.map((warning) => (
-                            <p key={warning}>{warning}</p>
-                          ))}
-                        </div>
-                      ) : null}
-                      {row.status === 'failure' ? (
-                        <div className="mt-1 space-y-1 text-[11px] text-red-700">
-                          <p className="break-words">
-                            {row.errorCode || 'EXTRACTION_FAILED'}: {row.errorMessage || 'Failed to process URL.'}
-                          </p>
-                          {nextStepGuidanceForErrorCode(row.errorCode) ? (
-                            <p className="break-words">Next step: {nextStepGuidanceForErrorCode(row.errorCode)}</p>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </article>
-                  ))}
-                </div>
-
-                {results.length > 400 ? (
-                  <p className="mt-2 text-[11px] text-[var(--color-muted)]">
-                    Showing first 400 rows for readability.
-                  </p>
-                ) : null}
-                {successCount > visibleSuccessCount ? (
-                  <p className="mt-2 text-[11px] text-[var(--color-muted)]">
-                    More successful rows exist outside the visible page.
-                  </p>
-                ) : null}
-                {degradedCount > visibleDegradedCount ? (
-                  <p className="mt-2 text-[11px] text-[var(--color-muted)]">
-                    More degraded rows exist outside the visible page.
-                  </p>
-                ) : null}
-              </div>
-            ) : (
-              <div className="text-sm text-[var(--color-muted)]">
-                {runMessage || 'Batch status will appear here after you start a run.'}
-              </div>
-            )}
-          </div>
+        {stage === 'review' ? (
+          <BatchReviewList
+            results={results}
+            usableCount={usableCount}
+            partialCount={partialOutputCount}
+            degradedCount={degradedCount}
+            failureCount={failureCount}
+            runMessage={runMessage}
+            processing={processing}
+            onDownloadOne={onDownloadOne}
+            canDownload={(item) => item.status === 'success' && Boolean(item.extractionId || item.sourceUrl)}
+            onDownloadAll={hasOutput ? onDownloadAll : null}
+            downloadAllLabel={downloadingAll ? 'Downloading...' : `Download ${successCount.toLocaleString()}`}
+            downloadAllDisabled={processing || downloadingAll || successCount === 0}
+            onRetryFailed={failureCount > 0 ? onRetryFailed : null}
+            retryLabel={retryingFailed ? 'Retrying...' : `Retry failed URLs (${failureCount.toLocaleString()})`}
+            retryDisabled={processing || retryingFailed}
+            rowTitle={(item) => item.title || item.outputFilename || item.url}
+          />
         ) : null}
+
+        {stage === 'running' && runMessage ? <p className="text-sm text-[var(--color-muted)]">{runMessage}</p> : null}
       </div>
     </section>
   );

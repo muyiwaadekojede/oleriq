@@ -1,11 +1,11 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { BatchModeSwitch } from '@/components/BatchModeSwitch';
+import { BatchReviewList } from '@/components/BatchReviewList';
 import { ImageToggle } from '@/components/ImageToggle';
-import type { BatchItemResult } from '@/components/BatchUrlPanel';
-import { nextStepGuidanceForErrorCode } from '@/lib/trustGuidance';
+import type { BatchItemResult, BatchSurfaceStage } from '@/components/batchTypes';
 import type { BatchInputMode, ExportFormat, ImageMode } from '@/lib/types';
 
 type UploadStatus = 'queued' | 'uploading' | 'uploaded' | 'failed';
@@ -30,7 +30,6 @@ type BatchDocumentPanelProps = {
   onFormatChange: (format: ExportFormat) => void;
   imageMode: ImageMode;
   onImageModeChange: (value: ImageMode) => void;
-  showImageModeToggle: boolean;
   showMixedImageSupportNote: boolean;
   onSelectFiles: (files: File[]) => void;
   onRemoveFile: (id: string) => void;
@@ -44,6 +43,8 @@ type BatchDocumentPanelProps = {
   successCount: number;
   failureCount: number;
   degradedCount: number;
+  usableCount: number;
+  partialOutputCount: number;
   etaText: string;
   runMessage: string;
   maxFiles: number;
@@ -70,18 +71,17 @@ function formatBytes(value: number): string {
   return `${size >= 10 || index === 0 ? Math.round(size) : size.toFixed(1)} ${units[index]}`;
 }
 
-function formatMs(value: number): string {
-  if (!Number.isFinite(value) || value <= 0) return '0s';
-  const seconds = Math.round(value / 1000);
-  if (seconds < 60) return `${seconds}s`;
-  const minutes = Math.floor(seconds / 60);
-  const rest = seconds % 60;
-  return `${minutes}m ${rest}s`;
-}
-
 function progressFill(processedCount: number, totalCount: number): number {
   if (totalCount <= 0) return 0;
   return Math.min(100, Math.round((processedCount / totalCount) * 100));
+}
+
+function settledRows(results: BatchItemResult[]): BatchItemResult[] {
+  return results.filter((item) => item.status === 'success' || item.status === 'failure');
+}
+
+function currentStage(processing: boolean, results: BatchItemResult[]): BatchSurfaceStage {
+  return settledRows(results).length > 0 ? 'review' : processing ? 'running' : 'setup';
 }
 
 export function BatchDocumentPanel({
@@ -93,7 +93,6 @@ export function BatchDocumentPanel({
   onFormatChange,
   imageMode,
   onImageModeChange,
-  showImageModeToggle,
   showMixedImageSupportNote,
   onSelectFiles,
   onRemoveFile,
@@ -101,12 +100,13 @@ export function BatchDocumentPanel({
   processing,
   uploading,
   downloadingAll,
-  jobId,
   processedCount,
   totalCount,
   successCount,
   failureCount,
   degradedCount,
+  usableCount,
+  partialOutputCount,
   etaText,
   runMessage,
   maxFiles,
@@ -120,16 +120,19 @@ export function BatchDocumentPanel({
 }: BatchDocumentPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [showMoreOptions, setShowMoreOptions] = useState(false);
   const totalSelectedBytes = files.reduce((sum, file) => sum + file.size, 0);
   const uploadedCount = files.filter((file) => file.status === 'uploaded').length;
   const fill = progressFill(processedCount, totalCount);
-  const visibleDegradedCount = results.filter(
-    (row) => row.status === 'success' && row.qualityState === 'degraded',
-  ).length;
-  const imageToggleLabelId = 'document-image-mode-label';
-  const showProgress = totalCount > 0 || successCount > 0 || failureCount > 0;
-  const showActivity =
-    processing || Boolean(runMessage) || totalCount > 0 || successCount > 0 || failureCount > 0 || results.length > 0;
+  const stage = currentStage(processing, results);
+  const currentCount = totalCount > 0 ? totalCount : uploadedCount || files.length;
+  const currentContextLabel = `${currentCount.toLocaleString()} ${currentCount === 1 ? 'file' : 'files'} · ${format.toUpperCase()} output`;
+
+  useEffect(() => {
+    if (stage !== 'setup') {
+      setShowMoreOptions(false);
+    }
+  }, [stage]);
 
   function handleDrop(filesToAdd: FileList | null): void {
     if (!filesToAdd || filesToAdd.length === 0) return;
@@ -141,327 +144,275 @@ export function BatchDocumentPanel({
   }
 
   return (
-    <section className="mt-7 rounded-2xl border border-[var(--color-border)] bg-white p-5 text-left">
-      <div className="space-y-4">
+    <section
+      data-batch-surface="primary"
+      data-batch-mode="document"
+      data-batch-stage={stage}
+      className="mt-7 rounded-[2rem] border border-[var(--color-border)] bg-white p-6 text-left shadow-[0_1px_0_rgba(15,23,42,0.03)]"
+    >
+      <div className="space-y-6">
         <BatchModeSwitch mode={mode} onModeChange={onModeChange} />
 
-        <div
-          role="group"
-          aria-labelledby="document-dropzone-title"
-          aria-describedby="document-dropzone-help"
-          tabIndex={0}
-          onClick={openFilePicker}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              openFilePicker();
-            }
-          }}
-          onDragEnter={(event) => {
-            event.preventDefault();
-            setDragActive(true);
-          }}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setDragActive(true);
-          }}
-          onDragLeave={(event) => {
-            event.preventDefault();
-            setDragActive(false);
-          }}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragActive(false);
-            handleDrop(event.dataTransfer.files);
-          }}
-          className={`rounded-xl border px-4 py-6 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] ${
-            dragActive
-              ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
-              : 'border-[var(--color-border)] text-[var(--color-muted)]'
-          }`}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={accept}
-            className="hidden"
-            onChange={(event) => {
-              handleDrop(event.target.files);
-              event.currentTarget.value = '';
-            }}
-          />
-
-          <p id="document-dropzone-title" className="text-sm font-medium text-[var(--color-ink)]">
-            Drop documents here or choose files.
-          </p>
-          <p id="document-dropzone-help" className="mt-2 text-xs text-[var(--color-muted)]">
-            Press Enter or Space to open the file picker, or drop files directly into this area.
-          </p>
-          <button
-            type="button"
-            onClick={(event) => {
-              event.stopPropagation();
-              openFilePicker();
-            }}
-            className="mt-3 h-10 rounded-lg border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-          >
-            Select Files
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <label htmlFor="document-batch-format" className="text-sm font-medium text-[var(--color-ink)]">
-              Format
-            </label>
-            <select
-              id="document-batch-format"
-              value={format}
-              onChange={(event) => onFormatChange(event.target.value as ExportFormat)}
-              className="h-10 rounded-lg border border-[var(--color-border)] bg-white px-3 text-sm outline-none focus:border-[var(--color-accent)]"
-            >
-              {EXPORT_FORMATS.map((item) => (
-                <option key={item} value={item}>
-                  {item.toUpperCase()}
-                </option>
-              ))}
-            </select>
-            {showImageModeToggle ? (
-              <>
-                <span id={imageToggleLabelId} className="text-sm font-medium text-[var(--color-ink)]">
-                  Document images
-                </span>
-                <div className="theme-light">
-                  <ImageToggle value={imageMode} onChange={onImageModeChange} ariaLabelledBy={imageToggleLabelId} />
-                </div>
-              </>
-            ) : null}
-            <button
-              type="button"
-              onClick={onSubmit}
-              disabled={processing || uploading || uploadedCount === 0}
-              className="h-10 rounded-lg bg-[var(--color-accent)] px-5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {processing ? 'Processing Batch...' : 'Start Batch'}
-            </button>
-
-            <button
-              type="button"
-              onClick={onDownloadAll}
-              disabled={processing || downloadingAll || successCount === 0}
-              className="h-10 rounded-lg border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {downloadingAll ? 'Downloading...' : `Download ${successCount.toLocaleString()}`}
-            </button>
-          </div>
-
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-2 text-xs text-[var(--color-muted)]">
-            <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
-              {maxFiles.toLocaleString()} files max
-            </span>
-            <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
-              {formatBytes(maxFileBytes)} per file
-            </span>
-            <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
-              {formatBytes(maxBatchBytes)} total
-            </span>
-            <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
-              {files.length.toLocaleString()} selected
-            </span>
-            <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
-              {uploadedCount.toLocaleString()} uploaded
-            </span>
-            {jobId ? (
-              <span className="rounded-full border border-[var(--color-border)] px-3 py-1">Job {jobId.slice(0, 8)}</span>
-            ) : null}
-            {processing ? (
-              <span className="rounded-full border border-[var(--color-border)] px-3 py-1">ETA {etaText}</span>
-            ) : null}
-            {showProgress ? (
-              <div className="grid min-w-20 place-items-center rounded-xl border border-[var(--color-border)] px-4 py-3 text-center">
-                <span className="text-lg font-semibold text-[var(--color-ink)]">{fill}%</span>
-                <span className="text-[11px] uppercase tracking-[0.14em] text-[var(--color-muted)]">progress</span>
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        {showProgress ? (
-          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-muted)]">
-              <span className="font-semibold text-[var(--color-ink)]">Batch progress</span>
-              <span>
-                {processedCount.toLocaleString()} / {Math.max(totalCount, processedCount).toLocaleString()}
-              </span>
+        {stage === 'setup' ? (
+          <>
+            <div className="space-y-3">
+              <h2 className="logo-mark max-w-[12ch] text-5xl font-semibold leading-[0.95] text-[var(--color-ink)]">
+                Batch convert many files into one clean output.
+              </h2>
+              <p className="max-w-xl text-lg leading-8 text-[var(--color-muted)]">
+                Choose the input, choose the output, then start. Everything else stays quiet until it matters.
+              </p>
             </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={fill}>
+
+            <div className="space-y-4">
               <div
-                className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-500 ease-out"
-                style={{ width: `${fill}%` }}
-              />
-            </div>
-          </div>
-        ) : null}
+                role="group"
+                aria-labelledby="document-dropzone-title"
+                aria-describedby="document-dropzone-help"
+                tabIndex={0}
+                onClick={openFilePicker}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openFilePicker();
+                  }
+                }}
+                onDragEnter={(event) => {
+                  event.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragLeave={(event) => {
+                  event.preventDefault();
+                  setDragActive(false);
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDragActive(false);
+                  handleDrop(event.dataTransfer.files);
+                }}
+                className={`rounded-[1.75rem] border px-5 py-8 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] ${
+                  dragActive
+                    ? 'border-[var(--color-accent)] text-[var(--color-accent)]'
+                    : 'border-[var(--color-border)] text-[var(--color-muted)]'
+                }`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept={accept}
+                  className="hidden"
+                  onChange={(event) => {
+                    handleDrop(event.target.files);
+                    event.currentTarget.value = '';
+                  }}
+                />
 
-        {showImageModeToggle && showMixedImageSupportNote ? (
-          <p className="text-xs text-[var(--color-muted)]">
-            Applies only to PDF, EPUB, HTML/HTM, and DOCX files in this batch.
-          </p>
-        ) : null}
-
-        {files.length > 0 ? (
-          <div className="rounded-xl border border-[var(--color-border)] bg-white p-3">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-muted)]">
-              <span>Selected files</span>
-              <span>{formatBytes(totalSelectedBytes)}</span>
-            </div>
-
-            <div className="max-h-64 space-y-2 overflow-auto pr-1">
-              {files.map((file) => (
-                <article key={file.id} className="rounded-lg border border-[var(--color-border)] bg-white p-2 text-xs">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="min-w-0 flex-1 truncate font-semibold text-[var(--color-ink)]" title={file.name}>
-                      {file.name}
-                    </p>
-                    <span
-                      className={`rounded-full px-2 py-0.5 font-semibold ${
-                        file.status === 'uploaded'
-                          ? 'border border-[var(--color-accent)] bg-white text-[var(--color-accent)]'
-                          : file.status === 'failed'
-                            ? 'border border-red-700 bg-white text-red-700'
-                            : 'border border-[var(--color-border)] bg-white text-[var(--color-ink)]'
-                      }`}
-                    >
-                      {file.status === 'queued' ? 'ready' : file.status}
-                    </span>
-                  </div>
-
-                  <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[var(--color-muted)]">
-                    <span>{formatBytes(file.size)}</span>
-                    {file.status !== 'uploading' ? (
-                      <button
-                        type="button"
-                        onClick={() => onRemoveFile(file.id)}
-                        className="rounded-md border border-[var(--color-border)] px-2 py-1 font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-                      >
-                        Remove
-                      </button>
-                    ) : (
-                      <span>{file.progress > 0 ? `${Math.round(file.progress)}%` : 'Uploading'}</span>
-                    )}
-                  </div>
-
-                  {file.error ? <p className="mt-1 break-words text-[11px] text-red-700">{file.error}</p> : null}
-                </article>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {showActivity ? (
-          <div className="border-t border-[var(--color-border)] pt-5">
-            <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-muted)]">
-                  Activity
+                <p id="document-dropzone-title" className="text-xl font-semibold text-[var(--color-ink)]">
+                  Drop documents here or choose files.
                 </p>
-                <h3 className="text-lg font-semibold text-[var(--color-ink)]">Batch activity</h3>
-              </div>
-              {failureCount > 0 ? (
+                <p id="document-dropzone-help" className="mt-2 text-sm text-[var(--color-muted)]">
+                  Press Enter or Space to open the file picker, or drop files directly into this area.
+                </p>
                 <button
                   type="button"
-                  onClick={onRetryFailed}
-                  disabled={processing || retryingFailed}
-                  className="h-10 rounded-lg border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openFilePicker();
+                  }}
+                  className="mt-4 rounded-full border border-[var(--color-border)] px-5 py-2 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
                 >
-                  {retryingFailed ? 'Retrying...' : `Retry failed files (${failureCount.toLocaleString()})`}
+                  Select Files
                 </button>
+              </div>
+
+              {files.length > 0 ? (
+                <div className="rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--color-muted)]">
+                    <span>{files.length.toLocaleString()} selected</span>
+                    <span>{uploadedCount.toLocaleString()} uploaded</span>
+                    <span>{formatBytes(totalSelectedBytes)}</span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {files.map((file) => (
+                      <article
+                        key={file.id}
+                        className="rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-semibold text-[var(--color-ink)]" title={file.name}>
+                              {file.name}
+                            </p>
+                            <p className="mt-1 text-[var(--color-muted)]">{formatBytes(file.size)}</p>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="rounded-full border border-[var(--color-border)] px-3 py-1 text-xs font-semibold text-[var(--color-ink)]">
+                              {file.status === 'queued' ? 'ready' : file.status}
+                            </span>
+                            {file.status !== 'uploading' ? (
+                              <button
+                                type="button"
+                                onClick={() => onRemoveFile(file.id)}
+                                className="rounded-full border border-[var(--color-border)] px-3 py-1 text-xs font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                              >
+                                Remove
+                              </button>
+                            ) : (
+                              <span className="text-xs text-[var(--color-muted)]">
+                                {file.progress > 0 ? `${Math.round(file.progress)}%` : 'Uploading'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {file.error ? <p className="mt-2 text-xs text-red-700">{file.error}</p> : null}
+                      </article>
+                    ))}
+                  </div>
+                </div>
               ) : null}
+
+              {runMessage ? <p className="text-sm text-[var(--color-muted)]">{runMessage}</p> : null}
+
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  aria-label="Output format"
+                  value={format}
+                  onChange={(event) => onFormatChange(event.target.value as ExportFormat)}
+                  className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-4 text-base text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
+                >
+                  {EXPORT_FORMATS.map((item) => (
+                    <option key={item} value={item}>
+                      {item.toUpperCase()} output
+                    </option>
+                  ))}
+                </select>
+
+                <button
+                  type="button"
+                  onClick={onSubmit}
+                  disabled={processing || uploading || uploadedCount === 0}
+                  className="h-12 rounded-2xl bg-[var(--color-accent)] px-6 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {processing ? 'Processing Batch...' : 'Start Batch'}
+                </button>
+
+                <button
+                  type="button"
+                  aria-expanded={showMoreOptions ? 'true' : 'false'}
+                  aria-controls="batch-document-more-options"
+                  onClick={() => setShowMoreOptions((current) => !current)}
+                  className="h-12 rounded-2xl border border-[var(--color-border)] bg-white px-5 text-base font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+                >
+                  More options
+                </button>
+              </div>
+
+              <div
+                id="batch-document-more-options"
+                data-batch-more-options
+                data-batch-more-options-open={showMoreOptions ? 'true' : 'false'}
+                className={showMoreOptions ? 'block' : 'hidden'}
+              >
+                <div className="grid gap-4 rounded-[1.75rem] border border-[var(--color-border)] bg-[var(--color-surface)] p-5">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-4">
+                      <span className="text-sm font-semibold text-[var(--color-ink)]">Document images</span>
+                      <div className="theme-light">
+                        <ImageToggle value={imageMode} onChange={onImageModeChange} />
+                      </div>
+                    </div>
+                    <p className="text-sm text-[var(--color-muted)]">
+                      Applies when this batch includes PDF, EPUB, HTML/HTM, or DOCX files.
+                    </p>
+                    {showMixedImageSupportNote ? (
+                      <p className="text-sm text-[var(--color-muted)]">
+                        Mixed batches still keep this setting, but image handling only affects the supported file types.
+                      </p>
+                    ) : null}
+                  </div>
+
+                  <div className="flex flex-wrap gap-3 text-sm text-[var(--color-muted)]">
+                    <span>{maxFiles.toLocaleString()} files max</span>
+                    <span>{formatBytes(maxFileBytes)} per file</span>
+                    <span>{formatBytes(maxBatchBytes)} total</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="space-y-3">
+              <h2 className="logo-mark max-w-[12ch] text-5xl font-semibold leading-[0.95] text-[var(--color-ink)]">
+                {stage === 'running' ? 'Run in progress.' : 'Review what actually came back.'}
+              </h2>
+              <p className="max-w-xl text-lg leading-8 text-[var(--color-muted)]">
+                {stage === 'running'
+                  ? 'The current run becomes the only thing asking for attention.'
+                  : 'The finished run reveals row-level truth only after the batch has completed enough work to review.'}
+              </p>
             </div>
 
-            {results.length > 0 ? (
-              <div className="rounded-xl border border-[var(--color-border)] bg-white p-3">
-                <div className="mb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-muted)]">
-                  <span>Successful: {successCount.toLocaleString()}</span>
-                  <span>Degraded: {degradedCount.toLocaleString()}</span>
-                  <span>Failed: {failureCount.toLocaleString()}</span>
-                  <span>Visible: {results.length.toLocaleString()}</span>
-                </div>
-
-                <div className="max-h-64 space-y-2 overflow-auto pr-1">
-                  {results.map((row) => (
-                    <article key={`${row.originalFilename || row.url}-${row.durationMs}`} className="rounded-lg border border-[var(--color-border)] bg-white p-2 text-xs">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p
-                          className="min-w-0 flex-1 truncate font-semibold text-[var(--color-ink)]"
-                          title={row.originalFilename || row.title || row.url}
-                        >
-                          {row.originalFilename || row.outputFilename || row.title || row.url}
-                        </p>
-                        <span
-                          className={`rounded-full px-2 py-0.5 font-semibold ${
-                            row.status === 'success' && row.qualityState === 'degraded'
-                              ? 'border border-amber-600 bg-white text-amber-700'
-                              : row.status === 'success'
-                              ? 'border border-[var(--color-accent)] bg-white text-[var(--color-accent)]'
-                              : row.status === 'failure'
-                                ? 'border border-red-700 bg-white text-red-700'
-                                : row.status === 'running'
-                                  ? 'border border-[var(--color-border)] bg-white text-[var(--color-ink)]'
-                                  : 'border border-[var(--color-border)] bg-white text-[var(--color-muted)]'
-                          }`}
-                        >
-                          {row.status === 'success' && row.qualityState === 'degraded' ? 'degraded' : row.status}
-                        </span>
-                      </div>
-
-                      <div className="mt-1 flex flex-wrap items-center justify-between gap-2 text-[var(--color-muted)]">
-                        <span>{formatMs(row.durationMs)}</span>
-                        {row.status === 'success' && row.outputObjectKey ? (
-                          <button
-                            type="button"
-                            onClick={() => onDownloadOne(row)}
-                            className="rounded-md border border-[var(--color-border)] px-2 py-1 font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
-                          >
-                            Download
-                          </button>
-                        ) : null}
-                      </div>
-
-                      {row.status === 'success' && row.qualityState === 'degraded' && row.warnings?.length ? (
-                        <div className="mt-1 space-y-1 text-[11px] text-amber-700">
-                          {row.warnings.map((warning) => (
-                            <p key={warning}>{warning}</p>
-                          ))}
-                        </div>
-                      ) : null}
-                      {row.status === 'failure' ? (
-                        <div className="mt-1 space-y-1 text-[11px] text-red-700">
-                          <p className="break-words">
-                            {row.errorCode || 'DOCUMENT_CONVERSION_FAILED'}: {row.errorMessage || 'Failed to convert file.'}
-                          </p>
-                          {nextStepGuidanceForErrorCode(row.errorCode) ? (
-                            <p className="break-words">Next step: {nextStepGuidanceForErrorCode(row.errorCode)}</p>
-                          ) : null}
-                        </div>
-                      ) : null}
-                    </article>
-                  ))}
-                </div>
-                {degradedCount > visibleDegradedCount ? (
-                  <p className="mt-2 text-[11px] text-[var(--color-muted)]">
-                    More degraded rows exist outside the visible page.
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xl font-semibold text-[var(--color-ink)]">{currentContextLabel}</p>
+                  <p className="text-lg text-[var(--color-muted)]">
+                    {processedCount.toLocaleString()} of {Math.max(totalCount, processedCount).toLocaleString()} checked
                   </p>
-                ) : null}
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-semibold text-[var(--color-ink)]">{fill}%</p>
+                  {processing ? <p className="text-sm text-[var(--color-muted)]">ETA {etaText}</p> : null}
+                </div>
               </div>
-            ) : (
-              <div className="text-sm text-[var(--color-muted)]">
-                {runMessage || 'Batch status will appear here after you start a run.'}
+
+              <div
+                className="h-3 overflow-hidden rounded-full bg-[var(--color-surface)]"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={fill}
+              >
+                <div
+                  className="h-full rounded-full bg-[var(--color-accent)] transition-[width] duration-500 ease-out"
+                  style={{ width: `${fill}%` }}
+                />
               </div>
-            )}
-          </div>
+            </div>
+          </>
+        )}
+
+        {stage === 'review' ? (
+          <BatchReviewList
+            results={results}
+            usableCount={usableCount}
+            partialCount={partialOutputCount}
+            degradedCount={degradedCount}
+            failureCount={failureCount}
+            runMessage={runMessage}
+            processing={processing}
+            onDownloadOne={onDownloadOne}
+            canDownload={(item) => item.status === 'success' && Boolean(item.outputObjectKey)}
+            onDownloadAll={successCount > 0 ? onDownloadAll : null}
+            downloadAllLabel={downloadingAll ? 'Downloading...' : `Download ${successCount.toLocaleString()}`}
+            downloadAllDisabled={processing || downloadingAll || successCount === 0}
+            onRetryFailed={failureCount > 0 ? onRetryFailed : null}
+            retryLabel={retryingFailed ? 'Retrying...' : `Retry failed files (${failureCount.toLocaleString()})`}
+            retryDisabled={processing || retryingFailed}
+            rowTitle={(item) => item.originalFilename || item.outputFilename || item.title || item.url}
+          />
         ) : null}
+
+        {stage === 'running' && runMessage ? <p className="text-sm text-[var(--color-muted)]">{runMessage}</p> : null}
       </div>
     </section>
   );

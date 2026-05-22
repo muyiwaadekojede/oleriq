@@ -5,9 +5,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { BatchBelowFoldContent } from '@/components/BatchBelowFoldContent';
 import { BatchDocumentPanel, type DocumentUploadItem } from '@/components/BatchDocumentPanel';
-import { BatchUrlPanel, type BatchItemResult } from '@/components/BatchUrlPanel';
+import { BatchUrlPanel } from '@/components/BatchUrlPanel';
+import type { BatchItemResult } from '@/components/batchTypes';
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
-import type { BatchInputMode, ExportFormat, ImageMode, ReaderSettings } from '@/lib/types';
+import type { BatchDiagnosticReason, BatchInputMode, ExportFormat, ImageMode, ReaderSettings } from '@/lib/types';
 
 type BatchJobStatus = 'idle' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 
@@ -20,6 +21,9 @@ type BatchJobApi = {
   successCount: number;
   failureCount: number;
   degradedCount: number;
+  usableCount: number;
+  emptyOutputCount: number;
+  partialOutputCount: number;
   averageDurationMs: number | null;
   startedAt: string | null;
   completedAt: string | null;
@@ -29,8 +33,9 @@ type BatchItemApi = {
   id: number;
   url: string;
   status: 'pending' | 'running' | 'success' | 'failure';
-  qualityState: 'usable' | 'degraded' | null;
+  qualityState: 'usable' | 'partial' | 'degraded' | null;
   warnings: string[];
+  diagnosticReasons: BatchDiagnosticReason[];
   durationMs: number;
   extractionId: string | null;
   sourceUrl: string | null;
@@ -73,12 +78,6 @@ type DocumentUploadEntry = DocumentUploadItem & {
 
 const BATCH_MAX_URLS = 50_000;
 const BATCH_ESTIMATED_MS_PER_URL = 9_000;
-const DOWNLOAD_ESTIMATED_MS_PER_URL: Record<ExportFormat, number> = {
-  txt: 500,
-  md: 650,
-  docx: 2_000,
-  pdf: 2_700,
-};
 const DEFAULT_SETTINGS: ReaderSettings = {
   fontFace: 'serif',
   fontSize: 16,
@@ -182,6 +181,7 @@ function mapBatchItem(item: BatchItemApi): BatchItemResult {
     status: item.status,
     qualityState: item.qualityState || undefined,
     warnings: Array.isArray(item.warnings) ? item.warnings : [],
+    diagnosticReasons: Array.isArray(item.diagnosticReasons) ? item.diagnosticReasons : [],
     durationMs: Number(item.durationMs || 0),
     extractionId: item.extractionId || undefined,
     sourceUrl: item.sourceUrl || undefined,
@@ -213,6 +213,9 @@ export default function BatchPage() {
   const [batchSuccessCount, setBatchSuccessCount] = useState(0);
   const [batchFailureCount, setBatchFailureCount] = useState(0);
   const [batchDegradedCount, setBatchDegradedCount] = useState(0);
+  const [batchUsableCount, setBatchUsableCount] = useState(0);
+  const [batchEmptyOutputCount, setBatchEmptyOutputCount] = useState(0);
+  const [batchPartialOutputCount, setBatchPartialOutputCount] = useState(0);
   const [batchEtaMs, setBatchEtaMs] = useState(0);
   const [batchRunMessage, setBatchRunMessage] = useState('');
   const [batchRetryingFailed, setBatchRetryingFailed] = useState(false);
@@ -229,6 +232,9 @@ export default function BatchPage() {
   const [documentSuccessCount, setDocumentSuccessCount] = useState(0);
   const [documentFailureCount, setDocumentFailureCount] = useState(0);
   const [documentDegradedCount, setDocumentDegradedCount] = useState(0);
+  const [documentUsableCount, setDocumentUsableCount] = useState(0);
+  const [documentEmptyOutputCount, setDocumentEmptyOutputCount] = useState(0);
+  const [documentPartialOutputCount, setDocumentPartialOutputCount] = useState(0);
   const [documentEtaMs, setDocumentEtaMs] = useState(0);
   const [documentRunMessage, setDocumentRunMessage] = useState('');
   const [documentImageMode, setDocumentImageMode] = useState<ImageMode>('off');
@@ -263,15 +269,6 @@ export default function BatchPage() {
 
   const parsedBatchUrls = useMemo(() => parseBatchUrls(batchUrlsInput), [batchUrlsInput]);
 
-  const batchDownloadEstimateMs = useMemo(() => {
-    const count = batchSuccessCount > 0 ? batchSuccessCount : parsedBatchUrls.length;
-    return count * DOWNLOAD_ESTIMATED_MS_PER_URL[batchFormat];
-  }, [batchFormat, parsedBatchUrls.length, batchSuccessCount]);
-
-  const documentDownloadEstimateMs = useMemo(() => {
-    const count = documentSuccessCount > 0 ? documentSuccessCount : documentUploads.length;
-    return count * DOWNLOAD_ESTIMATED_MS_PER_URL[documentFormat];
-  }, [documentFormat, documentSuccessCount, documentUploads.length]);
   const selectedDocumentHasImageCapableFiles = useMemo(
     () => documentUploads.some((item) => hasImageCapableDocument(item.name)),
     [documentUploads],
@@ -329,6 +326,9 @@ export default function BatchPage() {
       setSuccessCount: (value: number) => void;
       setFailureCount: (value: number) => void;
       setDegradedCount: (value: number) => void;
+      setUsableCount: (value: number) => void;
+      setEmptyOutputCount: (value: number) => void;
+      setPartialOutputCount: (value: number) => void;
       setEtaMs: (value: number) => void;
       setResults: (rows: BatchItemResult[]) => void;
       setRunMessage: (value: string) => void;
@@ -365,6 +365,9 @@ export default function BatchPage() {
     handlers.setSuccessCount(Number(json.job.successCount || 0));
     handlers.setFailureCount(Number(json.job.failureCount || 0));
     handlers.setDegradedCount(Number(json.job.degradedCount || 0));
+    handlers.setUsableCount(Number(json.job.usableCount || 0));
+    handlers.setEmptyOutputCount(Number(json.job.emptyOutputCount || 0));
+    handlers.setPartialOutputCount(Number(json.job.partialOutputCount || 0));
     handlers.setEtaMs(Math.max(0, Number(json.estimatedRemainingMs || 0)));
     handlers.setResults((json.items || []).map(mapBatchItem));
 
@@ -377,7 +380,7 @@ export default function BatchPage() {
           ? completedAtMs - startedAtMs
           : Number(json.job.averageDurationMs || 0) * Number(json.job.processedUrls || 0);
 
-      const message = `Completed in ${formatDuration(durationMs)}. ${Number(json.job.successCount || 0).toLocaleString()} usable or degraded, ${Number(json.job.degradedCount || 0).toLocaleString()} degraded, ${Number(json.job.failureCount || 0).toLocaleString()} failed.`;
+      const message = `Completed in ${formatDuration(durationMs)}. ${Number(json.job.usableCount || 0).toLocaleString()} usable, ${Number(json.job.partialOutputCount || 0).toLocaleString()} partial, ${Number(json.job.degradedCount || 0).toLocaleString()} degraded, ${Number(json.job.failureCount || 0).toLocaleString()} failed.`;
       handlers.setRunMessage(message);
 
       void trackClientEvent({
@@ -385,15 +388,16 @@ export default function BatchPage() {
         eventGroup: 'extract',
         status: Number(json.job.failureCount || 0) > 0 ? 'failure' : 'success',
         pagePath: handlers.pagePath,
-        metadata: {
-          jobId: json.job.id,
-          count: Number(json.job.totalUrls || 0),
-          successCount: Number(json.job.successCount || 0),
-          degradedCount: Number(json.job.degradedCount || 0),
-          failureCount: Number(json.job.failureCount || 0),
-          format: handlers.selectedFormat,
-          inputMode: json.job.inputMode,
-        },
+          metadata: {
+            jobId: json.job.id,
+            count: Number(json.job.totalUrls || 0),
+            successCount: Number(json.job.successCount || 0),
+            partialOutputCount: Number(json.job.partialOutputCount || 0),
+            degradedCount: Number(json.job.degradedCount || 0),
+            failureCount: Number(json.job.failureCount || 0),
+            format: handlers.selectedFormat,
+            inputMode: json.job.inputMode,
+          },
       });
     } else if (json.job.status === 'running' || json.job.status === 'queued') {
       handlers.setRunMessage(
@@ -420,6 +424,9 @@ export default function BatchPage() {
           setSuccessCount: setBatchSuccessCount,
           setFailureCount: setBatchFailureCount,
           setDegradedCount: setBatchDegradedCount,
+          setUsableCount: setBatchUsableCount,
+          setEmptyOutputCount: setBatchEmptyOutputCount,
+          setPartialOutputCount: setBatchPartialOutputCount,
           setEtaMs: setBatchEtaMs,
           setResults: setBatchResults,
           setRunMessage: setBatchRunMessage,
@@ -459,6 +466,9 @@ export default function BatchPage() {
           setSuccessCount: setDocumentSuccessCount,
           setFailureCount: setDocumentFailureCount,
           setDegradedCount: setDocumentDegradedCount,
+          setUsableCount: setDocumentUsableCount,
+          setEmptyOutputCount: setDocumentEmptyOutputCount,
+          setPartialOutputCount: setDocumentPartialOutputCount,
           setEtaMs: setDocumentEtaMs,
           setResults: setDocumentResults,
           setRunMessage: setDocumentRunMessage,
@@ -730,6 +740,9 @@ export default function BatchPage() {
       setBatchSuccessCount(0);
       setBatchFailureCount(0);
       setBatchDegradedCount(0);
+      setBatchUsableCount(0);
+      setBatchEmptyOutputCount(0);
+      setBatchPartialOutputCount(0);
       setBatchEtaMs(Number(json.job.estimatedProcessingMs || 0));
       setBatchRunMessage(`Retry job queued (${json.job.jobId.slice(0, 8)}) from ${failedUrls.length.toLocaleString()} failed URLs.`);
     } catch (error) {
@@ -811,6 +824,9 @@ export default function BatchPage() {
       setDocumentSuccessCount(0);
       setDocumentFailureCount(0);
       setDocumentDegradedCount(0);
+      setDocumentUsableCount(0);
+      setDocumentEmptyOutputCount(0);
+      setDocumentPartialOutputCount(0);
       setDocumentEtaMs(Number(json.job.estimatedProcessingMs || 0));
       setDocumentRunMessage(`Retry job queued (${json.job.jobId.slice(0, 8)}) from ${failedFiles.length.toLocaleString()} failed files.`);
     } catch (error) {
@@ -840,6 +856,9 @@ export default function BatchPage() {
     setBatchSuccessCount(0);
     setBatchFailureCount(0);
     setBatchDegradedCount(0);
+    setBatchUsableCount(0);
+    setBatchEmptyOutputCount(0);
+    setBatchPartialOutputCount(0);
     setBatchEtaMs(urls.length * BATCH_ESTIMATED_MS_PER_URL);
     setBatchJobStatus('queued');
 
@@ -1129,6 +1148,9 @@ export default function BatchPage() {
     setDocumentSuccessCount(0);
     setDocumentFailureCount(0);
     setDocumentDegradedCount(0);
+    setDocumentUsableCount(0);
+    setDocumentEmptyOutputCount(0);
+    setDocumentPartialOutputCount(0);
     setDocumentEtaMs(uploadedFiles.length * BATCH_ESTIMATED_MS_PER_URL);
     setDocumentJobStatus('queued');
     setDocumentRunMessage('Submitting document batch...');
@@ -1218,8 +1240,10 @@ export default function BatchPage() {
               successCount={batchSuccessCount}
               failureCount={batchFailureCount}
               degradedCount={batchDegradedCount}
+              usableCount={batchUsableCount}
+              emptyOutputCount={batchEmptyOutputCount}
+              partialOutputCount={batchPartialOutputCount}
               etaText={formatDuration(batchEtaMs)}
-              downloadEstimateText={formatDuration(batchDownloadEstimateMs)}
               runMessage={batchRunMessage}
               results={batchResults}
               onDownloadOne={(row) =>
@@ -1243,7 +1267,6 @@ export default function BatchPage() {
               onFormatChange={setDocumentFormat}
               imageMode={documentImageMode}
               onImageModeChange={setDocumentImageMode}
-              showImageModeToggle={selectedDocumentHasImageCapableFiles}
               showMixedImageSupportNote={selectedDocumentHasMixedImageSupport}
               onSelectFiles={(files) => void handleSelectDocumentFiles(files)}
               onRemoveFile={removeDocumentUpload}
@@ -1257,12 +1280,10 @@ export default function BatchPage() {
               successCount={documentSuccessCount}
               failureCount={documentFailureCount}
               degradedCount={documentDegradedCount}
+              usableCount={documentUsableCount}
+              partialOutputCount={documentPartialOutputCount}
               etaText={formatDuration(documentEtaMs)}
-              runMessage={
-                documentProcessing || documentSuccessCount > 0
-                  ? `${documentRunMessage}${documentSuccessCount > 0 && !documentProcessing ? ` Download est. ${formatDuration(documentDownloadEstimateMs)}.` : ''}`
-                  : documentRunMessage
-              }
+              runMessage={documentRunMessage}
               maxFiles={uploadConfig.limits.maxFiles}
               maxFileBytes={uploadConfig.limits.maxFileBytes}
               maxBatchBytes={uploadConfig.limits.maxBatchBytes}

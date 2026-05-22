@@ -1,42 +1,48 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { chromium } from 'playwright';
-import { prepareRealDocumentFixtures, readUploadPayload } from './batch-document-fixtures.mjs';
+import { readUploadPayload } from './batch-document-fixtures.mjs';
+import { resolveActiveBatchLiveCorpus } from './batch-live-corpus.mjs';
 
 const baseUrl = process.env.BASE_URL || 'http://127.0.0.1:3000';
-const sourceDir = path.join(process.cwd(), 'tests documents');
 const tempDir = path.join(process.cwd(), '.tmp-e2e-batch-documents-real');
 const firstPassFormats = ['pdf', 'md', 'txt', 'docx'];
 const secondPassFormats = ['pdf', 'md', 'txt', 'docx'];
+const batchSurfaceSelector = '[data-batch-surface="primary"]';
 
 function fail(message) {
   throw new Error(message);
 }
 
-async function findRealPdfFixture() {
-  let entries;
-  try {
-    entries = await fs.readdir(sourceDir);
-  } catch {
-    fail(`Missing required fixture directory: ${sourceDir}`);
-  }
-
-  const pdfName = entries
-    .filter((name) => name.toLowerCase().endsWith('.pdf'))
-    .sort()[0];
-
-  if (!pdfName) {
-    fail(`No PDF fixtures found in ${sourceDir}`);
-  }
-
-  return path.join(sourceDir, pdfName);
+function isTransientFetchFailure(error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const lowered = message.toLowerCase();
+  return lowered.includes('fetch failed') || lowered.includes('econnreset') || lowered.includes('socket hang up');
 }
+
+const liveCorpusOrder = [
+  '.pdf',
+  '.docx',
+  '.epub',
+  '.html',
+  '.htm',
+  '.txt',
+  '.md',
+  '.csv',
+  '.tsv',
+  '.json',
+  '.xml',
+  '.yaml',
+  '.yml',
+  '.log',
+  '.rst',
+];
 
 async function waitForUploadSummary(page, selectedCount, uploadedCount) {
   const expectedLine = `${selectedCount.toLocaleString()} selected`;
   await page.waitForFunction(
-    ({ expectedLine, uploadedCount }) => {
-      const panel = document.querySelector('main section.rounded-2xl.border');
+    ({ expectedLine, uploadedCount, batchSurfaceSelector }) => {
+      const panel = document.querySelector(batchSurfaceSelector);
       const text = panel instanceof HTMLElement ? panel.innerText : '';
       return (
         text.includes(expectedLine) &&
@@ -45,7 +51,7 @@ async function waitForUploadSummary(page, selectedCount, uploadedCount) {
           text.includes('failed'))
       );
     },
-    { expectedLine, uploadedCount },
+    { expectedLine, uploadedCount, batchSurfaceSelector },
     { timeout: 120_000 },
   );
 }
@@ -92,14 +98,15 @@ async function openDocumentsMode(page) {
   const button = page.getByRole('button', { name: 'Documents' });
   await button.waitFor({ state: 'visible', timeout: 20_000 });
   await button.click();
-  await page.waitForFunction(
-    () => {
-      const bodyText = document.body.innerText;
-      return bodyText.includes('Drop documents here or choose files.');
-    },
-    undefined,
-    { timeout: 20_000 },
-  );
+  await page.locator(`${batchSurfaceSelector}[data-batch-mode="document"]`).waitFor({ timeout: 60_000 });
+  await page.getByText('Drop documents here or choose files.').waitFor({ timeout: 60_000 });
+}
+
+async function openMoreOptions(page) {
+  await page.getByRole('button', { name: 'More options' }).click();
+  await page.locator('[data-batch-more-options][data-batch-more-options-open="true"]').waitFor({
+    timeout: 60_000,
+  });
 }
 
 async function assertDocumentUploaderAvailable(browser) {
@@ -116,6 +123,38 @@ async function assertDocumentUploaderAvailable(browser) {
   }
 }
 
+async function waitForBatchDetail(sessionId, jobId) {
+  const timeoutAt = Date.now() + 240_000;
+
+  while (Date.now() < timeoutAt) {
+    const response = await fetch(
+      `${baseUrl}/api/batch-jobs?jobId=${encodeURIComponent(jobId)}&limit=50&offset=0`,
+      {
+        headers: {
+          'x-clearpage-session': sessionId,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      fail(`Batch detail request failed for ${jobId}: ${response.status} ${await response.text()}`);
+    }
+
+    const json = await response.json();
+    if (!json.success || !json.job) {
+      fail(`Batch detail payload invalid for ${jobId}: ${JSON.stringify(json)}`);
+    }
+
+    if (json.job.status === 'completed' || json.job.status === 'failed') {
+      return json;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+  }
+
+  fail(`Batch detail polling timed out for ${jobId}.`);
+}
+
 async function runSingleConversion(browser, inputFixture, targetFormat) {
   const context = await browser.newContext({ acceptDownloads: true });
   const page = await context.newPage();
@@ -128,7 +167,7 @@ async function runSingleConversion(browser, inputFixture, targetFormat) {
     await page.getByText(inputName).waitFor({ timeout: 120_000 });
     await waitForUploadSummary(page, 1, 1);
 
-    const bodyAfterUpload = await page.locator('main section.rounded-2xl.border').first().innerText();
+    const bodyAfterUpload = await page.locator(batchSurfaceSelector).first().innerText();
     if (!bodyAfterUpload.includes('1 uploaded')) {
       fail(`${inputName} did not finish uploading cleanly: ${bodyAfterUpload}`);
     }
@@ -138,6 +177,7 @@ async function runSingleConversion(browser, inputFixture, targetFormat) {
     }
 
     if (inputFixture.imageCapable) {
+      await openMoreOptions(page);
       await page.getByText('Document images').waitFor({ timeout: 60_000 });
       const imageModeOn = page.getByRole('button', { name: 'On', exact: true });
       await imageModeOn.click();
@@ -147,38 +187,55 @@ async function runSingleConversion(browser, inputFixture, targetFormat) {
     }
 
     await page.locator('select').first().selectOption(targetFormat);
+    const createResponsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes('/api/batch-jobs') &&
+        response.request().method() === 'POST' &&
+        response.status() === 202,
+      { timeout: 120_000 },
+    );
     await page.getByRole('button', { name: 'Start Batch' }).click();
-    await page.getByRole('heading', { name: 'Batch activity' }).waitFor({ timeout: 240_000 });
+    const createResponse = await createResponsePromise;
+    const createJson = await createResponse.json();
+    const jobId = createJson?.job?.jobId;
+    if (!jobId) {
+      fail(`${inputName} -> ${targetFormat} did not return a batch job id: ${JSON.stringify(createJson)}`);
+    }
+    const sessionId = await page.evaluate(() => window.localStorage.getItem('clearpage_session_id') || '');
+    if (!sessionId) {
+      fail(`${inputName} -> ${targetFormat} did not expose a browser session id.`);
+    }
+
+    await page.locator(`${batchSurfaceSelector}[data-batch-stage="review"]`).waitFor({ timeout: 240_000 });
     await page.waitForFunction(
-      () => {
-        const panel = document.querySelector('main section.rounded-2xl.border');
+      ({ batchSurfaceSelector }) => {
+        const panel = document.querySelector(batchSurfaceSelector);
         const text = panel instanceof HTMLElement ? panel.innerText : '';
         return (
-          text.includes('Download') ||
+          text.includes('Expand') ||
+          text.includes('Show clean rows') ||
           text.includes('DOCUMENT_CONVERSION_FAILED') ||
           text.includes('Unsupported file type.')
         );
       },
-      undefined,
+      { batchSurfaceSelector },
       { timeout: 240_000 },
     );
 
     if (targetFormat === 'txt' && inputFixture.imageCapable) {
+      await page.locator('[data-batch-row]').first().getByRole('button').first().click();
       await page.waitForFunction(
-        () => {
-          const panel = document.querySelector('main section.rounded-2xl.border');
+        ({ batchSurfaceSelector }) => {
+          const panel = document.querySelector(batchSurfaceSelector);
           const text = panel instanceof HTMLElement ? panel.innerText : '';
-          return (
-            text.toLowerCase().includes('degraded') &&
-            text.includes('Images were converted to captions because TXT output does not support embedded images.')
-          );
+          return text.toLowerCase().includes('degraded') && text.includes('Images become captions instead of embedded images in TXT output.');
         },
-        undefined,
+        { batchSurfaceSelector },
         { timeout: 240_000 },
       );
     }
 
-    const bodyText = await page.locator('main section.rounded-2xl.border').first().innerText();
+    const bodyText = await page.locator(batchSurfaceSelector).first().innerText();
     const failureLine = bodyText
       .split('\n')
       .find((line) => line.includes('DOCUMENT_CONVERSION_FAILED') || line.includes('Unsupported file type.'));
@@ -192,17 +249,41 @@ async function runSingleConversion(browser, inputFixture, targetFormat) {
         fail(`${inputName} -> ${targetFormat} did not expose a degraded result state.`);
       }
 
-      if (!bodyText.includes('Images were converted to captions because TXT output does not support embedded images.')) {
+      if (!bodyText.includes('Images become captions instead of embedded images in TXT output.')) {
         fail(`${inputName} -> ${targetFormat} did not expose the deterministic TXT image warning.`);
       }
     }
 
-    const downloadPromise = page.waitForEvent('download', { timeout: 120_000 });
-    await page.locator('article button:has-text("Download")').first().click();
-    const download = await downloadPromise;
-    const outputName = download.suggestedFilename();
+    const detail = await waitForBatchDetail(sessionId, jobId);
+    const successfulItem = Array.isArray(detail.items)
+      ? detail.items.find((item) => item.status === 'success' && item.outputFilename)
+      : null;
+
+    if (!successfulItem?.id) {
+      fail(`${inputName} -> ${targetFormat} did not expose a downloadable batch item: ${JSON.stringify(detail)}`);
+    }
+
+    const downloadResponse = await fetch(
+      `${baseUrl}/api/batch-jobs/download?jobId=${encodeURIComponent(jobId)}&itemId=${encodeURIComponent(String(successfulItem.id))}`,
+      {
+        headers: {
+          'x-clearpage-session': sessionId,
+        },
+      },
+    );
+
+    if (!downloadResponse.ok) {
+      fail(
+        `${inputName} -> ${targetFormat} batch download failed: ${downloadResponse.status} ${await downloadResponse.text()}`,
+      );
+    }
+
+    const contentDisposition = downloadResponse.headers.get('content-disposition') || '';
+    const match = contentDisposition.match(/filename="?([^\"]+)"?/i);
+    const outputName = match?.[1] || successfulItem.outputFilename;
     const outputPath = path.join(tempDir, outputName);
-    await download.saveAs(outputPath);
+    const outputBuffer = Buffer.from(await downloadResponse.arrayBuffer());
+    await fs.writeFile(outputPath, outputBuffer);
 
     if (!outputName.toLowerCase().endsWith(`.${targetFormat}`)) {
       fail(`Unexpected output extension for ${inputName} -> ${targetFormat}: ${outputName}`);
@@ -224,65 +305,48 @@ async function runSingleConversion(browser, inputFixture, targetFormat) {
   }
 }
 
+async function runSingleConversionWithRetry(browser, inputFixture, targetFormat) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= 2; attempt += 1) {
+    try {
+      return await runSingleConversion(browser, inputFixture, targetFormat);
+    } catch (error) {
+      lastError = error;
+      if (!isTransientFetchFailure(error) || attempt >= 2) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    }
+  }
+
+  throw lastError;
+}
+
 async function main() {
   await fs.rm(tempDir, { recursive: true, force: true });
   await fs.mkdir(tempDir, { recursive: true });
 
-  const pdfFixturePath = await findRealPdfFixture();
-  const { fixtures: realFixtures } = await prepareRealDocumentFixtures({
-    dirName: path.join('.tmp-e2e-batch-documents-real', 'fixtures'),
-  });
-  const firstPassInputs = [
-    {
-      filename: path.basename(pdfFixturePath),
-      localPath: pdfFixturePath,
-      contentType: 'application/pdf',
-      inputExt: 'pdf',
-      imageCapable: true,
-    },
-    {
-      filename: realFixtures.pdfInline.filename,
-      localPath: realFixtures.pdfInline.localPath,
-      contentType: realFixtures.pdfInline.contentType,
-      inputExt: 'pdf',
-      imageCapable: true,
-    },
-    {
-      filename: realFixtures.pdfDecorative.filename,
-      localPath: realFixtures.pdfDecorative.localPath,
-      contentType: realFixtures.pdfDecorative.contentType,
-      inputExt: 'pdf',
-      imageCapable: true,
-    },
-    {
-      filename: realFixtures.epub.filename,
-      localPath: realFixtures.epub.localPath,
-      contentType: realFixtures.epub.contentType,
-      inputExt: 'epub',
-      imageCapable: true,
-    },
-    {
-      filename: realFixtures.docx.filename,
-      localPath: realFixtures.docx.localPath,
-      contentType: realFixtures.docx.contentType,
-      inputExt: 'docx',
-      imageCapable: true,
-    },
-    {
-      filename: realFixtures.html.filename,
-      localPath: realFixtures.html.localPath,
-      contentType: realFixtures.html.contentType,
-      inputExt: 'html',
-      imageCapable: true,
-    },
-    {
-      filename: realFixtures.htm.filename,
-      localPath: realFixtures.htm.localPath,
-      contentType: realFixtures.htm.contentType,
-      inputExt: 'htm',
-      imageCapable: true,
-    },
-  ];
+  const liveCorpus = await resolveActiveBatchLiveCorpus();
+  const firstPassInputs = [...liveCorpus.documents]
+    .sort((left, right) => {
+      const leftIndex = liveCorpusOrder.indexOf(left.inputExt);
+      const rightIndex = liveCorpusOrder.indexOf(right.inputExt);
+      return leftIndex - rightIndex;
+    })
+    .map((fixture) => ({
+      filename: fixture.filename,
+      localPath: fixture.localPath,
+      contentType: fixture.contentType,
+      inputExt: fixture.inputExt.replace(/^\./, ''),
+      imageCapable: fixture.imageCapable,
+    }));
+
+  if (firstPassInputs.length !== liveCorpusOrder.length) {
+    fail(`Expected one downloaded live-corpus document per supported format, got ${firstPassInputs.length}.`);
+  }
+
   const browser = await chromium.launch({ headless: true });
   const failures = [];
 
@@ -299,7 +363,7 @@ async function main() {
     for (const inputFixture of firstPassInputs) {
       for (const format of firstPassFormats) {
         try {
-          const result = await runSingleConversion(browser, inputFixture, format);
+          const result = await runSingleConversionWithRetry(browser, inputFixture, format);
           firstPass.push(result);
           console.log(`pass1 ${result.inputExt}->${format} ok (${result.outputName}) [images=${result.imageMode}]`);
         } catch (error) {
@@ -322,7 +386,7 @@ async function main() {
     for (const [sourceExt, inputPath] of representative.entries()) {
       for (const format of secondPassFormats) {
         try {
-          const result = await runSingleConversion(
+          const result = await runSingleConversionWithRetry(
             browser,
             {
               filename: path.basename(inputPath),

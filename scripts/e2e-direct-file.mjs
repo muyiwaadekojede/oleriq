@@ -3,6 +3,7 @@ import { chromium } from 'playwright';
 const baseUrl = process.env.BASE_URL || 'http://127.0.0.1:3000';
 const smallDirectPdfUrl = `${baseUrl}/test-fixtures/direct-source.pdf`;
 const directDocUrl = `${baseUrl}/test-fixtures/fallback-sample.doc`;
+const batchSurfaceSelector = '[data-batch-surface="primary"]';
 
 async function assertApiFallbackToOriginal() {
   const response = await fetch(`${baseUrl}/api/direct-file`, {
@@ -92,9 +93,16 @@ async function assertBatchDirectDocDownload(page) {
   await page.goto(`${baseUrl}/batch`, { waitUntil: 'networkidle' });
   await page.locator('#batch-urls').fill(directDocUrl);
   await page.getByRole('button', { name: 'Start Batch' }).click();
-  await page.getByRole('heading', { name: 'Batch activity' }).waitFor({ timeout: 180_000 });
+  await page.locator(`${batchSurfaceSelector}[data-batch-stage="review"]`).waitFor({ timeout: 180_000 });
 
-  const rowDownloadButton = page.locator('article button:has-text("Download")').first();
+  const showCleanRows = page.getByRole('button', { name: /Show clean rows/i });
+  await showCleanRows.waitFor({ timeout: 120_000 });
+  await showCleanRows.click();
+
+  const firstRow = page.locator('[data-batch-row]').first();
+  await firstRow.getByRole('button').first().click();
+
+  const rowDownloadButton = firstRow.getByRole('button', { name: 'Download' });
   await rowDownloadButton.waitFor({ timeout: 120_000 });
 
   const downloadPromise = page.waitForEvent('download', { timeout: 120_000 });
