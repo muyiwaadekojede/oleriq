@@ -1,344 +1,281 @@
+import Image from 'next/image';
 import Link from 'next/link';
 
-const GUIDE_INDEX = [
+const faqItems = [
   {
-    number: '01',
-    title: 'Preserve readable structure',
-    copy: 'See what users need to stay intact and where harder source shapes can still degrade output.',
+    question: 'Can a batch look finished while structure still needs review?',
+    answer:
+      'Yes. That is why the route keeps partial and degraded separate instead of flattening every finished row into one clean-looking state.',
   },
   {
-    number: '02',
-    title: 'Read result states honestly',
-    copy: 'Understand the difference between usable, degraded, and failed rows before you download.',
+    question: 'Why are clean rows hidden first?',
+    answer:
+      'Because the rows that need attention matter first. Clean rows stay available behind Show clean rows instead of competing with failures or warnings.',
   },
   {
-    number: '03',
-    title: 'Trust longer runs',
-    copy: 'Progress, retries, and failed-row visibility reduce guesswork during mixed or repeated jobs.',
+    question: 'Can I retry only the rows that broke?',
+    answer: 'Yes. Failed rows keep their retry path so one broken item does not force a full rerun.',
   },
   {
-    number: '04',
-    title: 'Choose the right workload',
-    copy: 'Match the route to bulk URLs, bulk files, or lighter one-off conversion work.',
-  },
-  {
-    number: '05',
-    title: 'Resolve common objections',
-    copy: 'Review practical batch questions without leaving the page or opening extra interface layers.',
+    question: 'When should I switch away from TXT or Markdown?',
+    answer:
+      'Switch when table layout, deeper heading structure, embedded images, or richer formatting matters in the final file.',
   },
 ] as const;
 
-const SIGNAL_CHIPS = ['readable structure', 'truthful result states', 'retry failed items'] as const;
-
-const PRESERVATION_GOALS = [
+const structureColumns = [
   {
-    label: 'Headings and outline',
-    copy: 'Long documents stay easier to scan when section hierarchy survives the conversion pass.',
+    title: 'What usually stays readable',
+    items: ['basic article flow', 'plain paragraphs and links', 'simple headings and lists'],
   },
   {
-    label: 'Lists, links, and references',
-    copy: 'Reference-heavy source material remains more usable when bullets and anchors keep their shape.',
-  },
-  {
-    label: 'Tables and code blocks',
-    copy: 'Structured source regions carry meaning that plain paragraph text can hide or flatten.',
+    title: 'What still needs review',
+    items: ['tables that depend on layout', 'deeper heading trees', 'code blocks and embedded media'],
   },
 ] as const;
 
-const PRESERVATION_LIMITS = [
-  {
-    label: 'Difficult tables',
-    copy: 'Dense or visually unusual tables can still lose layout integrity even when the row completes.',
-  },
-  {
-    label: 'Complex PDFs',
-    copy: 'Academic or image-heavy PDFs can return readable text with degraded structure or visual grouping.',
-  },
-  {
-    label: 'Non-article layouts',
-    copy: 'Some pages remain harder to normalize cleanly when the source layout was not built as a readable article.',
-  },
+const runSteps = [
+  'Start one run with one output target.',
+  'Watch progress without losing the thread.',
+  'Open only the row that needs inspection.',
 ] as const;
 
-const STATUS_CARDS = [
-  {
-    label: 'Usable',
-    title: 'Ready for download and review',
-    meaning:
-      'A usable row finished without a current warning flag, so it can be treated as the cleanest result in the run.',
-    trust: 'Trust signal: this row is the safest candidate for direct reuse, but review still matters on dense source material.',
-  },
-  {
-    label: 'Degraded',
-    title: 'Converted with a visible caution',
-    meaning:
-      'A degraded row produced output, but the source shape or conversion path raised a quality warning that should stay visible.',
-    trust: 'Trust signal: the row is not failed, but it should not be treated as equal to a clean result.',
-  },
-  {
-    label: 'Failed',
-    title: 'No usable converted file',
-    meaning:
-      'A failed row did not produce a usable converted output, so the batch keeps the breakage explicit instead of hiding it.',
-    trust: 'Trust signal: failure stays named so the rest of the batch can still be read honestly.',
-  },
-] as const;
-
-const PROCESS_STEPS = [
-  {
-    step: 'Step 1',
-    title: 'Start the run',
-    copy: 'Lock one output format, submit the batch, and let the route keep one shared activity surface for the job.',
-  },
-  {
-    step: 'Step 2',
-    title: 'Watch progress move',
-    copy: 'Progress confirms the queue is advancing instead of leaving the user to wonder whether the run stalled.',
-  },
-  {
-    step: 'Step 3',
-    title: 'Review failed rows',
-    copy: 'Visible failed rows preserve context so one broken item does not erase the rest of the completed work.',
-  },
-  {
-    step: 'Step 4',
-    title: 'Retry only what broke',
-    copy: 'Retry controls reduce waste by rerunning only the rows that need another pass instead of restarting the whole batch.',
-  },
-] as const;
-
-type WorkloadCard = {
-  label: string;
-  title: string;
-  copy: string;
-  linkLabel?: string;
-  linkHref?: string;
-  suffix?: string;
+const faqStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqItems.map((item) => ({
+    '@type': 'Question',
+    name: item.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: item.answer,
+    },
+  })),
 };
 
-const WORKLOADS: readonly WorkloadCard[] = [
-  {
-    label: 'Many URLs',
-    title: 'Article and reference-page runs',
-    copy: 'Use URL mode when you need one place to convert many pages into one target format and review row-level outcomes clearly.',
-  },
-  {
-    label: 'Many uploaded files',
-    title: 'Shared export target for documents',
-    copy: 'Use document mode when many files need one consistent export choice and one activity surface for status, warnings, and downloads.',
-  },
-  {
-    label: 'One-off URL work',
-    title: 'Use the lighter path when bulk is unnecessary',
-    copy: 'If the job is only one URL, the ',
-    linkLabel: 'single URL converter',
-    linkHref: '/',
-    suffix: ' keeps the same product tone with less workflow overhead.',
-  },
-] as const;
+function ProofArtifact({
+  src,
+  alt,
+  caption,
+  section,
+  sizes,
+}: {
+  src: string;
+  alt: string;
+  caption: string;
+  section: string;
+  sizes: string;
+}) {
+  return (
+    <figure
+      data-batch-guide-artifact={section}
+      className="overflow-hidden rounded-[30px] border border-[var(--color-border)] bg-[var(--color-surface)]"
+    >
+      <Image src={src} alt={alt} width={1440} height={1080} className="h-auto w-full" sizes={sizes} />
+      <figcaption className="border-t border-[var(--color-border)] px-5 py-4 text-sm leading-6 text-[var(--color-muted)]">
+        {caption}
+      </figcaption>
+    </figure>
+  );
+}
 
-const FAQS = [
-  {
-    question: 'Can batch conversion keep headings, lists, and tables readable?',
-    answer:
-      'That is the goal, and it is one of the main reasons this route exists. Clearpage aims to keep readable structure visible, but harder pages and files can still degrade. That is why the page reports warnings instead of assuming every completed row stayed clean.',
-  },
-  {
-    question: 'What does a degraded result mean?',
-    answer:
-      'It means the item converted, but the output should be reviewed because the conversion path or source shape raised a trust warning. Degraded is different from failed, and it is different from a fully clean result.',
-  },
-  {
-    question: 'What happens if some URLs or files fail?',
-    answer:
-      'Failed rows stay visible in the activity view with their failure state and guidance. A failed row does not need to erase the rest of the successful output from the same batch.',
-  },
-  {
-    question: 'Can I retry only failed items?',
-    answer: 'Yes. The page supports retrying failed URLs or failed files without rebuilding the entire run from scratch.',
-  },
-  {
-    question: 'Which formats can I download from a batch run?',
-    answer:
-      'Batch runs support Markdown, TXT, DOCX, and PDF output. The format stays fixed for the run so the results are easier to review and download as one consistent set.',
-  },
-  {
-    question: 'Does batch conversion work on every page or document?',
-    answer:
-      'No. Some pages, layouts, and document classes remain harder than others, especially when structure is complex or the source does not convert cleanly. Clearpage is designed to surface those limits with degraded results, failed rows, and retry controls instead of implying universal success.',
-  },
-] as const;
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p
+      data-batch-guide-kicker
+      className="text-[0.95rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-muted)]"
+    >
+      {children}
+    </p>
+  );
+}
+
+function QuietStatusStrip() {
+  return (
+    <div
+      data-batch-guide-card="status-strip"
+      className="grid gap-0 overflow-hidden rounded-[24px] border border-[var(--color-border)] sm:grid-cols-2 xl:grid-cols-4"
+    >
+      <div className="border-b border-[var(--color-border)] px-4 py-4 sm:border-r xl:border-b-0">
+        <p className="font-semibold">Usable</p>
+        <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">Clean output with no current warning signs.</p>
+      </div>
+      <div className="border-b border-[var(--color-border)] px-4 py-4 xl:border-b-0 xl:border-r">
+        <p className="font-semibold">Partial</p>
+        <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">The run finished, but only part came back intact.</p>
+      </div>
+      <div className="border-b border-[var(--color-border)] px-4 py-4 sm:border-r sm:border-b-0">
+        <p className="font-semibold">Degraded</p>
+        <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
+          The output came back, but Clearpage can already see a warning worth reviewing.
+        </p>
+      </div>
+      <div className="px-4 py-4">
+        <p className="font-semibold">Failed</p>
+        <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">No usable converted file came back from that row.</p>
+      </div>
+    </div>
+  );
+}
 
 export function BatchBelowFoldContent() {
   return (
     <section
-      aria-labelledby="batch-search-guidance-heading"
-      className="mt-14 border-t border-[var(--color-border)] pt-10"
-      data-batch-guide
+      data-batch-guide="true"
+      aria-labelledby="batch-guide-heading"
+      className="mt-16 border-t border-[var(--color-border)] pt-12"
     >
-      <article className="batch-guide reading-prose mx-auto w-full text-[var(--color-ink)]">
-        <section>
-          <h2 id="batch-search-guidance-heading">Batch convert many URLs or files into readable documents</h2>
-          <p className="batch-guide__lead">
-            Batch conversion is built for repeated work. Instead of converting one page or file at a time, this route
-            keeps one output target, one activity surface, and one honest record of what happened across the run.
-          </p>
-          <p className="batch-guide__lead">
-            The point is not raw extraction volume. The point is readable output, truthful result states, and less
-            uncertainty when a batch is larger, mixed, or harder than a quick one-off conversion.
-          </p>
+      <script
+        type="application/ld+json"
+        suppressHydrationWarning
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData) }}
+      />
+      <div className="mx-auto flex w-full max-w-[1220px] flex-col gap-16 text-[var(--color-ink)]">
+        <section data-batch-guide-section="truth-surface" className="space-y-7">
+          <div className="grid gap-8 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] xl:items-end">
+            <div className="space-y-5 xl:pr-6">
+              <SectionLabel>Truth surface</SectionLabel>
+              <h2 id="batch-guide-heading" className="max-w-[13ch] text-[2.3rem] leading-[0.95] md:text-[3rem]">
+                One finished run should not hide what actually came back.
+              </h2>
+              <p>
+                Repeated conversion work gets risky when a run looks finished before you know what came back clean,
+                what only partly held together, and what broke on the first pass.
+              </p>
+              <p>
+                The first fold now keeps setup, progress, and review in one calm surface so the route can stay legible
+                while usable, partial, degraded, and failed stay separate.
+              </p>
+            </div>
+            <ProofArtifact
+              section="truth-surface"
+              src="/proof/batch/batch-route-proof-review.png"
+              alt="Real /batch review state showing one shared working surface, compact counts, and collapsed rows."
+              caption="Real route state: the completed run stays quiet, but the rows that need attention still rise first."
+              sizes="(min-width: 1280px) 58vw, (min-width: 1024px) 54vw, 100vw"
+            />
+          </div>
 
-          <div className="batch-guide__index" data-batch-guide-nav>
-            <ol className="batch-guide__index-list" aria-label="Batch guide overview">
-              {GUIDE_INDEX.map((item) => (
-                <li key={item.number} className="batch-guide__index-item">
-                  <span className="batch-guide__index-number">{item.number}</span>
-                  <span>
-                    <span className="batch-guide__index-title">{item.title}</span>
-                    <span className="batch-guide__index-copy">{item.copy}</span>
-                  </span>
-                </li>
+          <QuietStatusStrip />
+
+          <p className="max-w-[76ch] text-sm leading-6 text-[var(--color-muted)]">
+            Use <span className="font-medium text-[var(--color-ink)]">/batch</span> when repeated work needs one
+            output target and one review surface. For one-off work, use the{' '}
+            <Link href="/" className="text-[var(--color-accent)] hover:text-[var(--color-accent-strong)]">
+              single URL converter
+            </Link>
+            .
+          </p>
+        </section>
+
+        <section
+          data-batch-guide-section="structure-proof"
+          className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-center"
+        >
+          <ProofArtifact
+            section="structure-proof"
+            src="/proof/batch/batch-structure-proof.png"
+            alt="Real /batch row detail showing a partial result and structure-loss guidance on the affected row."
+            caption="Real route state: structure warnings stay on the row that needs review instead of hiding behind a finished run."
+            sizes="(min-width: 1280px) 56vw, (min-width: 1024px) 50vw, 100vw"
+          />
+
+          <div className="space-y-5">
+            <SectionLabel>Structure proof</SectionLabel>
+            <h2 className="text-[2rem] leading-[1] md:text-[2.65rem]">Readable structure can still flatten.</h2>
+            <p>
+              Clean output you can actually use is more than getting words back. Structure still decides whether the
+              result is safe to trust, reuse, or pass to another system.
+            </p>
+            <div
+              data-batch-guide-card="structure-split"
+              className="grid overflow-hidden rounded-[24px] border border-[var(--color-border)] md:grid-cols-2"
+            >
+              {structureColumns.map((column, index) => (
+                <div
+                  key={column.title}
+                  className={index === 0 ? 'border-b border-[var(--color-border)] px-5 py-5 md:border-b-0 md:border-r' : 'px-5 py-5'}
+                >
+                  <p className="font-semibold">{column.title}</p>
+                  <ul className="mt-3 space-y-2 pl-5 text-sm leading-6 text-[var(--color-muted)]">
+                    {column.items.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
               ))}
-            </ol>
-          </div>
-
-          <div className="batch-guide__chip-row" aria-label="Batch route signals">
-            {SIGNAL_CHIPS.map((chip) => (
-              <span key={chip} className="batch-guide__chip">
-                <span className="batch-guide__chip-dot" aria-hidden="true" />
-                <span className="batch-guide__chip-label">{chip}</span>
-              </span>
-            ))}
-          </div>
-        </section>
-
-        <section data-batch-guide-preservation>
-          <p className="batch-guide__eyebrow">Readable structure first</p>
-          <h2>What Clearpage tries to preserve during batch conversion</h2>
-          <p className="batch-guide__intro">
-            Users do not only need the words from a page or file. They need enough structure to review, compare, and
-            reuse the output without rebuilding the document outline by hand.
-          </p>
-          <div className="batch-guide__matrix">
-            <div className="batch-guide__panel">
-              <h3>Readable structure matters more than plain text</h3>
-              <p>
-                A result can look complete while still losing the outline that makes it useful. When headings flatten,
-                lists lose anchors, or code blocks lose spacing, the file becomes harder to review and harder to reuse.
-              </p>
-              <ul className="batch-guide__list">
-                {PRESERVATION_GOALS.map((item) => (
-                  <li key={item.label}>
-                    <span className="batch-guide__list-label">{item.label}</span>
-                    <span className="batch-guide__list-copy">{item.copy}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="batch-guide__panel">
-              <h3>Where output can still degrade</h3>
-              <p>
-                Some source types remain harder than others. Clearpage surfaces that reality instead of treating every
-                completed row as equally clean.
-              </p>
-              <ul className="batch-guide__list">
-                {PRESERVATION_LIMITS.map((item) => (
-                  <li key={item.label}>
-                    <span className="batch-guide__list-label">{item.label}</span>
-                    <span className="batch-guide__list-copy">{item.copy}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
           </div>
         </section>
 
-        <section data-batch-guide-status>
-          <p className="batch-guide__eyebrow">Truthful batch states</p>
-          <h2>How batch results are reported</h2>
-          <p className="batch-guide__intro">
-            Batch status is designed to stay honest. The route separates clean output, caution-marked output, and rows
-            that did not produce a usable converted file.
-          </p>
-          <div className="batch-guide__status-rail">
-            {STATUS_CARDS.map((card) => (
-              <div key={card.label} className="batch-guide__status-card">
-                <span className="batch-guide__status-name">{card.label}</span>
-                <h3>{card.title}</h3>
-                <p>{card.meaning}</p>
-                <p className="batch-guide__status-trust">{card.trust}</p>
-              </div>
-            ))}
+        <section
+          data-batch-guide-section="run-recovery"
+          className="grid gap-8 xl:grid-cols-[minmax(0,0.98fr)_minmax(0,1.02fr)] xl:items-center"
+        >
+          <div className="space-y-5 xl:pr-4">
+            <SectionLabel>Run recovery</SectionLabel>
+            <h2 className="text-[2rem] leading-[1] md:text-[2.65rem]">Longer runs stay legible and recoverable.</h2>
+            <p>
+              Progress stays primary while work is moving. Review only steps forward once there is real settled output
+              to inspect, and failed rows keep their retry path instead of forcing a full rerun.
+            </p>
+            <div
+              data-batch-guide-card="run-steps"
+              className="rounded-[24px] border border-[var(--color-border)] px-5 py-5"
+            >
+              <ol className="space-y-4">
+                {runSteps.map((step, index) => (
+                  <li key={step} className="space-y-1">
+                    <p className="font-semibold">
+                      {index + 1}. {step}
+                    </p>
+                    <p className="text-sm leading-6 text-[var(--color-muted)]">
+                      {index === 0
+                        ? 'The route keeps one output format per run so the review surface stays coherent.'
+                        : index === 1
+                          ? 'The progress state stays quiet, direct, and tied to the same surface.'
+                          : 'Details, downloads, and retry actions stay hidden until you open the specific row.'}
+                    </p>
+                  </li>
+                ))}
+              </ol>
+            </div>
           </div>
+
+          <ProofArtifact
+            section="run-recovery"
+            src="/proof/batch/batch-running-proof.png"
+            alt="Real /batch running state showing progress as the primary signal while review stays secondary until there is settled work to inspect."
+            caption="Real route state: the run stays legible while work is still moving."
+            sizes="(min-width: 1280px) 58vw, (min-width: 1024px) 52vw, 100vw"
+          />
         </section>
 
-        <section data-batch-guide-progress>
-          <p className="batch-guide__eyebrow">Progress with less guesswork</p>
-          <h2>Progress, retries, and trust during longer runs</h2>
-          <p className="batch-guide__intro">
-            Longer runs need more than a spinner. This route uses progress visibility and failed-row recovery to reduce
-            the uncertainty that usually appears when a batch becomes mixed, heavy, or slow.
-          </p>
-          <div className="batch-guide__process-rail">
-            {PROCESS_STEPS.map((item, index) => (
-              <div key={item.step} className="batch-guide__process-card">
-                <span className="batch-guide__process-step">
-                  <span className="batch-guide__process-count">{index + 1}</span>
-                  {item.step}
-                </span>
-                <h3 className="batch-guide__process-title">{item.title}</h3>
-                <p className="batch-guide__process-copy">{item.copy}</p>
-              </div>
+        <section data-batch-guide-section="faq" className="space-y-5">
+          <SectionLabel>FAQ</SectionLabel>
+          <h2 className="text-[2rem] leading-[1] md:text-[2.65rem]">Questions that matter before a bigger run.</h2>
+          <div className="grid gap-x-10 gap-y-2 lg:grid-cols-2">
+            {faqItems.map((item) => (
+              <details
+                key={item.question}
+                data-batch-faq-item
+                className="group border-t border-[var(--color-border)] pt-4"
+              >
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-[1.18rem] font-semibold leading-8 marker:hidden">
+                  <span>{item.question}</span>
+                  <span
+                    aria-hidden="true"
+                    className="mt-1 text-[1.5rem] leading-none text-[var(--color-muted)] transition-transform duration-200 group-open:rotate-45"
+                  >
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 max-w-[62ch] text-base leading-8 text-[var(--color-muted)]">{item.answer}</p>
+              </details>
             ))}
           </div>
         </section>
-
-        <section data-batch-guide-workloads>
-          <p className="batch-guide__eyebrow">Workload fit</p>
-          <h2>Workloads this route is built for</h2>
-          <p className="batch-guide__intro">
-            Batch conversion fits repeated jobs where one-off conversion becomes too fragmented. The route is strongest
-            when many inputs need one export target and one place to review per-row condition clearly.
-          </p>
-          <div className="batch-guide__workload-rail">
-            {WORKLOADS.map((item) => (
-              <div key={item.label} className="batch-guide__workload-card">
-                <span className="batch-guide__workload-label">{item.label}</span>
-                <h3>{item.title}</h3>
-                <p>
-                  {item.copy}
-                  {item.linkHref ? (
-                    <>
-                      <Link
-                        href={item.linkHref}
-                        className="font-semibold text-[var(--color-accent)] hover:text-[var(--color-accent-strong)]"
-                      >
-                        {item.linkLabel}
-                      </Link>
-                      {item.suffix}
-                    </>
-                  ) : null}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section data-batch-guide-faq>
-          <p className="batch-guide__eyebrow">FAQ</p>
-          <h2>Batch conversion FAQ</h2>
-          <div className="batch-guide__faq-list">
-            {FAQS.map((item) => (
-              <div key={item.question} className="batch-guide__faq-item">
-                <span className="batch-guide__faq-question">Question</span>
-                <h3>{item.question}</h3>
-                <p className="batch-guide__faq-answer">{item.answer}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      </article>
+      </div>
     </section>
   );
 }

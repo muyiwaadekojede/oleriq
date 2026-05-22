@@ -61,13 +61,13 @@ colors:
 
 typography:
   # Fill in from the fonts already loaded in the project.
-  # If the codebase adopts a new font system intentionally, update this file in the same change.
+  # Do not add new fonts. Do not guess. Check the codebase.
   heading:
     fontFamily: "\"Newsreader\", Georgia, serif"
     fontWeight: "600"
     fontSize:   "3.75rem (text-6xl)"
   body:
-    fontFamily: "\"Geist\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
+    fontFamily: "\"Geist Sans\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", sans-serif"
     fontWeight: "400"
     fontSize:   "1rem (16px)"
 
@@ -177,9 +177,12 @@ Colour is not decoration here. It is functional, contextual, and relational. The
 
 ## 3. Typography
 
-**The current Clearpage font system is locked to `Newsreader` for display headings and `Geist Sans` for UI and body text.** Preserve that pairing unless the design law itself changes in the same committed decision.
+Use the current approved Clearpage font constitution.
 
-Typography here should feel calm, legible, and exact. `Newsreader` carries reading credibility. `Geist Sans` carries product clarity. Neither should be used in a decorative or nostalgic way.
+- `Newsreader` for display headings
+- `Geist Sans` for UI and body text
+
+Any future font change requires an explicit design-law amendment committed alongside the code. The role of typography here is to be calm, legible, authoritative, and contemporary — not decorative.
 
 **Rules:**
 - The heading (product name / page title) must always be the largest typographic element on the page by a significant margin.
@@ -250,6 +253,8 @@ For pages beyond the homepage that group denser content:
 - Do not stack multiple equal-weight panels on first load unless each one represents a genuinely separate task or state.
 - If two bordered sections can be merged without hurting comprehension, they should be merged.
 - Downstream result panels should stay hidden until there is real state to show, unless the empty state is necessary to explain the workflow.
+- Workflow surfaces that move through setup, running, and review states must reveal those states progressively inside one dominant surface. Do not let progress or review break out into a second equal-weight panel by default.
+- If a functional route keeps an explanatory section below the fold, that section must prove real route behavior with product artifacts and exact workflow truth. Generic article walls and decorative marketing copy are banned on those surfaces.
 - Utility-page headings must describe the task directly. Generic labels such as `workspace`, `console`, or `hub` are banned when the page can name the concrete job instead.
 - Page-level cards are not allowed on derived product surfaces when the homepage does not use them for the same framing job.
 

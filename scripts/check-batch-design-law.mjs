@@ -54,12 +54,8 @@ async function assertSetupState(page) {
 
   await assertText(page, 'Batch convert URLs and documents');
   await assertText(page, 'Convert many links or files into clean, readable Markdown, TXT, DOCX, or PDF.');
-  await assertText(page, 'Batch convert many URLs or files into readable documents');
-  await assertText(page, 'What Clearpage tries to preserve during batch conversion');
-  await assertText(page, 'How batch results are reported');
-  await assertText(page, 'Progress, retries, and trust during longer runs');
-  await assertText(page, 'Workloads this route is built for');
-  await assertText(page, 'Batch conversion FAQ');
+  await assertText(page, 'Batch convert URLs and documents');
+  await assertText(page, 'Review what actually came back.');
   await assertTextAbsent(page, 'Batch Workspace');
   await assertTextAbsent(page, 'Prepare batch');
   await assertSingleWorkingSurface(page);
@@ -101,6 +97,44 @@ async function assertSetupState(page) {
   await assertText(page, 'Document images');
   await assertText(page, '60 MB per file');
   await assertText(page, '2.0 GB total');
+}
+
+
+async function assertBelowFoldGuide(page) {
+  const guide = page.locator('[data-batch-guide="true"]');
+  await guide.waitFor({ timeout: 30_000 });
+
+  const requiredSections = [
+    'route-proof',
+    'structure-proof',
+    'status-truth',
+    'run-recovery',
+    'workload-fit',
+    'faq',
+  ];
+
+  for (const section of requiredSections) {
+    const count = await guide.locator(`[data-batch-guide-section="${section}"]`).count();
+    if (count !== 1) {
+      fail(`Expected exactly one below-fold section for ${section}, found ${count}.`);
+    }
+  }
+
+  const proofImageCount = await guide.locator('[data-batch-guide-artifact] img').count();
+  if (proofImageCount < 3) {
+    fail(`Expected at least 3 real /batch proof artifacts, found ${proofImageCount}.`);
+  }
+
+  await assertText(page, 'Readable structure can still flatten.');
+  await assertText(page, 'Usable, partial, degraded, and failed stay separate.');
+  await assertText(page, 'Longer runs stay inspectable and recoverable.');
+  await assertText(page, 'When /batch is the right route.');
+  await assertText(page, 'Questions that matter before a bigger run.');
+
+  await assertTextAbsent(page, 'What Clearpage tries to preserve during batch conversion');
+  await assertTextAbsent(page, 'How batch results are reported');
+  await assertTextAbsent(page, 'Progress, retries, and trust during longer runs');
+  await assertTextAbsent(page, 'Workloads this route is built for');
 }
 
 async function assertRunningState(browser) {
@@ -309,6 +343,7 @@ async function assertReviewState(browser) {
     await assertText(page, '0 degraded');
     await assertText(page, '1 failed');
     await assertText(page, 'Show clean rows');
+    await assertBelowFoldGuide(page);
 
     await assertRowTitles(page, ['IANA example domains', 'MDN table reference']);
 
