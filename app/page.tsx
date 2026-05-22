@@ -10,20 +10,28 @@ import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
 import type {
   ExportFormat,
   ExtractErrorCode,
+  ExtractionPath,
   ExtractSuccessResponse,
   ImageMode,
+  PageComplexitySignal,
   ReaderSettings,
 } from '@/lib/types';
 
 type FailureState = {
   errorCode: ExtractErrorCode;
   url: string;
+  attemptedExtractionPath?: ExtractionPath;
+  browserAttempted?: boolean;
+  pageComplexitySignal?: PageComplexitySignal;
 };
 
 type ExtractFailurePayload = {
   success: false;
   errorCode?: string;
   errorMessage?: string;
+  attemptedExtractionPath?: ExtractionPath;
+  browserAttempted?: boolean;
+  pageComplexitySignal?: PageComplexitySignal;
 };
 
 function initialThemeFromSystem(): ReaderSettings['colorTheme'] {
@@ -285,7 +293,13 @@ export default function Page() {
           errorMessage: (json as ExtractFailurePayload).errorMessage,
         });
 
-        setFailure({ errorCode, url: targetUrl });
+        setFailure({
+          errorCode,
+          url: targetUrl,
+          attemptedExtractionPath: (json as ExtractFailurePayload).attemptedExtractionPath,
+          browserAttempted: (json as ExtractFailurePayload).browserAttempted,
+          pageComplexitySignal: (json as ExtractFailurePayload).pageComplexitySignal,
+        });
         setResult(null);
         return;
       }
@@ -522,8 +536,12 @@ export default function Page() {
             publishedTime={result.publishedTime}
             wordCount={result.wordCount}
             imageCount={result.imageCount}
+            exportDiagnosticReasonsByFormat={result.exportDiagnosticReasonsByFormat}
             resultState={result.resultState}
             extractionPath={result.extractionPath}
+            browserAttempted={result.browserAttempted}
+            pageComplexitySignal={result.pageComplexitySignal}
+            diagnosticReasons={result.diagnosticReasons}
             warnings={result.warnings}
             images={images}
             onImagesChange={handleImagesChange}
@@ -545,6 +563,9 @@ export default function Page() {
           open={true}
           errorCode={failure.errorCode}
           failedUrl={failure.url}
+          attemptedExtractionPath={failure.attemptedExtractionPath}
+          browserAttempted={failure.browserAttempted}
+          pageComplexitySignal={failure.pageComplexitySignal}
           sessionId={sessionIdRef.current}
           onSubmitted={() => {
             void trackClientEvent({

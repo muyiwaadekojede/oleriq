@@ -9,7 +9,8 @@ import {
   MAX_DOCUMENT_BATCH_BYTES,
   MAX_DOCUMENT_BATCH_FILES,
 } from '@/lib/documentConversion';
-import type { ExportFormat, ExtractResultState, ReaderSettings } from '@/lib/types';
+import { hasPartialOutputReasons, normalizeStoredResultState } from '@/lib/trustGuidance';
+import type { BatchDiagnosticReason, ExportFormat, ExtractResultState, ReaderSettings } from '@/lib/types';
 
 type DurableJobStatus = 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
 type DurableItemStatus = 'pending' | 'running' | 'success' | 'failure';
@@ -34,6 +35,7 @@ type DurableDocumentBatchItem = {
   status: DurableItemStatus;
   qualityState: ExtractResultState | null;
   warnings: string[];
+  diagnosticReasons: BatchDiagnosticReason[];
   durationMs: number;
   extractionId: string | null;
   sourceUrl: string | null;
@@ -200,21 +202,39 @@ function cloneDetail(
   limit = 200,
   offset = 0,
 ): {
-  job: DurableDocumentBatchManifest['job'] & { degradedCount: number };
+  job: DurableDocumentBatchManifest['job'] & {
+    degradedCount: number;
+    usableCount: number;
+    emptyOutputCount: number;
+    partialOutputCount: number;
+  };
   items: DurableDocumentBatchItem[];
   estimatedRemainingMs: number;
 } {
   const safeLimit = Math.max(1, Math.min(1000, Math.floor(limit) || 200));
   const safeOffset = Math.max(0, Math.floor(offset) || 0);
+  const normalizedItems = manifest.items.map((item) => ({
+    ...item,
+    qualityState: normalizeStoredResultState(item.qualityState, item.diagnosticReasons),
+  }));
   const degradedCount = manifest.items.filter(
-    (item) => item.status === 'success' && item.qualityState === 'degraded',
+    (item) => item.status === 'success' && item.qualityState === 'degraded' && !hasPartialOutputReasons(item.diagnosticReasons),
+  ).length;
+  const emptyOutputCount = manifest.items.filter((item) => item.diagnosticReasons.includes('extract_empty_content')).length;
+  const partialOutputCount = manifest.items.filter(
+    (item) =>
+      item.status === 'success' &&
+      (item.qualityState === 'partial' || (item.qualityState === 'degraded' && hasPartialOutputReasons(item.diagnosticReasons))),
   ).length;
   return {
     job: {
       ...manifest.job,
       degradedCount,
+      usableCount: Math.max(0, manifest.job.successCount - degradedCount - partialOutputCount),
+      emptyOutputCount,
+      partialOutputCount,
     },
-    items: manifest.items.slice(safeOffset, safeOffset + safeLimit),
+    items: normalizedItems.slice(safeOffset, safeOffset + safeLimit),
     estimatedRemainingMs: estimateRemainingMs(manifest.job),
   };
 }
@@ -303,6 +323,7 @@ export async function createDurableDocumentBatchJob(input: {
       status: 'pending',
       qualityState: null,
       warnings: [],
+      diagnosticReasons: [],
       durationMs: 0,
       extractionId: null,
       sourceUrl: null,
@@ -399,6 +420,7 @@ async function progressManifest(manifest: DurableDocumentBatchManifest): Promise
       item.status = 'success';
       item.qualityState = converted.resultState;
       item.warnings = converted.warnings;
+      item.diagnosticReasons = converted.diagnosticReasons;
       item.durationMs = durationMs;
       item.title = converted.title;
       item.outputObjectKey = stored.objectKey;
@@ -423,6 +445,7 @@ async function progressManifest(manifest: DurableDocumentBatchManifest): Promise
       item.status = 'failure';
       item.qualityState = null;
       item.warnings = [];
+      item.diagnosticReasons = [];
       item.durationMs = durationMs;
       item.outputObjectKey = null;
       item.outputFilename = null;
@@ -466,7 +489,12 @@ export async function getDurableDocumentBatchDetail(input: {
   | {
       kind: 'ok';
       detail: {
-        job: DurableDocumentBatchManifest['job'] & { degradedCount: number };
+        job: DurableDocumentBatchManifest['job'] & {
+          degradedCount: number;
+          usableCount: number;
+          emptyOutputCount: number;
+          partialOutputCount: number;
+        };
         items: DurableDocumentBatchItem[];
         estimatedRemainingMs: number;
       };

@@ -3,8 +3,12 @@ import { JSDOM } from 'jsdom';
 import { Agent as UndiciAgent } from 'undici';
 
 import { getBrowser } from './browser';
+import { buildMarkdownExport } from './exportMarkdown';
+import { buildTxtExport } from './exportTxt';
 import { sanitizeHtml } from './sanitise';
-import type { ExtractErrorCode, ExtractionPath, ExtractResponse, ImageMode } from './types';
+import { structuralDiagnosticReasonsForHtmlExport } from './structuralFidelity';
+import { diagnosticReasonsForExtractionPath, deriveResultState, resultStateForExtractionPath } from './trustGuidance';
+import type { ExtractErrorCode, ExtractionPath, ExtractResponse, ImageMode, PageComplexitySignal } from './types';
 
 const PAYWALL_MARKERS = [
   'subscriber-only',
@@ -134,11 +138,11 @@ function normalizeUrlForMatch(value: string): string {
 function warningsForExtractionPath(extractionPath: ExtractionPath): string[] {
   switch (extractionPath) {
     case 'browser_fallback':
-      return ['This page required browser rendering, so the extracted document may differ slightly from the original layout.'];
+      return ['This page needed browser rendering, so tables, embeds, or layout may differ from the original page.'];
     case 'rsc_fallback':
-      return ['This page used a React Server Components fallback, so structure may be less complete than the original page.'];
+      return ['This was rebuilt from page data, so some structure may come back flatter than the original page.'];
     case 'syndication_fallback':
-      return ['This page used a syndication fallback, so the extracted document may not include every part of the original page.'];
+      return ['This came from a syndicated copy, so some parts of the live page may be missing.'];
     default:
       return [];
   }
@@ -165,6 +169,15 @@ function escapeHtml(input: string): string {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+function htmlContainsImage(html: string): boolean {
+  return /<img\b/i.test(html);
+}
+
+function parseNumericAttribute(value: string | null | undefined): number {
+  const parsed = Number.parseInt((value || '').trim(), 10);
+  return Number.isFinite(parsed) ? parsed : 0;
 }
 
 function hasPaywallSignals(html: string): boolean {
@@ -434,6 +447,58 @@ function resolveImageSource(img: Element): string | null {
   return pickBestImageSource(Array.from(new Set(candidates)));
 }
 
+function metadataContent(document: Document, selector: string): string | null {
+  return document.querySelector(selector)?.getAttribute('content')?.trim() || null;
+}
+
+function findLeadImageFromSourceDocument(document: Document): { src: string; alt: string } | null {
+  const selectors = ['main figure img', 'article figure img', '[role="main"] figure img', 'main img', 'article img', '[role="main"] img'];
+
+  for (const selector of selectors) {
+    const images = Array.from(document.querySelectorAll(selector));
+
+    for (const img of images) {
+      const src = resolveImageSource(img);
+      if (!src) continue;
+
+      const width = parseNumericAttribute(img.getAttribute('width'));
+      const height = parseNumericAttribute(img.getAttribute('height'));
+      if ((width > 0 && width < 240) || (height > 0 && height < 135)) {
+        continue;
+      }
+
+      const alt = img.getAttribute('alt')?.trim() || metadataContent(document, 'meta[property="og:image:alt"]') || '';
+      return { src, alt };
+    }
+  }
+
+  const metadataImage =
+    metadataContent(document, 'meta[property="og:image"]') ||
+    metadataContent(document, 'meta[name="twitter:image"]');
+
+  if (!metadataImage) return null;
+
+  return {
+    src: metadataImage,
+    alt: metadataContent(document, 'meta[property="og:image:alt"]') || '',
+  };
+}
+
+function prependLeadImageIfMissing(html: string, document: Document): string {
+  if (htmlContainsImage(html)) {
+    return html;
+  }
+
+  const leadImage = findLeadImageFromSourceDocument(document);
+  if (!leadImage) {
+    return html;
+  }
+
+  const alt = escapeHtml(leadImage.alt);
+  const src = escapeHtml(leadImage.src);
+  return `<figure><img src="${src}" alt="${alt}"></figure>${html}`;
+}
+
 function detectImageMime(
   contentType: string,
   sourceUrl: string,
@@ -603,6 +668,48 @@ async function buildImageVariants(
         };
 
   return { on, off, captions };
+}
+
+function buildExportDiagnosticReasonsByFormat(input: {
+  title: string;
+  byline: string;
+  sourceUrl: string;
+  siteName: string;
+  publishedTime: string;
+  content: string;
+  textContent: string;
+}) {
+  const markdown = buildMarkdownExport({
+    title: input.title,
+    byline: input.byline,
+    sourceUrl: input.sourceUrl,
+    siteName: input.siteName,
+    publishedTime: input.publishedTime,
+    content: input.content,
+  });
+
+  const txt = buildTxtExport({
+    title: input.title,
+    byline: input.byline,
+    sourceUrl: input.sourceUrl,
+    siteName: input.siteName,
+    publishedTime: input.publishedTime,
+    content: input.content,
+    textContent: input.textContent,
+  });
+
+  return {
+    md: structuralDiagnosticReasonsForHtmlExport({
+      sourceHtml: input.content,
+      format: 'md',
+      outputContent: markdown,
+    }),
+    txt: structuralDiagnosticReasonsForHtmlExport({
+      sourceHtml: input.content,
+      format: 'txt',
+      outputContent: txt,
+    }),
+  };
 }
 
 async function fetchRenderedHtml(url: string): Promise<string> {
@@ -820,19 +927,42 @@ function getBodyTextLengthFromHtml(html: string): number {
 function likelyNeedsBrowserRendering(html: string): boolean {
   const haystack = html.toLowerCase();
   const scriptCount = (haystack.match(/<script\b/g) || []).length;
+  const hasRscHints = haystack.includes('self.__next_f.push') || haystack.includes('__next_data__');
   const hasAppShellHints =
     haystack.includes('id="__next"') ||
     haystack.includes('id="root"') ||
     haystack.includes('data-reactroot') ||
     haystack.includes('ng-version') ||
-    haystack.includes('self.__next_f.push') ||
-    haystack.includes('__next_data__');
+    hasRscHints;
   const hasReaderScaffold = /<article|<main|<p/i.test(haystack);
   const textLength = getBodyTextLengthFromHtml(html);
 
+  if (hasRscHints) return true;
   if (textLength < 800 && hasAppShellHints) return true;
   if (textLength < 500 && scriptCount >= 12 && !hasReaderScaffold) return true;
   return false;
+}
+
+function pageComplexitySignalFromHtml(html: string): PageComplexitySignal {
+  if (!html.trim()) return 'unknown';
+  return likelyNeedsBrowserRendering(html) ? 'dynamic_page_likely' : 'standard';
+}
+
+function buildExtractFailure(input: {
+  errorCode: ExtractErrorCode;
+  errorMessage: string;
+  attemptedExtractionPath?: ExtractionPath;
+  browserAttempted?: boolean;
+  pageComplexitySignal?: PageComplexitySignal;
+}): ExtractResponse {
+  return {
+    success: false,
+    errorCode: input.errorCode,
+    errorMessage: input.errorMessage,
+    attemptedExtractionPath: input.attemptedExtractionPath,
+    browserAttempted: input.browserAttempted,
+    pageComplexitySignal: input.pageComplexitySignal,
+  };
 }
 
 function resolveFeedFallbackUrls(inputUrl: URL): string[] {
@@ -847,6 +977,8 @@ async function buildResponseFromFallbackContent(input: {
   sourceUrl: URL;
   images: ImageMode;
   extractionPath: ExtractionPath;
+  browserAttempted: boolean;
+  pageComplexitySignal: PageComplexitySignal;
   title: string;
   byline?: string;
   siteName?: string;
@@ -877,16 +1009,39 @@ async function buildResponseFromFallbackContent(input: {
     off: sanitizeHtml(variants.off.content),
     captions: sanitizeHtml(variants.captions.content),
   };
+  const title = normalizeExtractText(input.title) || 'Untitled Article';
+  const byline = normalizeExtractText(input.byline) || 'Unknown';
+  const siteName = normalizeExtractText(input.siteName) || getHostSiteName(input.sourceUrl);
+  const publishedTime = normalizeExtractText(input.publishedTime) || 'Unknown';
+  const exportDiagnosticReasonsByFormat = buildExportDiagnosticReasonsByFormat({
+    title,
+    byline,
+    sourceUrl: input.sourceUrl.toString(),
+    siteName,
+    publishedTime,
+    content: finalizedVariants.on,
+    textContent,
+  });
+  const warnings = warningsForExtractionPath(input.extractionPath);
+  const diagnosticReasons = diagnosticReasonsForExtractionPath(input.extractionPath);
 
   return {
     success: true,
-    resultState: 'degraded',
+    resultState: deriveResultState({
+      baseState: resultStateForExtractionPath(input.extractionPath),
+      diagnosticReasons,
+      warnings,
+    }),
     extractionPath: input.extractionPath,
-    warnings: warningsForExtractionPath(input.extractionPath),
-    title: normalizeExtractText(input.title) || 'Untitled Article',
-    byline: normalizeExtractText(input.byline) || 'Unknown',
-    siteName: normalizeExtractText(input.siteName) || getHostSiteName(input.sourceUrl),
-    publishedTime: normalizeExtractText(input.publishedTime) || 'Unknown',
+    browserAttempted: input.browserAttempted,
+    pageComplexitySignal: input.pageComplexitySignal,
+    warnings,
+    diagnosticReasons,
+    exportDiagnosticReasonsByFormat,
+    title,
+    byline,
+    siteName,
+    publishedTime,
     excerpt: normalizeExtractText(input.excerpt) || '',
     lang: normalizeExtractText(input.lang) || 'Unknown',
     content: finalizedVariants[input.images],
@@ -898,7 +1053,11 @@ async function buildResponseFromFallbackContent(input: {
   };
 }
 
-async function trySyndicationFallback(url: URL, images: ImageMode): Promise<ExtractResponse | null> {
+async function trySyndicationFallback(
+  url: URL,
+  images: ImageMode,
+  meta?: { browserAttempted?: boolean; pageComplexitySignal?: PageComplexitySignal },
+): Promise<ExtractResponse | null> {
   const feedUrls = resolveFeedFallbackUrls(url);
   if (feedUrls.length === 0) return null;
 
@@ -947,6 +1106,8 @@ async function trySyndicationFallback(url: URL, images: ImageMode): Promise<Extr
           sourceUrl: url,
           images,
           extractionPath: 'syndication_fallback',
+          browserAttempted: meta?.browserAttempted || false,
+          pageComplexitySignal: meta?.pageComplexitySignal || 'unknown',
           title: entry.querySelector('title')?.textContent || 'Untitled Article',
           byline:
             entry.querySelector('author > name')?.textContent ||
@@ -982,6 +1143,7 @@ async function tryRscPayloadFallback(
   html: string,
   url: URL,
   images: ImageMode,
+  browserAttempted = false,
 ): Promise<ExtractResponse | null> {
   if (!html.includes('self.__next_f.push')) return null;
 
@@ -1021,6 +1183,8 @@ async function tryRscPayloadFallback(
       sourceUrl: url,
       images,
       extractionPath: 'rsc_fallback',
+      browserAttempted,
+      pageComplexitySignal: pageComplexitySignalFromHtml(html),
       title,
       siteName,
       excerpt,
@@ -1139,40 +1303,49 @@ export async function extractFromUrl(
 
   try {
     let html = '';
-    let usedBrowserFallback = false;
+    let browserAttempted = false;
     let extractionPath: ExtractionPath = 'readability';
+    let pageComplexitySignal: PageComplexitySignal = 'unknown';
 
     try {
       html = await fetchHtmlWithTimeout(parsedUrl.toString(), 20_000);
+      pageComplexitySignal = pageComplexitySignalFromHtml(html);
     } catch (fetchError) {
       if (!shouldEscalateToBrowserFromFetchError(fetchError)) {
         throw fetchError;
       }
 
       html = await fetchRenderedHtml(parsedUrl.toString());
-      usedBrowserFallback = true;
+      browserAttempted = true;
       extractionPath = 'browser_fallback';
+      pageComplexitySignal = pageComplexitySignalFromHtml(html);
     }
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       if (hasBotChallengeSignals(html)) {
-        if (!usedBrowserFallback) {
+        if (!browserAttempted) {
           html = await fetchRenderedHtml(parsedUrl.toString());
-          usedBrowserFallback = true;
+          browserAttempted = true;
           extractionPath = 'browser_fallback';
+          pageComplexitySignal = pageComplexitySignalFromHtml(html);
           continue;
         }
 
-        const syndicationFallback = await trySyndicationFallback(parsedUrl, images);
+        const syndicationFallback = await trySyndicationFallback(parsedUrl, images, {
+          browserAttempted,
+          pageComplexitySignal,
+        });
         if (syndicationFallback) {
           return syndicationFallback;
         }
 
-        return {
-          success: false,
+        return buildExtractFailure({
           errorCode: 'FETCH_FAILED',
           errorMessage: 'This URL could not be reached. It may be offline, private, or blocking automated requests.',
-        };
+          attemptedExtractionPath: extractionPath,
+          browserAttempted,
+          pageComplexitySignal,
+        });
       }
 
       const dom = new JSDOM(html, { url: parsedUrl.toString() });
@@ -1181,48 +1354,55 @@ export async function extractFromUrl(
         const article = new Readability(dom.window.document).parse();
 
         if (!article) {
-          if (!usedBrowserFallback && likelyNeedsBrowserRendering(html)) {
+          if (!browserAttempted && likelyNeedsBrowserRendering(html)) {
             html = await fetchRenderedHtml(parsedUrl.toString());
-            usedBrowserFallback = true;
+            browserAttempted = true;
             extractionPath = 'browser_fallback';
+            pageComplexitySignal = pageComplexitySignalFromHtml(html);
             continue;
           }
 
-          const rscFallback = await tryRscPayloadFallback(html, parsedUrl, images);
+          const rscFallback = await tryRscPayloadFallback(html, parsedUrl, images, browserAttempted);
           if (rscFallback) {
             return rscFallback;
           }
 
-          const syndicationFallback = await trySyndicationFallback(parsedUrl, images);
+          const syndicationFallback = await trySyndicationFallback(parsedUrl, images, {
+            browserAttempted,
+            pageComplexitySignal,
+          });
           if (syndicationFallback) {
             return syndicationFallback;
           }
 
-          return {
-            success: false,
+          return buildExtractFailure({
             errorCode: 'EXTRACTION_FAILED',
-            errorMessage:
-              "We reached the page but couldn't identify the main article content.",
-          };
+            errorMessage: "We reached the page but couldn't identify the main article content.",
+            attemptedExtractionPath: extractionPath,
+            browserAttempted,
+            pageComplexitySignal,
+          });
         }
 
         const textContent = normalizeExtractText(article.textContent);
         const wordCount = countWords(textContent);
 
         if (wordCount < 80 && hasRenderErrorSignals(textContent, html)) {
-          if (!usedBrowserFallback) {
+          if (!browserAttempted) {
             html = await fetchRenderedHtml(parsedUrl.toString());
-            usedBrowserFallback = true;
+            browserAttempted = true;
             extractionPath = 'browser_fallback';
+            pageComplexitySignal = pageComplexitySignalFromHtml(html);
             continue;
           }
 
-          return {
-            success: false,
+          return buildExtractFailure({
             errorCode: 'EXTRACTION_FAILED',
-            errorMessage:
-              "We reached the page but couldn't identify the main article content.",
-          };
+            errorMessage: "We reached the page but couldn't identify the main article content.",
+            attemptedExtractionPath: extractionPath,
+            browserAttempted,
+            pageComplexitySignal,
+          });
         }
 
         if (wordCount < 220 && hasPaywallSignals(`${html}\n${textContent}`)) {
@@ -1231,35 +1411,45 @@ export async function extractFromUrl(
             errorCode: 'PAYWALL_DETECTED',
             errorMessage:
               'This page appears to be behind a paywall or requires a login.',
+            attemptedExtractionPath: extractionPath,
+            browserAttempted,
+            pageComplexitySignal,
           };
         }
 
         if (textContent.length < 100) {
-          if (!usedBrowserFallback && likelyNeedsBrowserRendering(html)) {
+          if (!browserAttempted && likelyNeedsBrowserRendering(html)) {
             html = await fetchRenderedHtml(parsedUrl.toString());
-            usedBrowserFallback = true;
+            browserAttempted = true;
             extractionPath = 'browser_fallback';
+            pageComplexitySignal = pageComplexitySignalFromHtml(html);
             continue;
           }
 
-          const rscFallback = await tryRscPayloadFallback(html, parsedUrl, images);
+          const rscFallback = await tryRscPayloadFallback(html, parsedUrl, images, browserAttempted);
           if (rscFallback) {
             return rscFallback;
           }
 
-          const syndicationFallback = await trySyndicationFallback(parsedUrl, images);
+          const syndicationFallback = await trySyndicationFallback(parsedUrl, images, {
+            browserAttempted,
+            pageComplexitySignal,
+          });
           if (syndicationFallback) {
             return syndicationFallback;
           }
 
-          return {
-            success: false,
+          return buildExtractFailure({
             errorCode: 'EMPTY_CONTENT',
             errorMessage: 'The page loaded but contained no readable text content.',
-          };
+            attemptedExtractionPath: extractionPath,
+            browserAttempted,
+            pageComplexitySignal,
+          });
         }
 
-        const cleanHtml = sanitizeHtml(article.content || '');
+        const articleHtml = prependLeadImageIfMissing(article.content || '', dom.window.document);
+        const cleanHtml = sanitizeHtml(articleHtml);
         const variants = await buildImageVariants(cleanHtml, parsedUrl.toString(), images);
         const finalizedVariants = {
           on: sanitizeHtml(variants.on.content),
@@ -1268,20 +1458,45 @@ export async function extractFromUrl(
         };
         const imageCount = variants.on.totalImages;
 
+        const title = deriveBestTitle(
+          normalizeExtractText(article.title),
+          article.content || '',
+          dom.window.document,
+          normalizeExtractText(article.siteName),
+        );
+        const byline = normalizeExtractText(article.byline) || 'Unknown';
+        const siteName = normalizeExtractText(article.siteName) || 'Unknown';
+        const publishedTime = normalizeExtractText((article as { publishedTime?: string }).publishedTime) || 'Unknown';
+        const exportDiagnosticReasonsByFormat = buildExportDiagnosticReasonsByFormat({
+          title,
+          byline,
+          sourceUrl: parsedUrl.toString(),
+          siteName,
+          publishedTime,
+          content: finalizedVariants.on,
+          textContent,
+        });
+
+        const warnings = warningsForExtractionPath(extractionPath);
+        const diagnosticReasons = diagnosticReasonsForExtractionPath(extractionPath);
+
         return {
           success: true,
-          resultState: extractionPath === 'readability' ? 'usable' : 'degraded',
+          resultState: deriveResultState({
+            baseState: resultStateForExtractionPath(extractionPath),
+            diagnosticReasons,
+            warnings,
+          }),
           extractionPath,
-          warnings: warningsForExtractionPath(extractionPath),
-          title: deriveBestTitle(
-            normalizeExtractText(article.title),
-            article.content || '',
-            dom.window.document,
-            normalizeExtractText(article.siteName),
-          ),
-          byline: normalizeExtractText(article.byline) || 'Unknown',
-          siteName: normalizeExtractText(article.siteName) || 'Unknown',
-          publishedTime: normalizeExtractText((article as { publishedTime?: string }).publishedTime) || 'Unknown',
+          browserAttempted,
+          pageComplexitySignal,
+          warnings,
+          diagnosticReasons,
+          exportDiagnosticReasonsByFormat,
+          title,
+          byline,
+          siteName,
+          publishedTime,
           excerpt: normalizeExtractText(article.excerpt) || '',
           lang: normalizeExtractText((article as { lang?: string }).lang) || 'Unknown',
           content: finalizedVariants[images],
@@ -1296,17 +1511,20 @@ export async function extractFromUrl(
       }
     }
 
-    return {
-      success: false,
+    return buildExtractFailure({
       errorCode: 'EXTRACTION_FAILED',
-      errorMessage:
-        "We reached the page but couldn't identify the main article content.",
-    };
+      errorMessage: "We reached the page but couldn't identify the main article content.",
+      attemptedExtractionPath: extractionPath,
+      browserAttempted,
+      pageComplexitySignal,
+    });
   } catch (error) {
     const maybeError = error as ExtractPipelineError;
     const fallbackCodes: ExtractErrorCode[] = ['FETCH_FAILED', 'TIMEOUT', 'EXTRACTION_FAILED'];
     if (maybeError?.code && fallbackCodes.includes(maybeError.code)) {
-      const syndicationFallback = await trySyndicationFallback(parsedUrl, images);
+      const syndicationFallback = await trySyndicationFallback(parsedUrl, images, {
+        pageComplexitySignal: 'unknown',
+      });
       if (syndicationFallback) {
         return syndicationFallback;
       }

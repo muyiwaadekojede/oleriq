@@ -1,10 +1,15 @@
 const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 const sessionId = `e2e-batch-${Date.now()}`;
 const articleUrl = `${baseUrl}/test-fixtures/article-source.html`;
+const emptyUrl = `${baseUrl}/test-fixtures/empty-source.html`;
+const structureUrl = `${baseUrl}/test-fixtures/structure-source.html`;
+const rscFallbackUrl = `${baseUrl}/test-fixtures/rsc-fallback-source.html`;
 
 const urls = [
   `${articleUrl}?variant=1`,
-  `${articleUrl}?variant=2`,
+  structureUrl,
+  rscFallbackUrl,
+  emptyUrl,
   'https://example.invalid',
 ];
 
@@ -84,6 +89,18 @@ if (typeof job.degradedCount !== 'number') {
   throw new Error(`Batch detail is missing degradedCount: ${JSON.stringify(job)}`);
 }
 
+if (typeof job.usableCount !== 'number') {
+  throw new Error(`Batch detail is missing usableCount: ${JSON.stringify(job)}`);
+}
+
+if (typeof job.emptyOutputCount !== 'number') {
+  throw new Error(`Batch detail is missing emptyOutputCount: ${JSON.stringify(job)}`);
+}
+
+if (typeof job.partialOutputCount !== 'number') {
+  throw new Error(`Batch detail is missing partialOutputCount: ${JSON.stringify(job)}`);
+}
+
 if (!Array.isArray(detail.items)) {
   throw new Error('Batch detail is missing items array.');
 }
@@ -95,6 +112,63 @@ if (!successfulRow) {
 
 if (!Array.isArray(successfulRow.warnings)) {
   throw new Error(`Successful batch rows must include warnings arrays: ${JSON.stringify(successfulRow)}`);
+}
+
+if (!Array.isArray(successfulRow.diagnosticReasons)) {
+  throw new Error(`Successful batch rows must include diagnosticReasons arrays: ${JSON.stringify(successfulRow)}`);
+}
+
+const structureRow = detail.items.find((item) => item.sourceUrl === structureUrl);
+if (!structureRow) {
+  throw new Error(`Batch detail is missing the structure-rich URL row: ${JSON.stringify(detail.items)}`);
+}
+
+if (structureRow.status !== 'success') {
+  throw new Error(`Structure-rich URL row should succeed before trust analysis: ${JSON.stringify(structureRow)}`);
+}
+
+if (structureRow.qualityState !== 'degraded') {
+  throw new Error(`Structure-rich URL row should be degraded when TXT export flattens tables: ${JSON.stringify(structureRow)}`);
+}
+
+if (!Array.isArray(structureRow.diagnosticReasons) || !structureRow.diagnosticReasons.includes('structure_table_loss_risk')) {
+  throw new Error(`Structure-rich URL row must expose structure_table_loss_risk: ${JSON.stringify(structureRow)}`);
+}
+
+for (const reason of ['structure_heading_loss_risk', 'structure_list_loss_risk', 'structure_code_block_loss_risk']) {
+  if (!structureRow.diagnosticReasons.includes(reason)) {
+    throw new Error(`Structure-rich URL row must expose ${reason}: ${JSON.stringify(structureRow)}`);
+  }
+}
+
+const rscRow = detail.items.find((item) => item.sourceUrl === rscFallbackUrl);
+if (!rscRow) {
+  throw new Error(`Batch detail is missing the RSC fallback row: ${JSON.stringify(detail.items)}`);
+}
+
+if (rscRow.status !== 'success' || rscRow.qualityState !== 'partial') {
+  throw new Error(`RSC fallback row should succeed with partial qualityState: ${JSON.stringify(rscRow)}`);
+}
+
+if (!Array.isArray(rscRow.diagnosticReasons) || !rscRow.diagnosticReasons.includes('extract_rsc_fallback_used')) {
+  throw new Error(`RSC fallback row must expose extract_rsc_fallback_used: ${JSON.stringify(rscRow)}`);
+}
+
+if (job.partialOutputCount < 1) {
+  throw new Error(`Expected partialOutputCount to reflect partial-success rows: ${JSON.stringify(job)}`);
+}
+
+const emptyRow = detail.items.find((item) => item.errorCode === 'EMPTY_CONTENT');
+if (!emptyRow) {
+  throw new Error(`Batch detail is missing an EMPTY_CONTENT row: ${JSON.stringify(detail.items)}`);
+}
+
+if (!Array.isArray(emptyRow.diagnosticReasons) || !emptyRow.diagnosticReasons.includes('extract_empty_content')) {
+  throw new Error(`EMPTY_CONTENT rows must expose extract_empty_content diagnosticReasons: ${JSON.stringify(emptyRow)}`);
+}
+
+if (job.emptyOutputCount < 1) {
+  throw new Error(`Expected emptyOutputCount to reflect EMPTY_CONTENT rows: ${JSON.stringify(job)}`);
 }
 
 console.log('e2e-batch passed');

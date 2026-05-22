@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Structure Source Fixture</title>
+  </head>
+  <body>
+    <main>
+      <article>
+        <h1>Structure Source Fixture</h1>
+        <p>This fixture is designed to exercise structural fidelity checks.</p>
+
+        <h2>Outline</h2>
+        <p>The output should preserve meaningful headings and list structure.</p>
+        <h4>Nested subsection that should stay a heading</h4>
+        <p>This subsection exists to prove whether deeper heading levels survive in plain-text output.</p>
+        <ul>
+          <li>Primary point</li>
+          <li>
+            Nested ideas
+            <ul>
+              <li>Child point A</li>
+              <li>Child point B</li>
+            </ul>
+          </li>
+          <li>Closing point</li>
+        </ul>
+
+        <h2>Comparison Table</h2>
+        <p>The table below is the main structured-data risk in this fixture.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Format</th>
+              <th>Readable headings</th>
+              <th>Tables preserved</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Markdown</td>
+              <td>Usually yes</td>
+              <td>Sometimes no</td>
+            </tr>
+            <tr>
+              <td>TXT</td>
+              <td>Partial</td>
+              <td>No native table shape</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2>Code Sample</h2>
+        <p>The code block should stay distinct from surrounding prose.</p>
+        <h5>Implementation detail note</h5>
+        <p>This deeper heading should not disappear into plain prose after conversion.</p>
+        <pre><code>function keepStructure(value) {
+  return value.trim();
+}</code></pre>
+      </article>
+    </main>
+  </body>
+</html>

@@ -10,6 +10,56 @@ const PNG_BYTES = Buffer.from(PNG_BASE64, 'base64');
 const PNG_DATA_URI = `data:image/png;base64,${PNG_BASE64}`;
 
 const GENERATED_DOCUMENT_FIXTURES = {
+  txt: {
+    filename: 'plain-notes.txt',
+    contentType: 'text/plain; charset=utf-8',
+    create: async () => Buffer.from(createPlainTextFixture(), 'utf8'),
+  },
+  md: {
+    filename: 'reference-structure.md',
+    contentType: 'text/markdown; charset=utf-8',
+    create: async () => Buffer.from(createMarkdownFixture(), 'utf8'),
+  },
+  csv: {
+    filename: 'comparison-grid.csv',
+    contentType: 'text/csv; charset=utf-8',
+    create: async () => Buffer.from(createCsvFixture(','), 'utf8'),
+  },
+  tsv: {
+    filename: 'comparison-grid.tsv',
+    contentType: 'text/tab-separated-values; charset=utf-8',
+    create: async () => Buffer.from(createCsvFixture('\t'), 'utf8'),
+  },
+  json: {
+    filename: 'batch-summary.json',
+    contentType: 'application/json',
+    create: async () => Buffer.from(createJsonFixture(), 'utf8'),
+  },
+  xml: {
+    filename: 'batch-summary.xml',
+    contentType: 'application/xml',
+    create: async () => Buffer.from(createXmlFixture(), 'utf8'),
+  },
+  yaml: {
+    filename: 'batch-summary.yaml',
+    contentType: 'text/plain; charset=utf-8',
+    create: async () => Buffer.from(createYamlFixture(), 'utf8'),
+  },
+  yml: {
+    filename: 'batch-summary.yml',
+    contentType: 'text/plain; charset=utf-8',
+    create: async () => Buffer.from(createYamlFixture(), 'utf8'),
+  },
+  log: {
+    filename: 'batch-run.log',
+    contentType: 'text/plain; charset=utf-8',
+    create: async () => Buffer.from(createLogFixture(), 'utf8'),
+  },
+  rst: {
+    filename: 'batch-guide.rst',
+    contentType: 'text/plain; charset=utf-8',
+    create: async () => Buffer.from(createRstFixture(), 'utf8'),
+  },
   docx: {
     filename: 'tiny-picture.docx',
     contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -206,6 +256,130 @@ function createHtmlFixtureDocument(title) {
     <p>After image paragraph. This text should remain in reading order.</p>
   </body>
 </html>`;
+}
+
+function createPlainTextFixture() {
+  return [
+    'Clearpage plain text fixture',
+    '',
+    'This file exercises plain text uploads with short paragraphs and simple reference lines.',
+    '',
+    'Batch trust should stay readable even when the source has no rich structure.',
+  ].join('\n');
+}
+
+function createMarkdownFixture() {
+  return [
+    '# Markdown Fixture',
+    '',
+    'This fixture uses a common technical-note shape.',
+    '',
+    '## Outline',
+    '',
+    '- Primary item',
+    '- Nested ideas',
+    '  - Child A',
+    '  - Child B',
+    '',
+    '## Table',
+    '',
+    '| Format | Trust signal |',
+    '| --- | --- |',
+    '| Markdown | Strong |',
+    '| TXT | Needs review |',
+    '',
+    '## Code',
+    '',
+    '```ts',
+    'function keepTrust(value: string) {',
+    '  return value.trim();',
+    '}',
+    '```',
+  ].join('\n');
+}
+
+function createCsvFixture(delimiter) {
+  return [
+    ['format', 'structure', 'notes'].join(delimiter),
+    ['pdf', 'high', 'Retains page layout'].join(delimiter),
+    ['md', 'medium', 'Readable but lighter'].join(delimiter),
+    ['txt', 'low', 'Table shape is flattened'].join(delimiter),
+  ].join('\n');
+}
+
+function createJsonFixture() {
+  return JSON.stringify(
+    {
+      title: 'Batch Summary Fixture',
+      resultState: 'degraded',
+      diagnostics: ['structure_table_loss_risk', 'document_pdf_truncated_pages'],
+      rows: [
+        { format: 'pdf', trust: 'usable' },
+        { format: 'txt', trust: 'degraded' },
+      ],
+    },
+    null,
+    2,
+  );
+}
+
+function createXmlFixture() {
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<batchSummary>
+  <title>Batch Summary Fixture</title>
+  <resultState>degraded</resultState>
+  <diagnostics>
+    <reason>structure_table_loss_risk</reason>
+    <reason>document_pdf_truncated_pages</reason>
+  </diagnostics>
+  <rows>
+    <row format="pdf" trust="usable" />
+    <row format="txt" trust="degraded" />
+  </rows>
+</batchSummary>`;
+}
+
+function createYamlFixture() {
+  return [
+    'title: Batch Summary Fixture',
+    'result_state: degraded',
+    'diagnostics:',
+    '  - structure_table_loss_risk',
+    '  - document_pdf_truncated_pages',
+    'rows:',
+    '  - format: pdf',
+    '    trust: usable',
+    '  - format: txt',
+    '    trust: degraded',
+  ].join('\n');
+}
+
+function createLogFixture() {
+  return [
+    '2026-05-20T10:00:00Z INFO batch started format=txt',
+    '2026-05-20T10:00:04Z WARN structure_table_loss_risk row=1',
+    '2026-05-20T10:00:06Z WARN document_pdf_truncated_pages row=2',
+    '2026-05-20T10:00:08Z INFO batch completed usable=0 degraded=2 failed=0',
+  ].join('\n');
+}
+
+function createRstFixture() {
+  return [
+    'Batch Guide Fixture',
+    '===================',
+    '',
+    'Overview',
+    '--------',
+    '',
+    '- Primary item',
+    '- Nested items are listed below',
+    '',
+    'Code sample::',
+    '',
+    '   function keepTrust(value) {',
+    '     return value.trim()',
+    '   }',
+  ].join('\n');
 }
 
 async function createDocxFixtureBuffer() {

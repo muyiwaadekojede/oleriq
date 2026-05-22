@@ -5,11 +5,22 @@ import db from '@/lib/db';
 import { convertDocumentBuffer, isSupportedDocumentFilename, MAX_DOCUMENT_BATCH_BYTES, MAX_DOCUMENT_BATCH_FILES } from '@/lib/documentConversion';
 import { storeExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
+import { buildMarkdownExport } from '@/lib/exportMarkdown';
+import { buildTxtExport } from '@/lib/exportTxt';
+import { structuralDiagnosticReasonsForHtmlExport } from '@/lib/structuralFidelity';
+import {
+  deriveResultState,
+  diagnosticReasonsForExtractErrorCode,
+  normalizeStoredResultState,
+  warningForDiagnosticReason,
+} from '@/lib/trustGuidance';
 import type {
+  BatchDiagnosticReason,
   BatchDocumentUploadInput,
   BatchInputMode,
   ExportFormat,
   ExtractErrorCode,
+  ExtractSuccessResponse,
   ExtractResultState,
   ImageMode,
   ReaderSettings,
@@ -32,6 +43,9 @@ export type BatchJobRow = {
   failureCount: number;
   averageDurationMs: number | null;
   degradedCount: number;
+  usableCount: number;
+  emptyOutputCount: number;
+  partialOutputCount: number;
   createdAt: string;
   startedAt: string | null;
   completedAt: string | null;
@@ -48,6 +62,7 @@ export type BatchItemRow = {
   status: BatchItemStatus;
   qualityState: ExtractResultState | null;
   warnings: string[];
+  diagnosticReasons: BatchDiagnosticReason[];
   durationMs: number;
   extractionId: string | null;
   sourceUrl: string | null;
@@ -65,7 +80,7 @@ export type BatchItemRow = {
   completedAt: string | null;
 };
 
-function parseWarningJson(value: unknown): string[] {
+function parseStringArrayJson(value: unknown): string[] {
   if (!value || typeof value !== 'string') return [];
 
   try {
@@ -254,6 +269,9 @@ function mapJobRow(row: Record<string, unknown>): BatchJobRow {
     failureCount: Number(row.failureCount || 0),
     averageDurationMs: row.averageDurationMs === null || row.averageDurationMs === undefined ? null : Number(row.averageDurationMs),
     degradedCount: Number(row.degradedCount || 0),
+    usableCount: Number(row.usableCount || 0),
+    emptyOutputCount: Number(row.emptyOutputCount || 0),
+    partialOutputCount: Number(row.partialOutputCount || 0),
     createdAt: String(row.createdAt),
     startedAt: row.startedAt ? String(row.startedAt) : null,
     completedAt: row.completedAt ? String(row.completedAt) : null,
@@ -264,14 +282,19 @@ function mapJobRow(row: Record<string, unknown>): BatchJobRow {
 }
 
 function mapItemRow(row: Record<string, unknown>): BatchItemRow {
+  const diagnosticReasons = parseStringArrayJson(row.diagnosticReasonJson) as BatchDiagnosticReason[];
   return {
     id: Number(row.id),
     jobId: String(row.jobId),
     position: Number(row.position || 0),
     url: String(row.url),
     status: String(row.status) as BatchItemStatus,
-    qualityState: row.qualityState ? (String(row.qualityState) as ExtractResultState) : null,
-    warnings: parseWarningJson(row.warningJson),
+    qualityState: normalizeStoredResultState(
+      row.qualityState ? (String(row.qualityState) as ExtractResultState) : null,
+      diagnosticReasons,
+    ),
+    warnings: parseStringArrayJson(row.warningJson),
+    diagnosticReasons,
     durationMs: Number(row.durationMs || 0),
     extractionId: row.extractionId ? String(row.extractionId) : null,
     sourceUrl: row.sourceUrl ? String(row.sourceUrl) : null,
@@ -338,6 +361,7 @@ export function getBatchJobItems(jobId: string, limit: number, offset: number): 
         status,
         quality_state AS qualityState,
         warning_json AS warningJson,
+        diagnostic_reason_json AS diagnosticReasonJson,
         duration_ms AS durationMs,
         extraction_id AS extractionId,
         source_url AS sourceUrl,
@@ -376,6 +400,7 @@ export function getBatchJobItem(jobId: string, itemId: number): BatchItemRow | n
         status,
         quality_state AS qualityState,
         warning_json AS warningJson,
+        diagnostic_reason_json AS diagnosticReasonJson,
         duration_ms AS durationMs,
         extraction_id AS extractionId,
         source_url AS sourceUrl,
@@ -649,6 +674,7 @@ function claimNextPendingItem(jobId: string): BatchItemRow | null {
         status,
         quality_state AS qualityState,
         warning_json AS warningJson,
+        diagnostic_reason_json AS diagnosticReasonJson,
         duration_ms AS durationMs,
           extraction_id AS extractionId,
           source_url AS sourceUrl,
@@ -694,6 +720,7 @@ function markItemSuccess(input: {
   durationMs: number;
   qualityState: ExtractResultState;
   warnings: string[];
+  diagnosticReasons: BatchDiagnosticReason[];
   extractionId: string | null;
   sourceUrl: string | null;
   title: string;
@@ -712,6 +739,7 @@ function markItemSuccess(input: {
         duration_ms = ?,
         quality_state = ?,
         warning_json = ?,
+        diagnostic_reason_json = ?,
         extraction_id = ?,
         source_url = ?,
         title = ?,
@@ -727,6 +755,7 @@ function markItemSuccess(input: {
       input.durationMs,
       input.qualityState,
       JSON.stringify(input.warnings),
+      JSON.stringify(input.diagnosticReasons),
       input.extractionId,
       input.sourceUrl,
       input.title,
@@ -764,6 +793,7 @@ function markItemFailure(input: {
   durationMs: number;
   errorCode: string;
   errorMessage: string;
+  diagnosticReasons: BatchDiagnosticReason[];
 }): void {
   const now = nowIso();
 
@@ -776,6 +806,7 @@ function markItemFailure(input: {
         duration_ms = ?,
         quality_state = NULL,
         warning_json = NULL,
+        diagnostic_reason_json = ?,
         extraction_id = NULL,
         source_url = NULL,
         title = NULL,
@@ -786,7 +817,14 @@ function markItemFailure(input: {
         completed_at = ?
       WHERE id = ?
       `,
-    ).run(input.durationMs, input.errorCode, input.errorMessage.slice(0, 1200), now, input.itemId);
+    ).run(
+      input.durationMs,
+      JSON.stringify(input.diagnosticReasons),
+      input.errorCode,
+      input.errorMessage.slice(0, 1200),
+      now,
+      input.itemId,
+    );
 
     db.prepare(
       `
@@ -879,7 +917,65 @@ function getJobProcessingConfig(jobId: string): {
   return row || null;
 }
 
-async function runUrlJob(jobId: string, config: { imagesMode: ImageMode }): Promise<void> {
+function exportTrustSurfaceForUrlResult(input: {
+  exportFormat: ExportFormat;
+  imagesMode: ImageMode;
+  result: ExtractSuccessResponse;
+}): {
+  qualityState: ExtractResultState;
+  warnings: string[];
+  diagnosticReasons: BatchDiagnosticReason[];
+} {
+  const sourceHtml = input.result.contentVariants[input.imagesMode];
+  let outputContent = '';
+
+  if (input.exportFormat === 'md') {
+    outputContent = buildMarkdownExport({
+      title: input.result.title,
+      byline: input.result.byline,
+      sourceUrl: input.result.sourceUrl,
+      siteName: input.result.siteName,
+      publishedTime: input.result.publishedTime,
+      content: sourceHtml,
+    });
+  } else if (input.exportFormat === 'txt') {
+    outputContent = buildTxtExport({
+      title: input.result.title,
+      byline: input.result.byline,
+      sourceUrl: input.result.sourceUrl,
+      siteName: input.result.siteName,
+      publishedTime: input.result.publishedTime,
+      content: sourceHtml,
+      textContent: input.result.textContent,
+    });
+  }
+
+  const exportDiagnosticReasons = structuralDiagnosticReasonsForHtmlExport({
+    sourceHtml,
+    format: input.exportFormat,
+    outputContent,
+  });
+
+  const diagnosticReasons = [...new Set([...input.result.diagnosticReasons, ...exportDiagnosticReasons])];
+  const warnings = [
+    ...input.result.warnings,
+    ...exportDiagnosticReasons
+      .map((reason) => warningForDiagnosticReason(reason))
+      .filter((warning): warning is string => Boolean(warning)),
+  ];
+
+  return {
+    qualityState: deriveResultState({
+      baseState: input.result.resultState,
+      diagnosticReasons,
+      warnings,
+    }),
+    warnings,
+    diagnosticReasons,
+  };
+}
+
+async function runUrlJob(jobId: string, config: { imagesMode: ImageMode; exportFormat: ExportFormat }): Promise<void> {
   while (true) {
     const item = claimNextPendingItem(jobId);
     if (!item) break;
@@ -908,6 +1004,7 @@ async function runUrlJob(jobId: string, config: { imagesMode: ImageMode }): Prom
               durationMs: Date.now() - startedAt,
               qualityState: 'usable',
               warnings: [],
+              diagnosticReasons: [],
               extractionId: null,
               sourceUrl: item.url,
               title: getTitleFromUrl(item.url),
@@ -935,14 +1032,20 @@ async function runUrlJob(jobId: string, config: { imagesMode: ImageMode }): Prom
           textContent: result.textContent,
           contentVariants: result.contentVariants,
         });
+        const trustSurface = exportTrustSurfaceForUrlResult({
+          exportFormat: config.exportFormat,
+          imagesMode: config.imagesMode,
+          result,
+        });
 
         markDomainSuccess(hostname);
         markItemSuccess({
           jobId,
           itemId: item.id,
           durationMs: Date.now() - startedAt,
-          qualityState: result.resultState,
-          warnings: result.warnings,
+          qualityState: trustSurface.qualityState,
+          warnings: trustSurface.warnings,
+          diagnosticReasons: trustSurface.diagnosticReasons,
           extractionId,
           sourceUrl: result.sourceUrl,
           title: result.title,
@@ -970,6 +1073,7 @@ async function runUrlJob(jobId: string, config: { imagesMode: ImageMode }): Prom
       durationMs: Date.now() - startedAt,
       errorCode: lastErrorCode,
       errorMessage: lastErrorMessage,
+      diagnosticReasons: diagnosticReasonsForExtractErrorCode(lastErrorCode),
     });
   }
 }
@@ -1019,6 +1123,7 @@ async function runDocumentJob(
         durationMs: Date.now() - startedAt,
         qualityState: converted.resultState,
         warnings: converted.warnings,
+        diagnosticReasons: converted.diagnosticReasons,
         extractionId: null,
         sourceUrl: null,
         title: converted.title,
@@ -1033,6 +1138,7 @@ async function runDocumentJob(
         durationMs: Date.now() - startedAt,
         errorCode: 'DOCUMENT_CONVERSION_FAILED',
         errorMessage: error instanceof Error ? error.message : 'Unexpected document conversion error.',
+        diagnosticReasons: [],
       });
     }
   }
@@ -1192,22 +1298,58 @@ export function getBatchJobDetail(input: {
   if (!job) return null;
 
   const items = getBatchJobItems(job.id, input.limit || 200, input.offset || 0);
-  const degradedRow = db
+  const summaryRow = db
     .prepare(
       `
       SELECT COUNT(*) AS count
       FROM batch_job_items
-      WHERE job_id = ? AND status = 'success' AND quality_state = 'degraded'
+      WHERE job_id = ? AND status = 'success' AND quality_state = 'degraded' AND NOT (
+        instr(COALESCE(diagnostic_reason_json, ''), '\"extract_rsc_fallback_used\"') > 0 OR
+        instr(COALESCE(diagnostic_reason_json, ''), '\"extract_syndication_fallback_used\"') > 0 OR
+        instr(COALESCE(diagnostic_reason_json, ''), '\"document_pdf_truncated_pages\"') > 0
+      )
       `,
     )
     .get(job.id) as { count: number };
+  const emptyOutputRow = db
+    .prepare(
+      `
+      SELECT COUNT(*) AS count
+      FROM batch_job_items
+      WHERE job_id = ? AND instr(COALESCE(diagnostic_reason_json, ''), '\"extract_empty_content\"') > 0
+      `,
+    )
+    .get(job.id) as { count: number };
+  const partialOutputRow = db
+    .prepare(
+      `
+      SELECT COUNT(*) AS count
+      FROM batch_job_items
+      WHERE job_id = ? AND (
+        quality_state = 'partial' OR (
+          quality_state = 'degraded' AND (
+            instr(COALESCE(diagnostic_reason_json, ''), '\"extract_rsc_fallback_used\"') > 0 OR
+            instr(COALESCE(diagnostic_reason_json, ''), '\"extract_syndication_fallback_used\"') > 0 OR
+            instr(COALESCE(diagnostic_reason_json, ''), '\"document_pdf_truncated_pages\"') > 0
+          )
+        )
+      )
+      `,
+    )
+    .get(job.id) as { count: number };
+  const degradedCount = Number(summaryRow.count || 0);
+  const emptyOutputCount = Number(emptyOutputRow.count || 0);
+  const partialOutputCount = Number(partialOutputRow.count || 0);
   const remaining = Math.max(0, job.totalUrls - job.processedUrls);
   const msPerUrl = job.averageDurationMs && job.averageDurationMs > 0 ? job.averageDurationMs : DEFAULT_MS_PER_URL;
 
   return {
     job: {
       ...job,
-      degradedCount: Number(degradedRow.count || 0),
+      degradedCount,
+      usableCount: Math.max(0, job.successCount - degradedCount - partialOutputCount),
+      emptyOutputCount,
+      partialOutputCount,
     },
     items,
     estimatedRemainingMs: remaining * msPerUrl,

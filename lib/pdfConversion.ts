@@ -581,6 +581,8 @@ export async function buildPdfConversionSource(input: {
       title: input.title,
       textContent,
       htmlContent,
+      diagnosticReasons: truncated ? ['document_pdf_truncated_pages'] : [],
+      warnings: truncated ? ['Only part of this PDF was converted in this run.'] : [],
     };
   } finally {
     await loadingTask.destroy();

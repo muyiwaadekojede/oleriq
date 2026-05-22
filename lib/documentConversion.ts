@@ -4,7 +4,9 @@ import { buildMarkdownExport } from '@/lib/exportMarkdown';
 import { buildPdfConversionSource } from '@/lib/pdfConversion';
 import { buildTxtExport } from '@/lib/exportTxt';
 import { sanitizeFilename } from '@/lib/sanitise';
-import type { ExportFormat, ExtractResultState, ImageMode, ReaderSettings } from '@/lib/types';
+import { structuralDiagnosticReasonsForDocumentExport } from '@/lib/structuralFidelity';
+import { deriveResultState, warningForDiagnosticReason } from '@/lib/trustGuidance';
+import type { BatchDiagnosticReason, ExportFormat, ExtractResultState, ImageMode, ReaderSettings } from '@/lib/types';
 
 export const MAX_DOCUMENT_FILE_BYTES = 60 * 1024 * 1024;
 export const MAX_DOCUMENT_BATCH_FILES = 500;
@@ -49,6 +51,8 @@ export type ConversionSource = {
   title: string;
   textContent: string;
   htmlContent: string;
+  diagnosticReasons?: BatchDiagnosticReason[];
+  warnings?: string[];
 };
 
 async function getMammoth() {
@@ -525,6 +529,7 @@ export async function convertDocumentBuffer(input: {
   title: string;
   resultState: ExtractResultState;
   warnings: string[];
+  diagnosticReasons: BatchDiagnosticReason[];
 } | {
   success: false;
 }> {
@@ -553,11 +558,18 @@ export async function convertDocumentBuffer(input: {
   const sourceLabel = normalizeSourceLabel(input.sourceLabel);
   const requestedImageMode = input.imagesMode || 'off';
   const effectiveImageMode = input.format === 'txt' && requestedImageMode === 'on' ? 'captions' : requestedImageMode;
-  const warnings =
-    input.format === 'txt' && requestedImageMode === 'on'
-      ? ['Images were converted to captions because TXT output does not support embedded images.']
-      : [];
-  const resultState: ExtractResultState = warnings.length > 0 ? 'degraded' : 'usable';
+  const baseWarnings = [
+    ...(source.warnings || []),
+    ...(input.format === 'txt' && requestedImageMode === 'on'
+      ? ['Images become captions instead of embedded images in TXT output.']
+      : []),
+  ];
+  const baseDiagnosticReasons: BatchDiagnosticReason[] = [
+    ...(source.diagnosticReasons || []),
+    ...(input.format === 'txt' && requestedImageMode === 'on'
+      ? (['document_txt_images_downgraded_to_captions'] as BatchDiagnosticReason[])
+      : []),
+  ];
   const preparedHtmlContent = await applyImageModeToHtml({
     html: source.htmlContent,
     mode: effectiveImageMode,
@@ -574,6 +586,22 @@ export async function convertDocumentBuffer(input: {
       publishedTime: 'Unknown',
       content: preparedHtmlContent,
     });
+    const structuralReasons = structuralDiagnosticReasonsForDocumentExport({
+      sourceHtml: preparedHtmlContent,
+      format: input.format,
+      outputContent: markdown,
+    });
+    const diagnosticReasons = [...new Set([...baseDiagnosticReasons, ...structuralReasons])];
+    const warnings = [
+      ...baseWarnings,
+      ...structuralReasons
+        .map((reason) => warningForDiagnosticReason(reason))
+        .filter((warning): warning is string => Boolean(warning)),
+    ];
+    const resultState: ExtractResultState = deriveResultState({
+      diagnosticReasons,
+      warnings,
+    });
 
     return {
       success: true,
@@ -583,6 +611,7 @@ export async function convertDocumentBuffer(input: {
       title: source.title,
       resultState,
       warnings,
+      diagnosticReasons,
     };
   }
 
@@ -596,6 +625,22 @@ export async function convertDocumentBuffer(input: {
       content: preparedHtmlContent,
       textContent: preparedTextContent,
     });
+    const structuralReasons = structuralDiagnosticReasonsForDocumentExport({
+      sourceHtml: preparedHtmlContent,
+      format: input.format,
+      outputContent: txt,
+    });
+    const diagnosticReasons = [...new Set([...baseDiagnosticReasons, ...structuralReasons])];
+    const warnings = [
+      ...baseWarnings,
+      ...structuralReasons
+        .map((reason) => warningForDiagnosticReason(reason))
+        .filter((warning): warning is string => Boolean(warning)),
+    ];
+    const resultState: ExtractResultState = deriveResultState({
+      diagnosticReasons,
+      warnings,
+    });
 
     return {
       success: true,
@@ -605,6 +650,7 @@ export async function convertDocumentBuffer(input: {
       title: source.title,
       resultState,
       warnings,
+      diagnosticReasons,
     };
   }
 
@@ -616,6 +662,12 @@ export async function convertDocumentBuffer(input: {
       sourceUrl: sourceLabel,
       content: preparedHtmlContent,
     });
+    const warnings = [...baseWarnings];
+    const diagnosticReasons = [...baseDiagnosticReasons];
+    const resultState: ExtractResultState = deriveResultState({
+      diagnosticReasons,
+      warnings,
+    });
 
     return {
       success: true,
@@ -625,6 +677,7 @@ export async function convertDocumentBuffer(input: {
       title: source.title,
       resultState,
       warnings,
+      diagnosticReasons,
     };
   }
 
@@ -635,6 +688,12 @@ export async function convertDocumentBuffer(input: {
     byline: 'Unknown',
     settings: input.settings,
   });
+  const warnings = [...baseWarnings];
+  const diagnosticReasons = [...baseDiagnosticReasons];
+  const resultState: ExtractResultState = deriveResultState({
+    diagnosticReasons,
+    warnings,
+  });
 
   return {
     success: true,
@@ -644,5 +703,6 @@ export async function convertDocumentBuffer(input: {
     title: source.title,
     resultState,
     warnings,
+    diagnosticReasons,
   };
 }

@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from 'react';
 
-import { nextStepGuidanceForErrorCode } from '@/lib/trustGuidance';
-import type { ExtractErrorCode } from '@/lib/types';
+import { extractionPathLabel, nextStepGuidanceForErrorCode, pageComplexitySignalLabel } from '@/lib/trustGuidance';
+import type { ExtractErrorCode, ExtractionPath, PageComplexitySignal } from '@/lib/types';
 
 const REASONS = [
   'The page exists and is publicly accessible',
@@ -33,6 +33,9 @@ type FailureModalProps = {
   open: boolean;
   errorCode: ExtractErrorCode;
   failedUrl: string;
+  attemptedExtractionPath?: ExtractionPath;
+  browserAttempted?: boolean;
+  pageComplexitySignal?: PageComplexitySignal;
   sessionId?: string;
   onSubmitted?: () => void;
   onClose: () => void;
@@ -42,6 +45,9 @@ export function FailureModal({
   open,
   errorCode,
   failedUrl,
+  attemptedExtractionPath,
+  browserAttempted,
+  pageComplexitySignal,
   sessionId,
   onSubmitted,
   onClose,
@@ -103,6 +109,18 @@ export function FailureModal({
           <p className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-ink)]">
             Next step: {nextStep}
           </p>
+        ) : null}
+        {attemptedExtractionPath || pageComplexitySignal === 'dynamic_page_likely' || browserAttempted ? (
+          <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-ink)]">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">What Clearpage saw</p>
+            <div className="mt-2 space-y-1 text-[var(--color-muted)]">
+              {attemptedExtractionPath ? <p>Attempted path: {extractionPathLabel(attemptedExtractionPath)}</p> : null}
+              {pageComplexitySignal === 'dynamic_page_likely' ? (
+                <p>Page signal: {pageComplexitySignalLabel(pageComplexitySignal)}</p>
+              ) : null}
+              {browserAttempted ? <p>Browser attempted</p> : null}
+            </div>
+          </div>
         ) : null}
 
         {submitted ? (

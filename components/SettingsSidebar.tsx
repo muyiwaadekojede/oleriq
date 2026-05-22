@@ -4,8 +4,23 @@ import type { CSSProperties } from 'react';
 
 import { ExportButton } from '@/components/ExportButton';
 import { ImageToggle } from '@/components/ImageToggle';
-import { extractionPathLabel } from '@/lib/trustGuidance';
-import type { ExportFormat, ExtractResultState, ExtractionPath, ImageMode, ReaderSettings } from '@/lib/types';
+import {
+  diagnosticReasonLabel,
+  extractionPathLabel,
+  nextStepGuidanceForDiagnosticReason,
+  pageComplexitySignalLabel,
+  resultTrustLabel,
+  warningForDiagnosticReason,
+} from '@/lib/trustGuidance';
+import type {
+  BatchDiagnosticReason,
+  ExportFormat,
+  ExtractResultState,
+  ExtractionPath,
+  ImageMode,
+  PageComplexitySignal,
+  ReaderSettings,
+} from '@/lib/types';
 
 type SettingsSidebarProps = {
   title: string;
@@ -14,8 +29,12 @@ type SettingsSidebarProps = {
   publishedTime: string;
   wordCount: number;
   imageCount: number;
+  exportDiagnosticReasonsByFormat: Partial<Record<ExportFormat, BatchDiagnosticReason[]>>;
   resultState: ExtractResultState;
   extractionPath: ExtractionPath;
+  browserAttempted: boolean;
+  pageComplexitySignal: PageComplexitySignal;
+  diagnosticReasons: BatchDiagnosticReason[];
   warnings: string[];
   images: ImageMode;
   onImagesChange: (value: ImageMode) => void;
@@ -33,8 +52,12 @@ export function SettingsSidebar({
   publishedTime,
   wordCount,
   imageCount,
+  exportDiagnosticReasonsByFormat,
   resultState,
   extractionPath,
+  browserAttempted,
+  pageComplexitySignal,
+  diagnosticReasons,
   warnings,
   images,
   onImagesChange,
@@ -60,8 +83,12 @@ export function SettingsSidebar({
           publishedTime={publishedTime}
           wordCount={wordCount}
           imageCount={imageCount}
+          exportDiagnosticReasonsByFormat={exportDiagnosticReasonsByFormat}
           resultState={resultState}
           extractionPath={extractionPath}
+          browserAttempted={browserAttempted}
+          pageComplexitySignal={pageComplexitySignal}
+          diagnosticReasons={diagnosticReasons}
           warnings={warnings}
           images={images}
           onImagesChange={onImagesChange}
@@ -86,8 +113,12 @@ export function SettingsSidebar({
               publishedTime={publishedTime}
               wordCount={wordCount}
               imageCount={imageCount}
+              exportDiagnosticReasonsByFormat={exportDiagnosticReasonsByFormat}
               resultState={resultState}
               extractionPath={extractionPath}
+              browserAttempted={browserAttempted}
+              pageComplexitySignal={pageComplexitySignal}
+              diagnosticReasons={diagnosticReasons}
               warnings={warnings}
               images={images}
               onImagesChange={onImagesChange}
@@ -111,8 +142,12 @@ type SidebarBodyProps = {
   publishedTime: string;
   wordCount: number;
   imageCount: number;
+  exportDiagnosticReasonsByFormat: Partial<Record<ExportFormat, BatchDiagnosticReason[]>>;
   resultState: ExtractResultState;
   extractionPath: ExtractionPath;
+  browserAttempted: boolean;
+  pageComplexitySignal: PageComplexitySignal;
+  diagnosticReasons: BatchDiagnosticReason[];
   warnings: string[];
   images: ImageMode;
   onImagesChange: (value: ImageMode) => void;
@@ -130,8 +165,12 @@ function SidebarBody({
   publishedTime,
   wordCount,
   imageCount,
+  exportDiagnosticReasonsByFormat,
   resultState,
   extractionPath,
+  browserAttempted,
+  pageComplexitySignal,
+  diagnosticReasons,
   warnings,
   images,
   onImagesChange,
@@ -141,6 +180,33 @@ function SidebarBody({
   exporting,
   onNewUrl,
 }: SidebarBodyProps) {
+  const txtReasons = [...(exportDiagnosticReasonsByFormat.txt || [])];
+  if (images === 'on' && imageCount > 0 && !txtReasons.includes('document_txt_images_downgraded_to_captions')) {
+    txtReasons.push('document_txt_images_downgraded_to_captions');
+  }
+
+  const exportNotes = [
+    { format: 'TXT', reasons: txtReasons },
+    { format: 'Markdown', reasons: [...(exportDiagnosticReasonsByFormat.md || [])] },
+  ]
+    .map((entry) => ({
+      ...entry,
+      notes: Array.from(
+        new Set(
+          entry.reasons.map((reason) => warningForDiagnosticReason(reason) || diagnosticReasonLabel(reason)),
+        ),
+      ),
+    }))
+    .filter((entry) => entry.notes.length > 0);
+
+  const nextSteps = Array.from(
+    new Set(
+      diagnosticReasons
+        .map((reason) => nextStepGuidanceForDiagnosticReason(reason))
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+
   return (
     <div className="space-y-5 pb-4 text-[var(--preview-text)]">
       <section>
@@ -181,10 +247,25 @@ function SidebarBody({
         <div className="rounded-xl border border-[var(--preview-border)] bg-[var(--preview-panel)] p-3 text-sm">
           <div className="flex items-center justify-between gap-3">
             <span className="font-semibold text-[var(--preview-text)]">
-              {resultState === 'usable' ? 'Usable result' : 'Degraded result'}
+              {resultTrustLabel(resultState, diagnosticReasons)}
             </span>
             <span className="text-[var(--preview-muted)]">{extractionPathLabel(extractionPath)}</span>
           </div>
+          {pageComplexitySignal === 'dynamic_page_likely' || browserAttempted ? (
+            <div className="mt-2 space-y-1 text-[var(--preview-muted)]">
+              {pageComplexitySignal === 'dynamic_page_likely' ? (
+                <p>Page signal: {pageComplexitySignalLabel(pageComplexitySignal)}</p>
+              ) : null}
+              {browserAttempted ? <p>Browser attempted</p> : null}
+            </div>
+          ) : null}
+          {diagnosticReasons.length > 0 ? (
+            <ul className="mt-2 space-y-1 text-[var(--preview-text)]">
+              {diagnosticReasons.map((reason) => (
+                <li key={reason}>{diagnosticReasonLabel(reason)}</li>
+              ))}
+            </ul>
+          ) : null}
           {warnings.length > 0 ? (
             <ul className="mt-2 space-y-1 text-[var(--preview-muted)]">
               {warnings.map((warning) => (
@@ -192,8 +273,18 @@ function SidebarBody({
               ))}
             </ul>
           ) : (
-            <p className="mt-2 text-[var(--preview-muted)]">Primary extraction succeeded without fallback warnings.</p>
+            <p className="mt-2 text-[var(--preview-muted)]">Clean output with no current warning signs.</p>
           )}
+          {nextSteps.length > 0 ? (
+            <div className="mt-3 border-t border-[var(--preview-border)] pt-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--preview-muted)]">Next step</p>
+              <ul className="mt-1 space-y-1 text-[var(--preview-muted)]">
+                {nextSteps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -292,6 +383,20 @@ function SidebarBody({
           <ExportButton label="Download Markdown" onClick={() => onExport('md')} loading={!!exporting.md} />
           <ExportButton label="Download DOCX" onClick={() => onExport('docx')} loading={!!exporting.docx} />
         </div>
+        {exportNotes.length > 0 ? (
+          <div className="mt-3 rounded-lg border border-[var(--preview-border)] bg-[var(--preview-panel)] p-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--preview-muted)]">Format notes</p>
+            <ul className="mt-2 space-y-2 text-xs text-[var(--preview-muted)]">
+              {exportNotes.map((entry) => (
+                <li key={entry.format}>
+                  <span className="font-semibold text-[var(--preview-text)]">{entry.format}</span>
+                  {': '}
+                  {entry.notes.join(' ')}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </section>
 
       <button
