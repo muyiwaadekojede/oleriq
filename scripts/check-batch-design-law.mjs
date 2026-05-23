@@ -153,6 +153,24 @@ async function assertBelowFoldGuide(page) {
   await assertText(page, 'Structure proof');
   await assertText(page, 'Run recovery');
 
+  const faqHeading = guide.locator('[data-batch-guide-section="faq"] h2');
+  await faqHeading.scrollIntoViewIfNeeded();
+  const faqHeadingLines = await faqHeading.evaluate((element) => {
+    const style = window.getComputedStyle(element);
+    const lineHeight = Number.parseFloat(style.lineHeight);
+    const height = element.getBoundingClientRect().height;
+    return { lineHeight, height };
+  });
+  if (
+    Number.isFinite(faqHeadingLines.lineHeight) &&
+    Number.isFinite(faqHeadingLines.height) &&
+    faqHeadingLines.height > faqHeadingLines.lineHeight * 1.35
+  ) {
+    fail(
+      `Expected FAQ heading to stay on one desktop line, got height ${faqHeadingLines.height} for line-height ${faqHeadingLines.lineHeight}.`,
+    );
+  }
+
   await assertTextAbsent(page, 'What Clearpage tries to preserve during batch conversion');
   await assertTextAbsent(page, 'How batch results are reported');
   await assertTextAbsent(page, 'Progress, retries, and trust during longer runs');

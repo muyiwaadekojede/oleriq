@@ -255,7 +255,7 @@ export function BatchBelowFoldContent() {
 
         <section data-batch-guide-section="faq" className="space-y-5">
           <SectionLabel>FAQ</SectionLabel>
-          <h2 className="max-w-[13ch] text-[2.1rem] leading-[0.98] md:max-w-[22ch] md:text-[2.8rem]">
+          <h2 className="max-w-[13ch] text-[2.1rem] leading-[0.98] md:max-w-none md:text-[2.8rem]">
             Questions that matter before a bigger run.
           </h2>
           <div className="grid gap-x-10 gap-y-2 lg:grid-cols-2">
