@@ -10,6 +10,18 @@ Date: `2026-05-23`
   2. verify those candidates against the current public web as of `2026-05-23`,
   3. map user needs against current Clearpage support, remaining gaps, competitor coverage, and the next feature priorities.
 
+## Final Naming Decision
+
+- [Verified] Final selected product name: `Oleriq`.
+- [Verified] This selection was made after a stricter follow-up screen requested by the user.
+- [Verified] The stricter screen used:
+  1. Google exact-match result review,
+  2. `.com` DNS lookup.
+- [Verified] On `2026-05-23`, `oleriq.com` did not resolve in DNS.
+- [Verified] On `2026-05-23`, the checked exact Google query for `"Oleriq"` did not show a clear current company or product title in the reviewed result set.
+- [Unverified] I cannot verify this. I cannot prove that no person, profile, company, or dormant entity anywhere in the world has ever used `Oleriq`.
+- [Verified] The practical acceptance standard for this final decision is narrower: no clear current company or product collision surfaced in the exact Google check that was run on `2026-05-23`.
+
 ## Verification Standard For Names
 
 - [Verified] Each shortlisted name was checked two ways on `2026-05-23`:
@@ -17,6 +29,12 @@ Date: `2026-05-23`
   2. exact-phrase public web search using quoted search queries.
 - [Unverified] I cannot verify this. No practical online method can prove that nobody anywhere has ever used a name.
 - [Verified] The practical acceptance standard in this pass is narrower: reject names with an obvious current exact-match company or product collision, and prefer names with no current `.com` DNS resolution plus no obvious exact-match search result.
+
+## Correction To Earlier Name List
+
+- [Verified] The earlier long candidate table below was generated before the stricter Google-only follow-up screen.
+- [Verified] That earlier table is still useful as a research artifact, but it is not the final naming decision record.
+- [Verified] The authoritative selected name for this project is now `Oleriq`.
 
 ## Research Phrase Bank
 
