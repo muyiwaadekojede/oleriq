@@ -47,6 +47,11 @@ async function assertRowTitles(page, expectedTitles) {
 async function assertSetupState(page) {
   await page.goto(`${baseUrl}/batch`, { waitUntil: 'networkidle' });
 
+  const pageTitle = await page.title();
+  if (pageTitle !== 'Batch convert URLs and documents to Markdown, TXT, DOCX, or PDF | Oleriq') {
+    fail(`Expected /batch title to use Oleriq, got: ${pageTitle}`);
+  }
+
   await assertText(page, 'Batch convert URLs and documents');
   await assertText(page, 'Convert many links or files into clean, readable Markdown, TXT, DOCX, or PDF.');
   await assertText(page, 'Batch convert URLs and documents');
@@ -152,6 +157,7 @@ async function assertBelowFoldGuide(page) {
   await assertText(page, 'Truth surface');
   await assertText(page, 'Structure proof');
   await assertText(page, 'Run recovery');
+  await assertTextAbsent(page, 'Clearpage');
 
   const faqHeading = guide.locator('[data-batch-guide-section="faq"] h2');
   await faqHeading.scrollIntoViewIfNeeded();

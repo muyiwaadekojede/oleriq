@@ -14,7 +14,7 @@
 - [Verified] The loudest switching axis is still managed convenience versus self-hosted control.
 - [Verified] The loudest distrust axis is the gap between a good first demo and what happens on protected pages, in Docker, or across multi-step browser sessions.
 - [Verified] The loudest "overhyped versus underdelivered" signal in the browser-agent lane is not that the tools never work. It is that they often need too many tool calls, too much context, or too much hidden setup before they become dependable.
-- [Inference] Clearpage should read this category as a trust-and-boundary market, not only a markdown-quality market.
+- [Inference] Oleriq should read this category as a trust-and-boundary market, not only a markdown-quality market.
 
 ## Strongest Signals
 
@@ -44,14 +44,14 @@
 - [Verified] Comparison threads keep separating exploration from repeatable automation.
 - [Verified] Playwright MCP is still treated as the more repeatable and debuggable path, but it is criticized for session loss, onboarding friction, and context-heavy tool use.
 - [Verified] Browser Use and adjacent real-browser approaches attract interest when users need logged-in state or exploratory flows, but HN security pushback shows that CDP-based control over a real browser is a serious trust boundary, not a minor implementation detail.
-- [Inference] Clearpage should treat any future browser-agent surface as an explicitly bounded fallback with visible state, not as a magical default mode.
+- [Inference] Oleriq should treat any future browser-agent surface as an explicitly bounded fallback with visible state, not as a magical default mode.
 
-## Clearpage-Relevant Implications
+## Oleriq-Relevant Implications
 
-- [Inference] Clearpage should expose which path produced the result: static fetch, browser fallback, auth-required, blocked, or partial.
-- [Inference] Clearpage should treat first-session trust as product surface. Public comparison threads repeatedly punish tools that look good in a demo and then become opaque under real workload pressure.
-- [Inference] Clearpage should avoid broad "works on everything" language. The public demand signals in this checkpoint reward narrower but more legible claims.
-- [Inference] Clearpage should keep operational burden low for the user while still surfacing enough evidence that failures are not silent.
+- [Inference] Oleriq should expose which path produced the result: static fetch, browser fallback, auth-required, blocked, or partial.
+- [Inference] Oleriq should treat first-session trust as product surface. Public comparison threads repeatedly punish tools that look good in a demo and then become opaque under real workload pressure.
+- [Inference] Oleriq should avoid broad "works on everything" language. The public demand signals in this checkpoint reward narrower but more legible claims.
+- [Inference] Oleriq should keep operational burden low for the user while still surfacing enough evidence that failures are not silent.
 
 ## Source Gap
 

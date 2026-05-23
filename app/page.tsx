@@ -403,7 +403,7 @@ export default function Page() {
       const blob = await response.blob();
       const contentDisposition = response.headers.get('content-disposition') || '';
       const match = contentDisposition.match(/filename="?([^\"]+)"?/i);
-      const filename = match?.[1] || `clearpage-export.${format}`;
+      const filename = match?.[1] || `Oleriq-export.${format}`;
       const objectUrl = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = objectUrl;

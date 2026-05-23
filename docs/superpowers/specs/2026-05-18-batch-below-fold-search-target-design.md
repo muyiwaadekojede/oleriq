@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This spec defines the below-fold content architecture for `Clearpage`'s `/batch` route.
+This spec defines the below-fold content architecture for `Oleriq`'s `/batch` route.
 
 The first fold remains tool-first. Users should still land, understand the job, and start the workflow without reading the lower page.
 
@@ -212,7 +212,7 @@ What it must not cover:
 - homepage comparison as a primary idea
 - broad category history
 
-### H2: What Clearpage tries to preserve during batch conversion
+### H2: What Oleriq tries to preserve during batch conversion
 
 Purpose:
 

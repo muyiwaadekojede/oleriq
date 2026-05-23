@@ -47,7 +47,7 @@ export function sanitizeHtml(html: string): string {
   return clean;
 }
 
-export function sanitizeFilename(title: string, fallback = 'clearpage-export'): string {
+export function sanitizeFilename(title: string, fallback = 'Oleriq-export'): string {
   const normalizedTitle = (title || fallback)
     .normalize('NFKD')
     .replace(/[\u0300-\u036f]/g, '');

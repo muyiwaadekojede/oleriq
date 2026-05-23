@@ -11,7 +11,7 @@
 - [Verified] The strongest cross-market pattern is a split between fast demo value and fragile reality. `firecrawl`, `jina-reader`, `browser-use`, and `scrapegraphai` all have public evidence that first success can feel immediate, then trust drops when dynamic pages, auth, anti-bot, or debugging enter the flow.
 - [Verified] Pricing frustration is not only about list price. The repeated pain is token spikes, expiring credits, unclear cost shape, refunds, and marketplace economics that feel hard to reason about before committing serious usage.
 - [Verified] Local-first challengers like `webclaw`, `webpeel`, `crw`, and `crawl4ai` win attention by reducing signup or hosted-cost anxiety, but their public evidence surface is thinner, so the long-run complaint picture is less mature.
-- [Inference] Clearpage should treat fast first success and honest cost shape as part of the product itself, not as marketing wrappers around extraction quality.
+- [Inference] Oleriq should treat fast first success and honest cost shape as part of the product itself, not as marketing wrappers around extraction quality.
 
 ## Counts
 
@@ -86,10 +86,10 @@
 - [Verified] GitHub discussions show that real users quickly run into proxy visibility, retry semantics, and failure-propagation pain once they leave the tutorial path.
 - [Verified] Pricing confidence is mixed: Apify's official page explains the free tier and pay-as-you-go structure, while public Reddit and Trustpilot surfaces show confusion, steep-at-scale concerns, and builder-economics frustration.
 
-## Clearpage-Relevant Takeaways
+## Oleriq-Relevant Takeaways
 
 - [Verified] Users reward tools that make the first result obvious in under 10 minutes.
 - [Verified] Users lose trust fastest when the product says a crawl succeeded but returns incomplete, empty, or unexplained output.
 - [Verified] Users want cost shape they can reason about before traffic grows: no surprise token spikes, no hidden retry burn, and no idle-month anxiety.
 - [Verified] Users also want debug evidence that is human-readable: what renderer ran, what failed, what retried, and whether auth or anti-bot got in the way.
-- [Inference] If Clearpage can combine a Jina-style first-success moment with clearer failure evidence than Firecrawl, Browser Use, ScrapeGraphAI, or Crawlee, that is a sharper wedge than trying to out-market every crawler on raw capability claims.
+- [Inference] If Oleriq can combine a Jina-style first-success moment with clearer failure evidence than Firecrawl, Browser Use, ScrapeGraphAI, or Crawlee, that is a sharper wedge than trying to out-market every crawler on raw capability claims.

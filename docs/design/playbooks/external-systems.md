@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This file defines how Clearpage uses external design systems, skills, and theory sources without losing its own identity.
+This file defines how Oleriq uses external design systems, skills, and theory sources without losing its own identity.
 
 It is a companion file, not the constitutional source of truth.
 
@@ -17,7 +17,7 @@ The precedence order is:
 External systems are imported as behavior, critique, workflow, or theory.
 They are not imported as a full visual override.
 
-Clearpage uses them to strengthen weak areas in the local design system:
+Oleriq uses them to strengthen weak areas in the local design system:
 - critique quality
 - route classification
 - UX writing
@@ -133,7 +133,7 @@ Primary use:
 Why it fits:
 - it looks for local `DESIGN.md`
 - it treats artifacts and critique as part of the process rather than afterthoughts
-- it is stronger as a workflow model than as a direct house style for Clearpage
+- it is stronger as a workflow model than as a direct house style for Oleriq
 
 What to adopt:
 - ask sharper discovery questions before big UI work
@@ -145,7 +145,7 @@ What not to adopt blindly:
 - large preset system libraries
 - multi-surface desktop-app mentality
 - default direction pickers as a replacement for local product judgment
-- broad media-generation surface logic on task-first Clearpage routes
+- broad media-generation surface logic on task-first Oleriq routes
 
 ## Taste Skill
 

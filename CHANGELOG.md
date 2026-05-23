@@ -1,4 +1,4 @@
-# Clearpage Change Log (Full Ledger)
+# Oleriq Change Log (Full Ledger)
 
 Generated: 2026-04-26T00:55:14+01:00
 Timezone: Africa/Lagos (+01:00)
@@ -18,7 +18,7 @@ A	README.md
 Hash: e714ab3bb357d575866ee2aaa840d8cae9eea3a5
 Date: 2026-04-23T01:09:51+01:00
 Author: muyiwaadekojede
-Subject: Build Clearpage full-stack app with extraction, exports, feedback, and E2E matrix
+Subject: Build Oleriq full-stack app with extraction, exports, feedback, and E2E matrix
 Files:
 A	.env.local.example
 A	.gitignore
@@ -71,7 +71,7 @@ M	.gitignore
 Hash: f6b0b34b76ad33a82a426a36f1490571deac293a
 Date: 2026-04-23T01:15:08+01:00
 Author: muyiwaadekojede
-Subject: Merge Clearpage implementation
+Subject: Merge Oleriq implementation
 Files:
 ### Commit
 Hash: cfa79a899ff4b20d57e8440a4a3cee3797662dff
@@ -368,7 +368,7 @@ M	lib/extract.ts
 
 Note: This section records interactive work that may not map 1:1 to a commit (test runs, deployments, diagnostics, server starts, reproductions, and iteration loops). Times below are taken from chat UI labels where available.
 
-1. [Time label: 8:25 PM] Full Clearpage build scope was provided (product, architecture, stack, extraction/export requirements, feedback pipeline, admin page requirements).
+1. [Time label: 8:25 PM] Full Oleriq build scope was provided (product, architecture, stack, extraction/export requirements, feedback pipeline, admin page requirements).
 2. [Time label: 8:25 PM onward] Base app implementation was completed, then iterative e2e runs started (npm run e2e:extract, npm run e2e:export, npm run e2e:feedback, npm run e2e:ui, and later npm run e2e:full).
 3. [Time label: 8:56 PM] Local server was launched and localhost URL was shared.
 4. [Time label: ~9:11 PM] User reported major quality issues (missing images, filename/title correctness, plus requirement for many unique URL tests).
@@ -380,7 +380,7 @@ Note: This section records interactive work that may not map 1:1 to a commit (te
 - Fixed payload-size/413 and test harness resiliency issues.
 6. [Time label: ~12:49 AM] Reported full matrix + core suite green for that cycle.
 7. [Time label: ~1:06 AM] Vercel production deployment performed; deployment URLs shared.
-8. [Time label: ~1:13 AM] Existing GitHub repo was found/used and project was pushed (github.com/muyiwaadekojede/clearpage).
+8. [Time label: ~1:13 AM] Existing GitHub repo was found/used and project was pushed (github.com/muyiwaadekojede/Oleriq).
 9. [Time label: ~10:29 AM] Full-journey telemetry tracking was requested and implemented (SQLite analytics, admin analytics dashboard, client/server events).
 10. [Time label: ~10:54 AM onward] Strict admin auth and server-side-only behavior hardening was requested.
 11. [Time label: ~1:50 PM and after] Admin auth/session/cookie protection, protected admin APIs, and server-side content-variant handling were implemented and tested.
@@ -402,8 +402,8 @@ Note: This section records interactive work that may not map 1:1 to a commit (te
 19. [Time label: ~7:15 AM / ~7:23 AM] Status reported with local/live e2e passing for that cycle.
 20. [Current continuation cycle] Remaining blocked URL handling and Vercel regressions were resolved to 0 blocked in brand matrix.
 21. [Current continuation cycle] Final live validation done:
-- BASE_URL=https://clearpage.vercel.app npm run e2e:full passed.
-- BASE_URL=https://clearpage.vercel.app node scripts/e2e-brand-matrix.mjs returned 36/36 pass, 0 blocked.
+- BASE_URL=https://Oleriq.vercel.app npm run e2e:full passed.
+- BASE_URL=https://Oleriq.vercel.app node scripts/e2e-brand-matrix.mjs returned 36/36 pass, 0 blocked.
 
 ## 3) Operational Notes
 

@@ -28,7 +28,7 @@ async function createFixtures() {
   const invalidPath = path.join(dir, 'unsupported.png');
   const structureHtmlPath = path.join(process.cwd(), 'public', 'test-fixtures', 'structure-source.html');
 
-  await fs.writeFile(textPath, 'Clearpage batch upload test.\n\nThis file should convert cleanly.');
+  await fs.writeFile(textPath, 'Oleriq batch upload test.\n\nThis file should convert cleanly.');
   await fs.writeFile(markdownPath, '# Batch Summary\n\nThis markdown file should convert cleanly.');
   await fs.writeFile(invalidPath, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
   const longPdfPath = path.join(dir, 'long-batch-fixture.pdf');

@@ -52,10 +52,10 @@
 - [Verified] These products collectively show where user demand goes after static extraction fails: pagination, full-site crawling, proxy control, anti-bot bypass, and more explicit local-versus-cloud fallback stories.
 - [Verified] They also show the tradeoff clearly: better protected-site coverage usually adds dependencies, remote browsers, or hosted infrastructure.
 
-## Clearpage-Relevant Direction
+## Oleriq-Relevant Direction
 
-- [Inference] Clearpage should not treat "browser mode" as a generic upgrade over static extraction. It should be an explicit escalation path with clear costs, clear limits, and evidence about why escalation happened.
-- [Inference] Clearpage should expose state transitions plainly: static success, auth-required, wait-required, blocked, browser-escalated, partial, or failed.
-- [Inference] Clearpage should preserve operator trust with replay-grade evidence such as screenshots, action traces, and failure reasons whenever browser control is involved.
-- [Inference] Clearpage should separate cheap extraction from expensive browser work so users do not pay browser costs on pages that are still solvable through fast static methods.
-- [Inference] Clearpage should make session handling first-class if it wants authenticated scraping to be credible: cookies, storage state, profile reuse, and safe renewal all matter.
+- [Inference] Oleriq should not treat "browser mode" as a generic upgrade over static extraction. It should be an explicit escalation path with clear costs, clear limits, and evidence about why escalation happened.
+- [Inference] Oleriq should expose state transitions plainly: static success, auth-required, wait-required, blocked, browser-escalated, partial, or failed.
+- [Inference] Oleriq should preserve operator trust with replay-grade evidence such as screenshots, action traces, and failure reasons whenever browser control is involved.
+- [Inference] Oleriq should separate cheap extraction from expensive browser work so users do not pay browser costs on pages that are still solvable through fast static methods.
+- [Inference] Oleriq should make session handling first-class if it wants authenticated scraping to be credible: cookies, storage state, profile reuse, and safe renewal all matter.

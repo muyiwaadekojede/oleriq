@@ -546,7 +546,7 @@ export default function BatchPage() {
 
       await downloadBlobResponse(
         response,
-        `${(row.title || 'clearpage-direct-file').replace(/\s+/g, '-').toLowerCase()}.${requestedFormat}`,
+        `${(row.title || 'Oleriq-direct-file').replace(/\s+/g, '-').toLowerCase()}.${requestedFormat}`,
       );
 
       if (response.headers.get('x-clearpage-fallback-format') === 'original' && requestedFormat !== 'pdf') {
@@ -572,7 +572,7 @@ export default function BatchPage() {
 
     await downloadBlobResponse(
       response,
-      `${(row.title || 'clearpage-batch').replace(/\s+/g, '-').toLowerCase()}.${requestedFormat}`,
+      `${(row.title || 'Oleriq-batch').replace(/\s+/g, '-').toLowerCase()}.${requestedFormat}`,
     );
   }
 

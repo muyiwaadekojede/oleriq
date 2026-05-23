@@ -4,7 +4,7 @@
 
 - [Verified] This directory keeps the tracked decision surface for competitor reuse.
 - [Verified] The full working analysis can stay in the external lab under `notes\` and `evidence\`.
-- [Verified] This tracked index keeps the final gate outcome discoverable from the Clearpage repo itself.
+- [Verified] This tracked index keeps the final gate outcome discoverable from the Oleriq repo itself.
 
 ## File Naming
 
@@ -31,7 +31,7 @@
 - Competitor: Firecrawl
 - Manifest slug: firecrawl
 - Category: direct_product
-- Repo path: C:\Users\Godsgrace\Desktop\codez\clearpage-competitor-lab\repos\direct-products\firecrawl
+- Repo path: C:\Users\Godsgrace\Desktop\codez\Oleriq-competitor-lab\repos\direct-products\firecrawl
 - Reuse gate: legal_review_required
 - Evidence: repo audit + license check + product analysis
 - Reason: Technical ideas are useful, but direct adoption stays blocked until written review clears the exact scope.

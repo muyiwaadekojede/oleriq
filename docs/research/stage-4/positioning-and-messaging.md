@@ -2,8 +2,8 @@
 
 ## Strategic Position
 
-- [Inference] Clearpage should not position itself as the broadest scraper.
-- [Inference] Clearpage should position itself as the cleanest and most trustworthy path from URL or document to usable export.
+- [Inference] Oleriq should not position itself as the broadest scraper.
+- [Inference] Oleriq should position itself as the cleanest and most trustworthy path from URL or document to usable export.
 - [Inference] The strongest message is not `we can crawl more things`. It is `you can trust what you get back`.
 
 ## Core Message Options
@@ -28,31 +28,31 @@
 ### Against Firecrawl
 
 - [Inference] Firecrawl signals platform breadth, but its public pain surface includes cost sensitivity, false-success states, and hard-page reliability pressure.
-- [Inference] Clearpage should not try to out-broaden Firecrawl first.
-- [Inference] Clearpage should position around cleaner outputs, more legible results, and less ambiguity about output quality.
+- [Inference] Oleriq should not try to out-broaden Firecrawl first.
+- [Inference] Oleriq should position around cleaner outputs, more legible results, and less ambiguity about output quality.
 
 ### Against Jina Reader
 
 - [Inference] Jina Reader wins on instant-read simplicity.
 - [Inference] Its public pain surface is structure loss, token unpredictability, and JS-heavy gaps.
-- [Inference] Clearpage should position around better export trust and clearer fidelity boundaries, not around beating Jina on one-line input simplicity alone.
+- [Inference] Oleriq should position around better export trust and clearer fidelity boundaries, not around beating Jina on one-line input simplicity alone.
 
 ### Against Crawl4AI
 
 - [Inference] Crawl4AI wins on open-source depth and control.
 - [Inference] Its public pain surface is markdown fidelity, SPA parity, and operational drag.
-- [Inference] Clearpage should position around lower-friction trust for people who want usable results without infrastructure work.
+- [Inference] Oleriq should position around lower-friction trust for people who want usable results without infrastructure work.
 
 ### Against Browser Use And Playwright MCP
 
 - [Inference] These products promise browser-native power, but their public pain surfaces include loops, token bloat, setup friction, and replay or visibility issues.
-- [Inference] Clearpage should not compete here by default.
-- [Inference] Clearpage should position itself as the trustworthy extraction layer before any browser-agent expansion.
+- [Inference] Oleriq should not compete here by default.
+- [Inference] Oleriq should position itself as the trustworthy extraction layer before any browser-agent expansion.
 
 ### Against Webclaw, CRW, And WebPeel
 
 - [Inference] These products have attractive low-friction, low-price, or self-host narratives, but public third-party proof is thinner.
-- [Inference] Clearpage should avoid overreacting to their positioning breadth until stronger independent proof appears.
+- [Inference] Oleriq should avoid overreacting to their positioning breadth until stronger independent proof appears.
 
 ## Honeymoon Messaging
 

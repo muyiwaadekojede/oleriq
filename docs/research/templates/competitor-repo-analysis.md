@@ -12,7 +12,7 @@
 ## Product Job
 
 - [Verified] Primary user job:
-- [Inference] Where it overlaps with Clearpage:
+- [Inference] Where it overlaps with Oleriq:
 - [Inference] Where it is only adjacent:
 
 ## Stack And Runtime
@@ -52,4 +52,4 @@
 ## Decision
 
 - [Verified] Recommended next action:
-- [Inference] Recommended Clearpage follow-up:
+- [Inference] Recommended Oleriq follow-up:

@@ -12,7 +12,7 @@
 - [Verified] `crawl4ai-mcp-server` and `teracrawl` cluster around integration reality rather than pure extraction quality: MCP transport stability, SPA waiting behavior, local-hosting expectations, dependency sprawl, and browser-backed deployment tradeoffs.
 - [Verified] `browserpilot` demand is feature-led rather than complaint-led in the public surface I found: pagination, full-site crawling, proxies, and broader model support dominate.
 - [Verified] `webustler` has the weakest public evidence surface in this pass.
-- [Inference] For Clearpage, the adjacent-tool lesson is not just “extract better markdown.” It is “reduce setup burden, preserve structure, expose failure evidence, and offer an honest browser-backed path for dynamic or protected pages.”
+- [Inference] For Oleriq, the adjacent-tool lesson is not just “extract better markdown.” It is “reduce setup burden, preserve structure, expose failure evidence, and offer an honest browser-backed path for dynamic or protected pages.”
 
 ## Competitor Notes
 
@@ -25,7 +25,7 @@
 - [Verified] GitHub issue `#492` asks for a visual highlighter during tracing and clicking because the operator otherwise cannot easily see what the agent is acting on.
 - [Verified] GitHub issue `#1479` flags indirect prompt-injection risk through accessibility snapshots, which matters because MCP returns page structure directly into the LLM context.
 - [Verified] A Reddit thread titled `If you haven't already, learn Playwright MCP` is strongly positive about test generation and page-aware debugging, so the pain is not lack of value; it is cost, reliability, and control.
-- [Inference] Clearpage should treat browser-backed automation as valuable but expensive, and should keep the browser path narrow, observable, and optional rather than the default for every extraction job.
+- [Inference] Oleriq should treat browser-backed automation as valuable but expensive, and should keep the browser path narrow, observable, and optional rather than the default for every extraction job.
 
 ### trafilatura
 
@@ -34,7 +34,7 @@
 - [Verified] GitHub issue `#840` reports intermittent segmentation faults during concurrent `extract()` calls, which raises trust concerns for batch or threaded workloads.
 - [Verified] GitHub issue `#842` says keeping images enabled can break parsing and produce unstable markdown output.
 - [Verified] A Hacker News thread about `Defuddle` includes a direct comparison that says the Python `trafilatura` library gave the `best quality content` with `accurate meta data` for that user.
-- [Inference] Clearpage can use this pattern directly: users reward extraction quality, but they stop trusting a parser when concurrency, markdown fidelity, or media-preservation edge cases break in production.
+- [Inference] Oleriq can use this pattern directly: users reward extraction quality, but they stop trusting a parser when concurrency, markdown fidelity, or media-preservation edge cases break in production.
 
 ### mozilla-readability
 
@@ -43,7 +43,7 @@
 - [Verified] GitHub issue `#1002` asks for a way to disable or raise the maximum title-length trimming.
 - [Verified] A Hacker News thread about `Rdrview` praises `mozilla/readability` for consistent primary-content extraction and minimal semantic mangling versus several alternatives.
 - [Verified] A Hacker News thread about `2markdown` says `Readability` works well on article or blog pages but fails badly on structured pages such as API documentation.
-- [Inference] Clearpage should not assume one parser can cover both article-style pages and structured documentation equally well.
+- [Inference] Oleriq should not assume one parser can cover both article-style pages and structured documentation equally well.
 
 ### webustler
 
@@ -63,7 +63,7 @@
 - [Verified] Crawl4AI issue `#1963` says MCP scrape tools lack the `wait_until` and SPA-friendly controls available in the REST API and CLI.
 - [Verified] Crawl4AI issue `#1964` says markdown export can lose heading hierarchy and table structure.
 - [Verified] Crawl4AI issue `#1962` says escaped non-ASCII output causes major token overhead for CJK content.
-- [Inference] Clearpage should assume that MCP wrappers inherit core crawler pain points quickly, especially around transport discipline, dynamic-page waiting, and markdown fidelity.
+- [Inference] Oleriq should assume that MCP wrappers inherit core crawler pain points quickly, especially around transport discipline, dynamic-page waiting, and markdown fidelity.
 
 ### teracrawl
 
@@ -71,7 +71,7 @@
 - [Verified] GitHub issue `#1` asks whether an existing `SearXNG` instance can replace `browser-serp`, which is a direct request to reduce dependency lock-in.
 - [Verified] A Reddit thread about Firecrawl being blocked by headlessness recommends `Teracrawl` specifically because it runs on top of a headful Chrome browser API.
 - [Verified] A public analysis page on Starlog says you cannot run Teracrawl without a `Browser.cash API key`, which frames the main tradeoff as better scraping coverage versus external-service dependence.
-- [Inference] Clearpage should expect users to value anti-bot success, but they will still push back if that success requires too many moving parts or a mandatory hosted dependency.
+- [Inference] Oleriq should expect users to value anti-bot success, but they will still push back if that success requires too many moving parts or a mandatory hosted dependency.
 
 ### browserpilot
 
@@ -81,7 +81,7 @@
 - [Verified] The older `handrew/browserpilot` repo also has demand for broader model support in issue `#16` and browser compatibility in issue `#19`.
 - [Verified] The older repo has a public code-injection vulnerability report in issue `#21`, which adds a security-trust concern to the automation story.
 - [Verified] The Hacker News launch thread for `BrowserPilot: Natural language browser automation` is positive about the plain-English automation idea, which confirms baseline appeal even if the recent public surface is more feature-led than review-led.
-- [Inference] Clearpage should read BrowserPilot demand as a sign that users want one tool to span search, browsing, extraction, and export, but those users quickly ask for crawling depth, proxy control, model choice, and safer execution.
+- [Inference] Oleriq should read BrowserPilot demand as a sign that users want one tool to span search, browsing, extraction, and export, but those users quickly ask for crawling depth, proxy control, model choice, and safer execution.
 
 ## Cross-Competitor Signals That Matter
 

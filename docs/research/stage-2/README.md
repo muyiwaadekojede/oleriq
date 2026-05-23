@@ -14,9 +14,9 @@
 
 ## Current Market Shape
 
-- [Verified] `Firecrawl`, `Jina Reader`, `Apify`, `Webclaw`, `WebPeel`, `CRW`, and `ScrapeGraphAI` are active direct extraction or crawl products in Clearpage's problem space.
+- [Verified] `Firecrawl`, `Jina Reader`, `Apify`, `Webclaw`, `WebPeel`, `CRW`, and `ScrapeGraphAI` are active direct extraction or crawl products in Oleriq's problem space.
 - [Verified] `Browser Use`, `BrowserPilot`, `Playwright MCP`, and `TeraCrawl` sit closer to browser automation, agent execution, or extraction infrastructure than to a narrow "clean page to exportable document" product.
-- [Verified] `crawl4ai-mcp-server`, `Webustler`, `Trafilatura`, and `Mozilla Readability` are better treated as enabling tools, wrappers, or libraries than as like-for-like Clearpage commercial competitors.
+- [Verified] `crawl4ai-mcp-server`, `Webustler`, `Trafilatura`, and `Mozilla Readability` are better treated as enabling tools, wrappers, or libraries than as like-for-like Oleriq commercial competitors.
 - [Inference] Future prioritization should separate direct product competitors from enabling primitives, because mixing them hides who is competing for the same user job and who is simply part of the stack.
 
 ## Highest-Signal Workbook Drift
@@ -60,7 +60,7 @@
 
 - [Verified] The direct-competitor set is broader than simple "URL to markdown" tools. Several competitors now bundle search, browser control, monitoring, screenshots, structured extraction, and MCP or agent integrations.
 - [Verified] Low-friction onboarding is a repeated pattern: prefix-based usage for `Jina Reader`, cloud-first signup for `Browser Use`, in-under-a-minute docs for `Webclaw`, live demo plus no-card free start for `WebPeel`, and strong playground or quick-start paths across several tools.
-- [Inference] Clearpage should be evaluated later not only against output quality, but also against onboarding speed, free-tier trust, browser-backed coverage, structured extraction depth, and how clearly each competitor frames its ideal user job.
+- [Inference] Oleriq should be evaluated later not only against output quality, but also against onboarding speed, free-tier trust, browser-backed coverage, structured extraction depth, and how clearly each competitor frames its ideal user job.
 
 ## Unresolved Items
 
@@ -72,7 +72,7 @@
 
 - [Verified] The normalized per-competitor verification table is in `docs/research/stage-2/live-competitor-verification.csv`.
 - [Verified] The direct-cohort repo investigation summary is in `docs/research/stage-2/repo-investigation-direct-cohort.md`.
-- [Verified] The durable per-repo lab notes are in `C:\Users\Godsgrace\Desktop\codez\clearpage-competitor-lab\notes\<slug>\analysis.md`.
+- [Verified] The durable per-repo lab notes are in `C:\Users\Godsgrace\Desktop\codez\Oleriq-competitor-lab\notes\<slug>\analysis.md`.
 
 ## Recommended Stage 3 Input
 

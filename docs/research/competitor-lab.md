@@ -4,19 +4,19 @@
 
 - [Verified] This document defines the tracked operating contract for the competitor lab used by the npm commands `research:lab:init`, `research:lab:sync:*`, `research:lab:status`, and `research:lab:audit`.
 - [Verified] The lab is for competitor repo discovery, sync, audit, and repeated investigation.
-- [Verified] The lab is not part of the tracked Clearpage application source tree.
+- [Verified] The lab is not part of the tracked Oleriq application source tree.
 
 ## Path Contract
 
-- [Verified] The external source-of-truth path is `C:\Users\Godsgrace\Desktop\codez\clearpage-competitor-lab`.
-- [Verified] The repo-facing mount path is `C:\Users\Godsgrace\Desktop\codez\clearpage\competitor-lab`.
+- [Verified] The external source-of-truth path is `C:\Users\Godsgrace\Desktop\codez\Oleriq-competitor-lab`.
+- [Verified] The repo-facing mount path is `C:\Users\Godsgrace\Desktop\codez\Oleriq\competitor-lab`.
 - [Verified] The repo-facing path must be a Windows junction (a Windows directory pointer that exposes another folder tree without copying it) targeting the external path.
 - [Verified] The external path is the canonical lab state. The in-repo junction is a discoverability mount only.
 
 ## Expected Lab Layout
 
 ```text
-C:\Users\Godsgrace\Desktop\codez\clearpage-competitor-lab\
+C:\Users\Godsgrace\Desktop\codez\Oleriq-competitor-lab\
   repos\
     direct-products\
       <slug>\
@@ -102,13 +102,13 @@ npm run research:lab:init
 ### Missing or Broken Junction
 
 ```powershell
-if (Test-Path 'C:\Users\Godsgrace\Desktop\codez\clearpage\competitor-lab') {
-  $junction = Get-Item 'C:\Users\Godsgrace\Desktop\codez\clearpage\competitor-lab' -Force
+if (Test-Path 'C:\Users\Godsgrace\Desktop\codez\Oleriq\competitor-lab') {
+  $junction = Get-Item 'C:\Users\Godsgrace\Desktop\codez\Oleriq\competitor-lab' -Force
   $junction.Delete()
 }
 New-Item -ItemType Junction `
-  -Path 'C:\Users\Godsgrace\Desktop\codez\clearpage\competitor-lab' `
-  -Target 'C:\Users\Godsgrace\Desktop\codez\clearpage-competitor-lab'
+  -Path 'C:\Users\Godsgrace\Desktop\codez\Oleriq\competitor-lab' `
+  -Target 'C:\Users\Godsgrace\Desktop\codez\Oleriq-competitor-lab'
 ```
 
 ### Missing or Unreadable Manifest

@@ -312,7 +312,7 @@ export default function AdminPage() {
       <main className="mx-auto flex min-h-screen w-full max-w-md items-center px-6 py-16">
         <section className="w-full rounded-2xl border border-[var(--color-border)] bg-white p-6">
           <h1 className="logo-mark text-4xl font-semibold">Admin Login</h1>
-          <p className="mt-2 text-sm text-[var(--color-muted)]">Sign in to access Clearpage telemetry and feedback.</p>
+          <p className="mt-2 text-sm text-[var(--color-muted)]">Sign in to access Oleriq telemetry and feedback.</p>
 
           <form className="mt-6 space-y-4" onSubmit={(event) => void handleLogin(event)}>
             <div>
@@ -372,7 +372,7 @@ export default function AdminPage() {
         <div>
           <h1 className="logo-mark text-5xl font-semibold">Admin Dashboard</h1>
           <p className="mt-2 text-sm text-[var(--color-muted)]">
-            Full journey telemetry + feedback inbox for Clearpage.
+            Full journey telemetry + feedback inbox for Oleriq.
           </p>
         </div>
 

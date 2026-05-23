@@ -21,7 +21,7 @@ const ERROR_MESSAGES: Record<ExtractErrorCode, string> = {
   EXTRACTION_FAILED:
     "We reached the page but couldn't identify the main article content. This sometimes happens with homepages, login pages, or highly dynamic layouts.",
   PAYWALL_DETECTED:
-    'This page appears to be behind a paywall or requires a login. Clearpage can only extract content that is publicly accessible.',
+    'This page appears to be behind a paywall or requires a login. Oleriq can only extract content that is publicly accessible.',
   EMPTY_CONTENT: 'The page loaded but contained no readable text content.',
   TIMEOUT:
     'The page took too long to load. This can happen with very slow servers or heavily JavaScript-dependent pages.',
@@ -70,7 +70,7 @@ export function FailureModal({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(sessionId ? { 'x-clearpage-session': sessionId } : {}),
+          ...(sessionId ? { 'x-Oleriq-session': sessionId } : {}),
         },
         body: JSON.stringify({
           sessionId,
@@ -112,7 +112,7 @@ export function FailureModal({
         ) : null}
         {attemptedExtractionPath || pageComplexitySignal === 'dynamic_page_likely' || browserAttempted ? (
           <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-ink)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">What Clearpage saw</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">What Oleriq saw</p>
             <div className="mt-2 space-y-1 text-[var(--color-muted)]">
               {attemptedExtractionPath ? <p>Attempted path: {extractionPathLabel(attemptedExtractionPath)}</p> : null}
               {pageComplexitySignal === 'dynamic_page_likely' ? (

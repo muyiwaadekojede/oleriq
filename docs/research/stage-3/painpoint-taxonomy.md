@@ -4,7 +4,7 @@
 
 - [Verified] This file groups the Stage 3 evidence corpus into product-relevant pain-point clusters.
 - [Verified] The purpose is to make the `251`-row corpus easier to use for later prioritization.
-- [Verified] The labels `today`, `soon`, and `later` below are relevance buckets for Clearpage, not final roadmap commitments.
+- [Verified] The labels `today`, `soon`, and `later` below are relevance buckets for Oleriq, not final roadmap commitments.
 
 ## Today
 
@@ -12,7 +12,7 @@
 
 - [Verified] Evidence cluster: jobs reported as successful while returning empty data, anti-bot loops, Docker instability, concurrency crashes, brittle browser actions, and truncated extraction outputs.
 - [Inference] Relevance: `today`
-- [Inference] Why: Clearpage already has extraction and `/batch` job surfaces, so trust in status, result completeness, and bounded failure is immediately relevant.
+- [Inference] Why: Oleriq already has extraction and `/batch` job surfaces, so trust in status, result completeness, and bounded failure is immediately relevant.
 
 ### Renderer Visibility And Dynamic-Page Truth
 
@@ -24,7 +24,7 @@
 
 - [Verified] Evidence cluster: damaged tables, flattened code blocks, malformed academic PDF markdown, list-format bugs, missing article bodies, and title/header normalization complaints.
 - [Inference] Relevance: `today`
-- [Inference] Why: Clearpage already promises clean, exportable documents, so fidelity failures strike at the current product promise directly.
+- [Inference] Why: Oleriq already promises clean, exportable documents, so fidelity failures strike at the current product promise directly.
 
 ### Debuggability And Failure Explanation
 
@@ -56,25 +56,25 @@
 
 - [Verified] Evidence cluster: deterministic batch filenames, rerun controls, queue-state control, and cost-aware batch packing.
 - [Inference] Relevance: `soon`
-- [Inference] Why: Clearpage already has batch primitives and can extend them without changing product category.
+- [Inference] Why: Oleriq already has batch primitives and can extend them without changing product category.
 
 ### Token And Output-Size Predictability
 
 - [Verified] Evidence cluster: token spikes, multilingual token overhead, and browser-context bloat in MCP or browser-assisted flows.
 - [Inference] Relevance: `soon`
-- [Inference] Why: this becomes more important as Clearpage adds more machine-facing and browser-assisted surfaces.
+- [Inference] Why: this becomes more important as Oleriq adds more machine-facing and browser-assisted surfaces.
 
 ### Pricing And Spending Confidence
 
 - [Verified] Evidence cluster: expiring credits, bursty-usage waste, unclear scaling cost, token shock, and early-user hesitation once cost shape becomes visible.
 - [Inference] Relevance: `soon`
-- [Inference] Why: Clearpage does not need billing complexity first, but it should not ignore the evidence that cost confidence shapes adoption very early.
+- [Inference] Why: Oleriq does not need billing complexity first, but it should not ignore the evidence that cost confidence shapes adoption very early.
 
 ### Agent-Readable Docs And Tool-Facing Packaging
 
 - [Verified] Evidence cluster: `llms.txt` requests, local-hosting clarity, MCP client setup friction, and community-built unofficial setup guides.
 - [Inference] Relevance: `soon`
-- [Inference] Why: this is a leverage point if Clearpage wants stronger agent adoption without immediately expanding into a full platform.
+- [Inference] Why: this is a leverage point if Oleriq wants stronger agent adoption without immediately expanding into a full platform.
 
 ## Later
 
@@ -88,7 +88,7 @@
 
 - [Verified] Evidence cluster: selector capture, replay failures, configurable selector strategies, and exploratory-to-deterministic workflow requests.
 - [Inference] Relevance: `later`
-- [Inference] Why: valuable if Clearpage becomes more browser-agent oriented, but not required for the current product promise.
+- [Inference] Why: valuable if Oleriq becomes more browser-agent oriented, but not required for the current product promise.
 
 ### Deep Research And Multi-Source Enrichment
 

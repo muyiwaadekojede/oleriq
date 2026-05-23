@@ -7,8 +7,8 @@
 - [Verified] Covered surfaces in this expanded pass:
 - [Verified] Direct competitors: `firecrawl`, `jina-reader`, `apify-crawlee`, `crawl4ai`, `webclaw`, `crw`, `scrapegraphai`, `browser-use`, `webpeel`
 - [Verified] Adjacent or enabling tools: `playwright-mcp`, `trafilatura`, `mozilla-readability`, `webustler`, `crawl4ai-mcp-server`, `teracrawl`, `browserpilot`
-- [Verified] Generic domain pain points related to Clearpage’s present or plausible future surface
-- [Verified] This stage still does not synthesize a final feature roadmap. It stops at evidence collection, clustering, taxonomy, and Clearpage implications.
+- [Verified] Generic domain pain points related to Oleriq’s present or plausible future surface
+- [Verified] This stage still does not synthesize a final feature roadmap. It stops at evidence collection, clustering, taxonomy, and Oleriq implications.
 
 ## Artifacts
 
@@ -64,7 +64,7 @@
 
 - [Verified] The loudest demand in this market is not "more formats" and not "more crawl breadth" by itself.
 - [Verified] The loudest demand is trust under pressure: reliable output, honest failure, dynamic-page truthfulness, browser-path visibility, and structural fidelity once extraction leaves easy pages.
-- [Inference] Clearpage already competes well on human-facing export, but the broader demand-side gap is around trust, observability, first-session confidence, dynamic-page truthfulness, and agent-native control.
+- [Inference] Oleriq already competes well on human-facing export, but the broader demand-side gap is around trust, observability, first-session confidence, dynamic-page truthfulness, and agent-native control.
 
 ## Strongest Demand Clusters
 
@@ -90,7 +90,7 @@
 - [Verified] `scrapegraphai` users ask for real debug output, not shallow verbose mode.
 - [Verified] `browser-use` users want selector capture, deterministic replay, and better introspection from exploratory runs.
 - [Verified] `playwright-mcp` users ask for visual highlighters and complain about overwhelming page-state context being sent to the model.
-- [Inference] Clearpage can gain trust quickly if it explains what happened, what path was used, and why a result is incomplete or failed.
+- [Inference] Oleriq can gain trust quickly if it explains what happened, what path was used, and why a result is incomplete or failed.
 
 ### Low-Friction First Success
 
@@ -118,14 +118,14 @@
 
 - [Verified] `playwright-mcp`, `crawl4ai-mcp`, `browser-use`, `firecrawl`, and `webclaw` all show public pain around token bloat, session resets, bot blocking, missing explicit waits, and weak replay evidence once extraction escalates into live browser control.
 - [Verified] The browser-agent lane adds clear demand for session persistence, visible action traces, better fallback boundaries, and direct explanation of when a browser path is required.
-- [Inference] If Clearpage expands into browser-assisted or agent-facing surfaces, the product burden is not just "support a browser." It is "make the browser path legible, bounded, and economically sane."
+- [Inference] If Oleriq expands into browser-assisted or agent-facing surfaces, the product burden is not just "support a browser." It is "make the browser path legible, bounded, and economically sane."
 
 ### Document And Structure Fidelity
 
 - [Verified] The generic domain corpus adds repeated pain around broken tables, flattened code blocks, malformed academic PDF markdown, OCR language gaps, Word or diagram conversion failures, and hanging document jobs.
 - [Verified] `jina-reader`, `crawl4ai`, `mozilla-readability`, and `trafilatura` each reinforce that structure loss is a practical trust problem, not a minor formatting complaint.
 - [Verified] The document-intelligence lane adds repeated pain around merged-cell loss, heading-marker collapse, list and anchor flattening, GitHub-style complex-layout failures, and the need for provenance after a nominally successful extraction.
-- [Inference] Clearpage’s document and markdown claims should be framed around tested fidelity boundaries, not broad file-extension support alone.
+- [Inference] Oleriq’s document and markdown claims should be framed around tested fidelity boundaries, not broad file-extension support alone.
 
 ## Competitor Readout
 
@@ -148,16 +148,16 @@
 - [Verified] `browserpilot`: strongest adjacent-tool demand around pagination, full-site crawling, proxy control, model support, and security trust.
 - [Verified] `crw`: official surface is unusually polished for a thin-signal product, but public complaint depth remains thin.
 
-## Clearpage Implications
+## Oleriq Implications
 
-- [Inference] Clearpage should treat renderer visibility as product surface. Users want to know whether extraction used lightweight fetch, browser fallback, or a degraded path.
-- [Inference] Clearpage should treat structured failure reporting as product surface. Users need explicit reasons for empty output, partial output, retry paths, and dynamic-page limits.
-- [Inference] Clearpage should treat dynamic-page support as a product question, not only an implementation question, because public demand repeatedly centers on JS-heavy pages, page state, and authenticated sessions.
-- [Inference] Clearpage should keep first success extremely fast, because `jina-reader`, `webclaw`, and `crw` all show that ease-of-start strongly shapes user sentiment.
-- [Inference] Clearpage should treat post-first-use trust as a separate product surface, because the strongest modern pain pattern is demo success followed by first-edge-case disappointment.
-- [Inference] Clearpage should expose predictable batch output naming and job-state truthfulness if it expands agent-facing or recurring workflows.
-- [Inference] Clearpage should define structural fidelity expectations explicitly for tables, headings, lists, code blocks, OCR-heavy files, and mixed-layout documents instead of treating "document converted" as the only success condition.
-- [Inference] Clearpage should consider agent-readable docs or tool-facing docs packaging, because `llms.txt`-style discoverability surfaced explicitly in demand signals.
+- [Inference] Oleriq should treat renderer visibility as product surface. Users want to know whether extraction used lightweight fetch, browser fallback, or a degraded path.
+- [Inference] Oleriq should treat structured failure reporting as product surface. Users need explicit reasons for empty output, partial output, retry paths, and dynamic-page limits.
+- [Inference] Oleriq should treat dynamic-page support as a product question, not only an implementation question, because public demand repeatedly centers on JS-heavy pages, page state, and authenticated sessions.
+- [Inference] Oleriq should keep first success extremely fast, because `jina-reader`, `webclaw`, and `crw` all show that ease-of-start strongly shapes user sentiment.
+- [Inference] Oleriq should treat post-first-use trust as a separate product surface, because the strongest modern pain pattern is demo success followed by first-edge-case disappointment.
+- [Inference] Oleriq should expose predictable batch output naming and job-state truthfulness if it expands agent-facing or recurring workflows.
+- [Inference] Oleriq should define structural fidelity expectations explicitly for tables, headings, lists, code blocks, OCR-heavy files, and mixed-layout documents instead of treating "document converted" as the only success condition.
+- [Inference] Oleriq should consider agent-readable docs or tool-facing docs packaging, because `llms.txt`-style discoverability surfaced explicitly in demand signals.
 
 ## Source Gaps
 

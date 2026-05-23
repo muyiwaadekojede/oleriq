@@ -260,7 +260,7 @@ function createHtmlFixtureDocument(title) {
 
 function createPlainTextFixture() {
   return [
-    'Clearpage plain text fixture',
+    'Oleriq plain text fixture',
     '',
     'This file exercises plain text uploads with short paragraphs and simple reference lines.',
     '',

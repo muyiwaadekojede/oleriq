@@ -6,7 +6,7 @@ product
 
 ## Users
 
-Clearpage is for people who need to turn a URL or an uploaded document into a clean, exportable reading artifact with minimal friction. The default user is task-focused, short on time, and trying to get usable output fast rather than explore a feature-rich interface.
+Oleriq is for people who need to turn a URL or an uploaded document into a clean, exportable reading artifact with minimal friction. The default user is task-focused, short on time, and trying to get usable output fast rather than explore a feature-rich interface.
 
 Primary user groups in the current product shape:
 - knowledge workers collecting source material
@@ -16,7 +16,7 @@ Primary user groups in the current product shape:
 
 ## Product Purpose
 
-Clearpage exists to reduce the gap between raw web or document input and trustworthy, exportable output.
+Oleriq exists to reduce the gap between raw web or document input and trustworthy, exportable output.
 
 The core promise is not broad scraping power. The core promise is calm, understandable conversion:
 - paste a URL and get a clean document
@@ -49,7 +49,7 @@ Typography implications:
 
 ## Anti-references
 
-Clearpage should not look or sound like:
+Oleriq should not look or sound like:
 - a generic AI landing page with gradients, glow, and inflated claims
 - a dashboard-first tool that surfaces internal machinery before user value
 - a “feature buffet” homepage with stacked sections, trust bars, and competing calls to action
@@ -127,7 +127,7 @@ Expected examples:
 
 Rules:
 - may borrow stronger editorial composition, image-first exploration, or broader narrative pacing
-- must still respect Clearpage’s tone, token system, and truth-first product posture
+- must still respect Oleriq’s tone, token system, and truth-first product posture
 - must never redefine the core tool surfaces by stealth
 - still must make the first meaningful action obvious without fragmenting the top of the page into several equal-weight boxes
 

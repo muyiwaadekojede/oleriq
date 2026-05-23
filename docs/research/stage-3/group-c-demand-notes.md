@@ -11,7 +11,7 @@
 - [Verified] Its highest-signal requests are about reliability on messy real UIs, deterministic replay after an exploratory agent run, infinite-loop control, and dependency friction inside larger Python stacks.
 - [Verified] `scrapegraphai` demand is concentrated on hard web realities: bot protection, AJAX pagination, authenticated scraping, better debugging, and direct markdown-style export.
 - [Verified] `webpeel` has a source gap in this pass rather than a visible public request backlog.
-- [Inference] For Clearpage, Group C matters less as a pure "better markdown output" benchmark and more as a benchmark for control, observability, and browser-backed fallback when pages are dynamic or protected.
+- [Inference] For Oleriq, Group C matters less as a pure "better markdown output" benchmark and more as a benchmark for control, observability, and browser-backed fallback when pages are dynamic or protected.
 
 ## Competitor Notes
 
@@ -23,7 +23,7 @@
 - [Verified] The same discussion contains a user workaround: capture `selector_map`, parse Playwright traces, and then synthesize candidate selectors in a second pass because raw agent actions are not clean reusable locators.
 - [Verified] GitHub discussion `#94` shows a looping failure mode and a request for prompt-level domain avoidance controls.
 - [Verified] A Reddit thread about `browser-use` includes complaints that runs can get stuck on `about:blank`, take too long on basic tasks, and feel unclear to operate; one commenter says they built a Chrome extension plus REST server to make it "just work."
-- [Inference] Clearpage should treat replayability, guardrails, and failure introspection as product expectations, not extras, when users move beyond one-off extraction.
+- [Inference] Oleriq should treat replayability, guardrails, and failure introspection as product expectations, not extras, when users move beyond one-off extraction.
 
 ### scrapegraphai
 
@@ -33,7 +33,7 @@
 - [Verified] GitHub issue `#1045` says verbose mode is not useful enough for diagnosing poor extraction and malformed JSON responses, and asks for a real debug-level view of LLM context and raw output.
 - [Verified] GitHub discussion `#807` asks for direct markdown export from crawler output because the current path is not obvious.
 - [Verified] GitHub org discussions also show recurring model-support and runtime-integration questions such as `deepseek support`, `Azure AI models`, and `asyncio.run() cannot be called from a running event loop`.
-- [Inference] Clearpage should assume demand for dynamic-page handling, authenticated-session handoff, and debuggable extraction traces is real and ongoing.
+- [Inference] Oleriq should assume demand for dynamic-page handling, authenticated-session handoff, and debuggable extraction traces is real and ongoing.
 
 ### webpeel
 
@@ -41,7 +41,7 @@
 - [Verified] The public GitHub discussions surface was empty during this pass.
 - [Verified] I did not find a clear Reddit thread, Hacker News thread, or public review page with concrete user demand signals for `webpeel` in this pass.
 - [Unverified] I cannot verify this. The lack of visible public demand signals may mean the product is early, the user community is elsewhere, or the public feedback surface is simply thin.
-- [Inference] For Clearpage, `webpeel` is currently a weak demand-mining comparator because the public evidence surface is sparse.
+- [Inference] For Oleriq, `webpeel` is currently a weak demand-mining comparator because the public evidence surface is sparse.
 
 ## Cross-Competitor Signals That Matter
 

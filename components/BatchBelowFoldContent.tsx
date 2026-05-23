@@ -109,7 +109,7 @@ function QuietStatusStrip() {
       <div className="border-b border-[var(--color-border)] px-4 py-4 sm:border-r sm:border-b-0">
         <p className="font-semibold">Degraded</p>
         <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
-          The output came back, but Clearpage can already see a warning worth reviewing.
+          The output came back, but Oleriq can already see a warning worth reviewing.
         </p>
       </div>
       <div className="px-4 py-4">

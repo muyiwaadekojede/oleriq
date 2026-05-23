@@ -6,7 +6,7 @@
 - [Verified] Stage 1 does not include live web verification of competitor pricing, positioning, onboarding, or user sentiment.
 - [Verified] The workbook extracts for this stage are in `docs/research/stage-1/workbook/`.
 
-## Clearpage Product Truth
+## Oleriq Product Truth
 
 ### Core Promise
 
@@ -73,7 +73,7 @@
 
 ### Current Workbook Coverage
 
-- [Verified] The workbook currently tracks products in the Clearpage problem space rather than generic AI products.
+- [Verified] The workbook currently tracks products in the Oleriq problem space rather than generic AI products.
 - [Verified] The tracked set includes Firecrawl, Jina Reader, Apify, Browser Use, ScrapeGraphAI, Webclaw, WebPeel, CRW, Crawl4AI, TeraCrawl, BrowserPilot, Webustler, `crawl4ai-mcp-server`, Playwright MCP, Trafilatura, and Mozilla Readability.
 - [Verified] The workbook categories cover SaaS, API, library, early-access cloud tools, and mixed open-source plus hosted models.
 - [Verified] The workbook is centered on scraping, crawling, extraction, browser automation, pricing, free-tier structure, licensing, and stack choices.

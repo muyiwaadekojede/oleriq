@@ -16,7 +16,7 @@
 - [Verified] On `2024-09-09`, GitHub issue `firecrawl/firecrawl#647` requested automatic cookie-banner suppression in screenshots because banners hide meaningful content and block validation or downstream image-classification use.
 - [Verified] On `2026-01-19`, a Reddit post in `r/scrapingtheweb` described Firecrawl as effective against harder sites but too expensive for recurring price monitoring workloads, which adds a cost-sensitivity signal on top of the GitHub reliability signals.
 - [Unverified] I cannot verify this. Community cost complaints were not independently benchmarked in this pass.
-- [Inference] Clearpage should treat reliability transparency, browser-escalation clarity, and cost-shape clarity as product-level demand, not only implementation details.
+- [Inference] Oleriq should treat reliability transparency, browser-escalation clarity, and cost-shape clarity as product-level demand, not only implementation details.
 
 ## Jina Reader
 
@@ -27,7 +27,7 @@
 - [Verified] On `2025-02-20`, the open issues list showed `#1148 Unable to crawl heavy Javascript based website`, which signals demand for stronger dynamic-page handling.
 - [Verified] On `2024-09-02`, a Hacker News comment described Jina Reader as a neat, currently free prefix-based API that returns Markdown and can be self-hosted from open source, which is a direct praise signal for speed-to-first-success.
 - [Verified] On `2024-11-09`, another Hacker News comment said Jina Reader does about `90%` of the job but struggles on some Cloudflare-protected sites, which reinforces the dynamic-site coverage gap while still confirming strong utility.
-- [Inference] Clearpage should study Jina more as an onboarding and ergonomics benchmark than as a UI benchmark.
+- [Inference] Oleriq should study Jina more as an onboarding and ergonomics benchmark than as a UI benchmark.
 
 ## Apify Crawlee
 
@@ -37,14 +37,14 @@
 - [Verified] On `2023-11-08`, GitHub discussion `apify/crawlee#2175` asked for a way to propagate `failedRequestHandler` errors back to the main execution context, and the accepted answer required custom promise plumbing, which is a workaround signal and an ergonomics gap.
 - [Verified] On `2021-11-06`, GitHub discussion `apify/crawlee#1232` asked how to mark queued requests as unprocessed and remained an explicit demand signal for queue-state control.
 - [Verified] On `2024-10-06`, the same proxy discussion also described Reddit scraping as unexpectedly difficult even with residential proxies, showing that users care about anti-bot visibility and actionable diagnostics, not only raw proxy support.
-- [Inference] Clearpage does not need Crawlee's full crawler breadth, but it should learn from this demand cluster if it adds long-running jobs, retries, or agent-facing batch controls.
+- [Inference] Oleriq does not need Crawlee's full crawler breadth, but it should learn from this demand cluster if it adds long-running jobs, retries, or agent-facing batch controls.
 
 ## Cross-Competitor Readout
 
 - [Verified] `Firecrawl` demand is concentrated around reliable extraction under adversarial pages, screenshot cleanliness, and cost sensitivity.
 - [Verified] `Jina Reader` demand is concentrated around frictionless single-URL usage, token predictability, and better handling for PDFs and JS-heavy pages.
 - [Verified] `Apify Crawlee` demand is concentrated around control-plane ergonomics for serious crawling workloads, especially queue semantics, retries, proxies, and debugging.
-- [Inference] Clearpage's strongest near-term opportunity is not to imitate full crawler platforms. It is to combine low-friction extraction with stronger trust signals about what happened, why it failed, and what fallback path was used.
+- [Inference] Oleriq's strongest near-term opportunity is not to imitate full crawler platforms. It is to combine low-friction extraction with stronger trust signals about what happened, why it failed, and what fallback path was used.
 
 ## Source Gaps
 

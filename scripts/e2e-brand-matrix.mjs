@@ -226,7 +226,7 @@ async function exportAllFormats(article) {
       throw new Error(`Export ${format} missing filename for ${article.sourceUrl}`);
     }
 
-    if (/clearpage-export\./i.test(contentDisposition)) {
+    if (/Oleriq-export\./i.test(contentDisposition)) {
       throw new Error(`Export ${format} used fallback filename for ${article.sourceUrl}`);
     }
 

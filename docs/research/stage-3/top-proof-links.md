@@ -6,7 +6,7 @@
 ## Document Fidelity And Structure
 
 - [Verified] Recommended horizon: `solve_now`
-- [Verified] Why this cluster matters: Clearpage already promises clean, exportable documents and batch document conversion, so fidelity failures hit the current product promise directly.
+- [Verified] Why this cluster matters: Oleriq already promises clean, exportable documents and batch document conversion, so fidelity failures hit the current product promise directly.
 - [Verified] `crawl4ai` via `github_issue`: A user reported that Crawl4AI markdown export loses heading hierarchy and table structure. Source: https://github.com/unclecode/crawl4ai/issues/1964
 - [Verified] `trafilatura` via `github_issue`: The issue tracker includes an open report that structured heading tags such as `h2` and `h3` fail to extract correctly. Source: https://github.com/adbar/trafilatura/issues/777
 - [Verified] `mozilla-readability` via `github_issue`: The issue tracker includes an open report that GitHub issue pages are not processed properly by Readability. Source: https://github.com/mozilla/readability/issues/977
@@ -15,7 +15,7 @@
 ## Onboarding And Honeymoon Gap
 
 - [Verified] Recommended horizon: `solve_now`
-- [Verified] Why this cluster matters: Clearpage competes in a fast-first-success category where trust can collapse on the first real edge case.
+- [Verified] Why this cluster matters: Oleriq competes in a fast-first-success category where trust can collapse on the first real edge case.
 - [Verified] `firecrawl` via `github_issue`: A self-hosted user reported that `/scrape` worked but `/extract` failed under the Docker-based local setup. Source: https://github.com/firecrawl/firecrawl/issues/1294
 - [Verified] `firecrawl` via `github_issue`: A user reported crawl jobs returning `completed` with an empty `data` array and no visible error. Source: https://github.com/firecrawl/firecrawl/issues/1309
 - [Verified] `jina-reader` via `github_issue`: A GitHub user said the docs are lacking, the interactive builder is buggy, and the response shape is hard to understand. Source: https://github.com/jina-ai/reader/issues/1224
@@ -33,7 +33,7 @@
 ## Reliability Truthfulness
 
 - [Verified] Recommended horizon: `solve_now`
-- [Verified] Why this cluster matters: Clearpage already exposes extraction failures and batch jobs, so honest status and non-empty output are immediate trust requirements.
+- [Verified] Why this cluster matters: Oleriq already exposes extraction failures and batch jobs, so honest status and non-empty output are immediate trust requirements.
 - [Verified] `firecrawl` via `github_issue`: A crawl can report `completed` and successful while returning an empty data array. Source: https://github.com/firecrawl/firecrawl/issues/1309
 - [Verified] `firecrawl` via `github_issue`: Self-hosted Firecrawl can become unresponsive in an anti-bot fallback loop instead of timing out cleanly. Source: https://github.com/firecrawl/firecrawl/issues/2350
 - [Verified] `browser-use` via `github_issue`: Browser Use can enter an infinite loop when a CDP connection is lost and the browser closes. Source: https://github.com/browser-use/browser-use/issues/1275
@@ -42,7 +42,7 @@
 ## Debugging And Replay Visibility
 
 - [Verified] Recommended horizon: `solve_now`
-- [Verified] Why this cluster matters: Clearpage already has extraction and batch flows, so better failure explanation can improve trust without changing product category.
+- [Verified] Why this cluster matters: Oleriq already has extraction and batch flows, so better failure explanation can improve trust without changing product category.
 - [Verified] `scrapegraphai` via `github_issue`: User says verbose mode is not enough to diagnose poor results on simple pages and asks for DEBUG-level visibility into model context and malformed JSON responses. Source: https://github.com/ScrapeGraphAI/Scrapegraph-ai/issues/1045
 - [Verified] `playwright-mcp` via `github_issue`: Users ask for a visible highlighter during tracing and clicking so they can see what the agent is targeting. Source: https://github.com/microsoft/playwright-mcp/issues/492
 - [Verified] `browser-use` via `github_issue`: History replay can fail because initial actions are missing and serialized data is incomplete. Source: https://github.com/browser-use/browser-use/issues/3044
@@ -60,7 +60,7 @@
 ## Agent Packaging And Mcp Setup
 
 - [Verified] Recommended horizon: `later_if_agent_surface_expands`
-- [Verified] Why this cluster matters: Important only if Clearpage deliberately expands into agent-native surfaces.
+- [Verified] Why this cluster matters: Important only if Oleriq deliberately expands into agent-native surfaces.
 - [Verified] `playwright-mcp` via `github_issue`: User reports that large pages can produce roughly `50k`-token MCP responses and fill the client context quickly. Source: https://github.com/microsoft/playwright-mcp/issues/1040
 - [Verified] `playwright-mcp` via `github_issue`: Getting-started docs were reported to miss prerequisite browser-install steps. Source: https://github.com/microsoft/playwright-mcp/issues/1113
 - [Verified] `jina-reader` via `github_issue`: Users want better documentation packaging and an `llms.txt` entry point for agent discovery. Source: https://github.com/jina-ai/reader/issues/1224
@@ -78,7 +78,7 @@
 ## Batch And Job Control
 
 - [Verified] Recommended horizon: `solve_soon`
-- [Verified] Why this cluster matters: Clearpage already has a real batch surface, so deterministic job control is close to the current architecture.
+- [Verified] Why this cluster matters: Oleriq already has a real batch surface, so deterministic job control is close to the current architecture.
 - [Verified] `apify-crawlee` via `github_issue`: Large crawls can slow badly near completion because the queue keeps scanning massive numbers of already-done requests. Source: https://github.com/apify/crawlee/issues/2406
 - [Verified] `apify-crawlee` via `github_discussion`: A user needed failedRequestHandler errors to reach the main execution flow, and the accepted path required custom promise rejection plumbing. Source: https://github.com/apify/crawlee/discussions/1233
 - [Verified] `webclaw` via `github_discussion`: A user asked for deterministic per-page files in batch mode, including custom filenames. Source: https://github.com/0xMassi/webclaw/discussions/2

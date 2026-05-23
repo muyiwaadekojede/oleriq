@@ -1,4 +1,4 @@
-# DESIGN.md — Clearpage
+# DESIGN.md — Oleriq
 ### The design law for this codebase. Read before writing any UI code.
 
 > This file follows the **DESIGN.md open format** introduced by Google Labs / Google Stitch (open-sourced April 2026).
@@ -44,7 +44,7 @@ Work through the following before touching any token value:
 
 ```yaml
 ---
-name: Clearpage
+name: Oleriq
 
 colors:
   # Fill in from the existing codebase — see audit instructions above.
@@ -87,7 +87,7 @@ rounded:
 
 ## Companion Files and Precedence
 
-`DESIGN.md` is the constitutional layer for Clearpage UI. It defines the hard rules, prohibitions, and visual constraints that companion files are not allowed to overrule.
+`DESIGN.md` is the constitutional layer for Oleriq UI. It defines the hard rules, prohibitions, and visual constraints that companion files are not allowed to overrule.
 
 The companion files are:
 
@@ -108,7 +108,7 @@ Companion files may expand judgment, workflow, critique quality, and theory supp
 
 ## 0. The Design Philosophy
 
-**Clearpage does one thing per screen. With nothing to distract from it.**
+**Oleriq does one thing per screen. With nothing to distract from it.**
 
 This is not a preference. It is the product's identity. Every layout decision flows from it.
 
@@ -177,7 +177,7 @@ Colour is not decoration here. It is functional, contextual, and relational. The
 
 ## 3. Typography
 
-Use the current approved Clearpage font constitution.
+Use the current approved Oleriq font constitution.
 
 - `Newsreader` for display headings
 - `Geist Sans` for UI and body text

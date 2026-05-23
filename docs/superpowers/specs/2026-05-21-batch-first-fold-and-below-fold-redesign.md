@@ -281,7 +281,7 @@ That means the below fold should feel calmer, more exact, and more proof-led tha
 
 The below fold should prove:
 
-- what readable structure Clearpage tries to preserve
+- what readable structure Oleriq tries to preserve
 - how `usable`, `partial`, `degraded`, and `failed` differ
 - how longer runs stay inspectable and recoverable
 - when `/batch` is the right route versus the lighter one-off path

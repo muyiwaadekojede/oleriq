@@ -27,8 +27,8 @@ Updated: 2026-05-16
 - [Inference] Rich-element handling: figures, tables, equations, screenshots, captions, footnotes, and code blocks keep creating downstream work even after text extraction completes.
 - [Inference] Human fallback: hard cases still need review queues, side-by-side source preview, or tie-breaker passes when two extraction methods disagree.
 
-## Clearpage-Relevant Takeaways
-- [Inference] For current Clearpage document workflows, the risk is silent degradation after a nominally successful conversion: headings collapse, bullets flatten, tables shift, or code blocks lose formatting while the job still reports success.
+## Oleriq-Relevant Takeaways
+- [Inference] For current Oleriq document workflows, the risk is silent degradation after a nominally successful conversion: headings collapse, bullets flatten, tables shift, or code blocks lose formatting while the job still reports success.
 - [Inference] For future file-to-structured-output workflows, the product value is likely in verification layers around extraction, not just extraction itself.
 - [Inference] The most defensible roadmap themes are: table-specific QA, per-page OCR or layout routing, provenance-friendly structured output, and explicit handling for multilingual or mixed-layout documents.
 - [Inference] A strong success metric should include structural fidelity checks and downstream usability checks, not only "conversion completed" or "JSON returned."

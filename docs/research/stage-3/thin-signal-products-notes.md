@@ -3,7 +3,7 @@
 - [Verified] Run date: `2026-05-16`.
 - [Verified] Competitor group: `webpeel`, `crw`, `webclaw`.
 - [Verified] Source mix used in this pass: official sites, official docs, official GitHub repos, official blog or comparison pages, PyPI where it functions as an official package surface, and public Reddit mentions where available.
-- [Verified] This pass focuses on products that matter to Clearpage but have thinner public evidence surfaces than larger competitors.
+- [Verified] This pass focuses on products that matter to Oleriq but have thinner public evidence surfaces than larger competitors.
 - [Inference] In this context, "thin signal" means public demand and trust signals are narrow, founder-led, or missing, even when the product surface itself looks capable.
 
 ## Main Readout
@@ -11,7 +11,7 @@
 - [Verified] `webclaw` has the strongest public traction signal in this set because it combines a live docs and pricing surface, a meaningful GitHub star count, and repeated Reddit launch or usage posts.
 - [Verified] `crw` has a stronger official docs and pricing surface than public community surface. The product looks real and relevant, but the visible discussion layer is thin.
 - [Verified] `webpeel` has the thinnest public validation layer in this set. The product surface is broad, but most visible evidence is self-authored or package-metadata-driven rather than community-driven.
-- [Inference] For Clearpage, these products are useful more as positioning and packaging comparators than as high-confidence demand-mining comparators.
+- [Inference] For Oleriq, these products are useful more as positioning and packaging comparators than as high-confidence demand-mining comparators.
 - [Inference] Thin public evidence is itself a signal: it raises uncertainty about adoption depth, support burden, and whether the visible narrative is mostly controlled by the maker rather than tested by a broader user base.
 
 ## Competitor Notes
@@ -24,7 +24,7 @@
 - [Verified] The official blog and changelog are active, which means the product is being shipped, but the public proof layer is still heavily self-published.
 - [Verified] The PyPI package acts like an official comparison surface and explicitly frames WebPeel as a Firecrawl alternative.
 - [Inference] The main thin-signal pattern is not lack of product claims. It is lack of independent discussion, visible bug reports, or public user troubleshooting relative to how broad the feature set appears.
-- [Inference] For Clearpage, WebPeel is relevant as a packaging comparator for low-cost, agent-first positioning, but it is weak as evidence of proven market pull.
+- [Inference] For Oleriq, WebPeel is relevant as a packaging comparator for low-cost, agent-first positioning, but it is weak as evidence of proven market pull.
 
 ### crw
 
@@ -34,7 +34,7 @@
 - [Verified] The official blog is active and includes comparison or benchmark articles, but those comparisons are vendor-authored rather than independent reviews.
 - [Verified] I did not find a clear Reddit, Hacker News, or Product Hunt signal for CRW during this pass.
 - [Inference] CRW looks operationally real and technically relevant, but the public demand layer is unusually quiet for a product making strong benchmark and compatibility claims.
-- [Inference] For Clearpage, CRW is most useful as an operational-simplicity comparator: self-hostable, Rust-based, Firecrawl-compatible, and price-shaped for small teams. It is less useful as a public-demand barometer.
+- [Inference] For Oleriq, CRW is most useful as an operational-simplicity comparator: self-hostable, Rust-based, Firecrawl-compatible, and price-shaped for small teams. It is less useful as a public-demand barometer.
 
 ### webclaw
 
@@ -43,8 +43,8 @@
 - [Verified] The official GitHub repo showed about `1.2k` stars, `0` public issues, and `1` public pull request during this pass.
 - [Verified] Public Reddit signals exist and are materially stronger than for `webpeel` or `crw`, but they are still mostly founder-led launch or update posts rather than independent troubleshooting threads.
 - [Verified] The official comparison and migration pages are detailed, but they are still vendor-authored positioning assets.
-- [Inference] Webclaw is the strongest thin-signal product here because it has visible traction and community chatter, but the chatter is still narrow enough that Clearpage should not mistake it for the mature evidence surface of a larger incumbent.
-- [Inference] For Clearpage, webclaw matters because it proves there is appetite for a simpler, agent-native, Firecrawl-compatible alternative with strong anti-bot messaging and self-hosting appeal.
+- [Inference] Webclaw is the strongest thin-signal product here because it has visible traction and community chatter, but the chatter is still narrow enough that Oleriq should not mistake it for the mature evidence surface of a larger incumbent.
+- [Inference] For Oleriq, webclaw matters because it proves there is appetite for a simpler, agent-native, Firecrawl-compatible alternative with strong anti-bot messaging and self-hosting appeal.
 
 ## Strongest Signals
 

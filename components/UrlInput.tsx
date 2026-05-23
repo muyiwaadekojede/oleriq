@@ -49,7 +49,7 @@ export function UrlInput({
   return (
     <div className="cp-shell cp-enter flex min-h-screen items-center justify-center px-6 py-10">
       <div className="w-full max-w-3xl text-center">
-        <h1 className="logo-mark text-6xl font-semibold text-[var(--color-ink)]">Clearpage</h1>
+        <h1 className="logo-mark text-6xl font-semibold text-[var(--color-ink)]">Oleriq</h1>
         <p className="mx-auto mt-2 max-w-2xl text-lg text-[var(--color-muted)]">{subtitle}</p>
 
         <div className="mt-12 flex flex-col gap-4 md:flex-row md:items-center">

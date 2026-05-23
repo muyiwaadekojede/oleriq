@@ -16,7 +16,7 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: 'Clearpage',
+  title: 'Oleriq',
   description: 'Turn any URL into a clean, readable document in Markdown, TXT, DOCX, or PDF.',
 };
 

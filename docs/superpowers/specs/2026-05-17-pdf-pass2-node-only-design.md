@@ -23,7 +23,7 @@ What this feature does not do:
 
 ## 2. Why This Exists
 
-Clearpage already supports image-aware EPUB, DOCX, and HTML conversion in Pass 1.
+Oleriq already supports image-aware EPUB, DOCX, and HTML conversion in Pass 1.
 
 PDF remains the major gap because the current ingestion path only extracts text through `pdf-parse`, which drops source images before export generation. That means the current `images` control is not truthful for PDF uploads.
 

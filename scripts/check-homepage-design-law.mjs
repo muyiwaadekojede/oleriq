@@ -16,6 +16,7 @@ const [appPageSource, appLayoutSource, urlInputSource] = await Promise.all([
 ]);
 
 const failures = [];
+const expectedBrand = 'Oleriq';
 const expectedSubtitle = 'Turn any URL into a clean, readable document in Markdown, TXT, DOCX, or PDF.';
 const expectedCta = "{loading ? 'Converting...' : 'Convert URL'}";
 
@@ -37,6 +38,18 @@ if (urlInputSource.includes('usageMetrics?:') || urlInputSource.includes('hasUsa
 
 if (!appPageSource.includes(`subtitle="${expectedSubtitle}"`)) {
   failures.push('Homepage subtitle must match the approved trust-first copy.');
+}
+
+if (!appLayoutSource.includes(`title: '${expectedBrand}'`)) {
+  failures.push('Root layout metadata title must use the approved Oleriq brand.');
+}
+
+if (!urlInputSource.includes(`>${expectedBrand}<`)) {
+  failures.push('Homepage hero must render the approved Oleriq brand.');
+}
+
+if (urlInputSource.includes('Clearpage')) {
+  failures.push('Homepage surface must not leak the retired Clearpage brand.');
 }
 
 if (!urlInputSource.includes(expectedCta)) {

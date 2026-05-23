@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This brief defines the first design refresh pass for `Clearpage`'s `/batch` route.
+This brief defines the first design refresh pass for `Oleriq`'s `/batch` route.
 
 It does not change the route's role. It sharpens the route so it feels authored, calm, and exact instead of merely functional.
 
