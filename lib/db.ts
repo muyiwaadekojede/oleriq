@@ -3,32 +3,130 @@ import fs from 'fs';
 import path from 'path';
 
 export function resolveDataDir(): string {
-  const custom = process.env.CLEARPAGE_DATA_DIR?.trim();
+  const custom =
+    process.env.OLERIQ_DATA_DIR?.trim() ||
+    process.env.CLEARPAGE_DATA_DIR?.trim();
   if (custom) return custom;
 
   if (process.env.VERCEL) {
-    return path.join('/tmp', 'clearpage-data');
+    return path.join('/tmp', 'oleriq-data');
   }
 
   return path.join(process.cwd(), 'data');
 }
 
+function resolveDatabasePath(dataDir: string): string {
+  return path.join(dataDir, 'oleriq.db');
+}
+
+function resolveLegacyDatabasePath(dataDir: string): string {
+  return path.join(dataDir, 'clearpage.db');
+}
+
+function databaseSidecarPaths(filePath: string): string[] {
+  return [`${filePath}-wal`, `${filePath}-shm`];
+}
+
+function replaceFileIfPresent(sourcePath: string, targetPath: string): void {
+  if (!fs.existsSync(sourcePath)) {
+    if (fs.existsSync(targetPath)) {
+      fs.rmSync(targetPath, { force: true });
+    }
+    return;
+  }
+
+  fs.copyFileSync(sourcePath, targetPath);
+}
+
+function isDatabaseUsable(filePath: string): boolean {
+  if (!fs.existsSync(filePath)) return false;
+
+  try {
+    const probe = new Database(filePath, { readonly: true });
+    probe.prepare("SELECT name FROM sqlite_master WHERE type = 'table' LIMIT 1").all();
+    probe.close();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function copyDatabaseFileSet(sourceFilePath: string, targetFilePath: string): void {
+  fs.copyFileSync(sourceFilePath, targetFilePath);
+  const targetSidecars = databaseSidecarPaths(targetFilePath);
+  const sourceSidecars = databaseSidecarPaths(sourceFilePath);
+  for (let index = 0; index < sourceSidecars.length; index += 1) {
+    replaceFileIfPresent(sourceSidecars[index], targetSidecars[index]);
+  }
+}
+
+function promoteLegacyDatabaseFile(dataDir: string): void {
+  const filePath = resolveDatabasePath(dataDir);
+  const legacyFilePath = resolveLegacyDatabasePath(dataDir);
+
+  if (!fs.existsSync(legacyFilePath)) {
+    return;
+  }
+
+  try {
+    if (!fs.existsSync(filePath)) {
+      copyDatabaseFileSet(legacyFilePath, filePath);
+      return;
+    }
+
+    const fileStat = fs.statSync(filePath);
+    const legacyStat = fs.statSync(legacyFilePath);
+    const targetUsable = isDatabaseUsable(filePath);
+    const legacyUsable = isDatabaseUsable(legacyFilePath);
+
+    if (!targetUsable && legacyUsable) {
+      copyDatabaseFileSet(legacyFilePath, filePath);
+      return;
+    }
+
+    if (legacyUsable && legacyStat.size > fileStat.size) {
+      copyDatabaseFileSet(legacyFilePath, filePath);
+    }
+  } catch {
+    // If promotion fails, opening either database remains the fallback path.
+  }
+}
+
+function openSqliteDatabase(filePath: string): Database.Database {
+  const fileDb = new Database(filePath);
+  try {
+    fileDb.pragma('journal_mode = WAL');
+  } catch {
+    // Some runtimes/filesystems do not support WAL.
+  }
+  return fileDb;
+}
+
 function openDatabase(): Database.Database {
   const dataDir = resolveDataDir();
-  const filePath = path.join(dataDir, 'clearpage.db');
 
   try {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    const fileDb = new Database(filePath);
+    promoteLegacyDatabaseFile(dataDir);
+    const filePath = resolveDatabasePath(dataDir);
+    const legacyFilePath = resolveLegacyDatabasePath(dataDir);
+    const targetPath = isDatabaseUsable(filePath)
+      ? filePath
+      : isDatabaseUsable(legacyFilePath)
+        ? legacyFilePath
+        : filePath;
+
     try {
-      fileDb.pragma('journal_mode = WAL');
-    } catch {
-      // Some runtimes/filesystems do not support WAL.
+      return openSqliteDatabase(targetPath);
+    } catch (error) {
+      if (targetPath !== legacyFilePath && fs.existsSync(legacyFilePath)) {
+        return openSqliteDatabase(legacyFilePath);
+      }
+      throw error;
     }
-    return fileDb;
   } catch (error) {
     console.error('Database file initialization failed, falling back to in-memory DB:', error);
     return new Database(':memory:');

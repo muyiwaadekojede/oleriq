@@ -7,6 +7,7 @@ import { ReadingPreview } from '@/components/ReadingPreview';
 import { SettingsSidebar } from '@/components/SettingsSidebar';
 import { UrlInput } from '@/components/UrlInput';
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
+import { FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
 import type {
   ExportFormat,
   ExtractErrorCode,
@@ -100,7 +101,7 @@ export default function Page() {
   function buildHeaders(): HeadersInit {
     return {
       'Content-Type': 'application/json',
-      ...(sessionIdRef.current ? { 'x-clearpage-session': sessionIdRef.current } : {}),
+      ...(sessionIdRef.current ? { [SESSION_HEADER]: sessionIdRef.current } : {}),
     };
   }
 
@@ -216,7 +217,7 @@ export default function Page() {
         exportFormat: format,
       });
 
-      if (response.headers.get('x-clearpage-fallback-format') === 'original') {
+      if (response.headers.get(FALLBACK_FORMAT_HEADER) === 'original') {
         setInputStatusMessage('Converted file unavailable. Downloaded original file instead.');
       }
     } finally {

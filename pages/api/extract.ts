@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { storeExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
+import { BATCH_HEADER, LEGACY_BATCH_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
 import { batchExtractRateLimiter, extractRateLimiter } from '@/lib/rateLimit';
 import type { ExtractResponse, ImageMode } from '@/lib/types';
 
@@ -20,15 +21,15 @@ type DomainCooldownState = {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __clearpageExtractDomainCooldowns: Map<string, DomainCooldownState> | undefined;
+  var __oleriqExtractDomainCooldowns: Map<string, DomainCooldownState> | undefined;
 }
 
 function getDomainCooldownStore(): Map<string, DomainCooldownState> {
-  if (!global.__clearpageExtractDomainCooldowns) {
-    global.__clearpageExtractDomainCooldowns = new Map<string, DomainCooldownState>();
+  if (!global.__oleriqExtractDomainCooldowns) {
+    global.__oleriqExtractDomainCooldowns = new Map<string, DomainCooldownState>();
   }
 
-  return global.__clearpageExtractDomainCooldowns;
+  return global.__oleriqExtractDomainCooldowns;
 }
 
 function sleep(ms: number): Promise<void> {
@@ -146,8 +147,8 @@ export default async function handler(
   }
 
   const ip = getIp(req);
-  const rawBatchHeader = req.headers['x-clearpage-batch'];
-  const isBatchRequest = rawBatchHeader === '1' || (Array.isArray(rawBatchHeader) && rawBatchHeader[0] === '1');
+  const rawBatchHeader = readHeaderValue(req.headers, BATCH_HEADER, LEGACY_BATCH_HEADER);
+  const isBatchRequest = rawBatchHeader === '1';
   const rate = isBatchRequest ? batchExtractRateLimiter.consume(ip) : extractRateLimiter.consume(ip);
   const body = req.body as { url?: string; images?: ImageMode };
 

@@ -19,18 +19,18 @@ type CacheEntry = {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __clearpageExtractCache: Map<string, CacheEntry> | undefined;
+  var __oleriqExtractCache: Map<string, CacheEntry> | undefined;
 }
 
 const CACHE_TTL_MS = 1000 * 60 * 30;
 const CACHE_MAX_ENTRIES = 400;
 
 function getCache(): Map<string, CacheEntry> {
-  if (!global.__clearpageExtractCache) {
-    global.__clearpageExtractCache = new Map<string, CacheEntry>();
+  if (!global.__oleriqExtractCache) {
+    global.__oleriqExtractCache = new Map<string, CacheEntry>();
   }
 
-  return global.__clearpageExtractCache;
+  return global.__oleriqExtractCache;
 }
 
 function pruneCache(cache: Map<string, CacheEntry>): void {

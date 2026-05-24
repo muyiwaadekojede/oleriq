@@ -3,7 +3,7 @@ import type { Browser, LaunchOptions } from 'playwright';
 
 declare global {
   // eslint-disable-next-line no-var
-  var __clearpageBrowser: Browser | undefined;
+  var __oleriqBrowser: Browser | undefined;
 }
 
 type PlaywrightLike = {
@@ -73,19 +73,19 @@ export async function getBrowser(): Promise<Browser | null> {
   }
 
   try {
-    if (!global.__clearpageBrowser || !global.__clearpageBrowser.isConnected()) {
+    if (!global.__oleriqBrowser || !global.__oleriqBrowser.isConnected()) {
       if (process.env.VERCEL) {
         const sparticuzBrowser = await launchWithSparticuz(playwright);
         if (sparticuzBrowser) {
-          global.__clearpageBrowser = sparticuzBrowser;
+          global.__oleriqBrowser = sparticuzBrowser;
           launchMode = 'sparticuz';
         } else {
-          global.__clearpageBrowser = await playwright.chromium.launch({ headless: true });
+          global.__oleriqBrowser = await playwright.chromium.launch({ headless: true });
           launchMode = 'default';
         }
       } else {
         try {
-          global.__clearpageBrowser = await playwright.chromium.launch({ headless: true });
+          global.__oleriqBrowser = await playwright.chromium.launch({ headless: true });
           launchMode = 'default';
         } catch (primaryError) {
           const shouldTrySparticuz = looksLikeMissingBrowserBinary(primaryError);
@@ -99,13 +99,13 @@ export async function getBrowser(): Promise<Browser | null> {
             throw primaryError;
           }
 
-          global.__clearpageBrowser = fallbackBrowser;
+          global.__oleriqBrowser = fallbackBrowser;
           launchMode = 'sparticuz';
         }
       }
     }
     lastBrowserError = null;
-    return global.__clearpageBrowser;
+    return global.__oleriqBrowser;
   } catch (error) {
     console.error('Playwright browser launch failed:', error);
     lastBrowserError = error instanceof Error ? error.message : String(error);

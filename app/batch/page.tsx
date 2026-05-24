@@ -8,6 +8,7 @@ import { BatchDocumentPanel, type DocumentUploadItem } from '@/components/BatchD
 import { BatchUrlPanel } from '@/components/BatchUrlPanel';
 import type { BatchItemResult } from '@/components/batchTypes';
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
+import { FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
 import type { BatchDiagnosticReason, BatchInputMode, ExportFormat, ImageMode, ReaderSettings } from '@/lib/types';
 
 type BatchJobStatus = 'idle' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
@@ -292,7 +293,7 @@ export default function BatchPage() {
   const documentProcessing = documentJobStatus === 'queued' || documentJobStatus === 'running';
 
   function buildHeaders(): HeadersInit {
-    return sessionIdRef.current ? { 'x-clearpage-session': sessionIdRef.current } : {};
+    return sessionIdRef.current ? { [SESSION_HEADER]: sessionIdRef.current } : {};
   }
 
   async function readErrorMessage(response: Response): Promise<string> {
@@ -549,7 +550,7 @@ export default function BatchPage() {
         `${(row.title || 'Oleriq-direct-file').replace(/\s+/g, '-').toLowerCase()}.${requestedFormat}`,
       );
 
-      if (response.headers.get('x-clearpage-fallback-format') === 'original' && requestedFormat !== 'pdf') {
+      if (response.headers.get(FALLBACK_FORMAT_HEADER) === 'original' && requestedFormat !== 'pdf') {
         setBatchRunMessage('Downloaded original file for one item because conversion was unavailable.');
       }
       return;

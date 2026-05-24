@@ -7,6 +7,7 @@ import {
   stripExtension,
   MAX_DOCUMENT_FILE_BYTES,
 } from '@/lib/documentConversion';
+import { FALLBACK_FORMAT_HEADER } from '@/lib/internalIdentifiers';
 import { sanitizeFilename } from '@/lib/sanitise';
 import type { ExportFormat } from '@/lib/types';
 
@@ -225,7 +226,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!converted.success) {
       res.setHeader('Content-Type', contentType || 'application/octet-stream');
       res.setHeader('Content-Disposition', `attachment; filename="${safeBase}${currentExtension}"`);
-      res.setHeader('x-clearpage-fallback-format', 'original');
+      res.setHeader(FALLBACK_FORMAT_HEADER, 'original');
       trackAnalyticsEvent(req, {
         sessionId: requestSessionId || undefined,
         eventName: 'api_direct_file_result',

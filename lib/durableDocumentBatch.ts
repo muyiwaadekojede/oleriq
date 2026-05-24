@@ -100,10 +100,18 @@ function dataMode(): 'blob' | 'filesystem' {
 }
 
 function uploadRecordKey(uploadId: string): string {
+  return `oleriq/state/uploads/${uploadId}.json`;
+}
+
+function legacyUploadRecordKey(uploadId: string): string {
   return `clearpage/state/uploads/${uploadId}.json`;
 }
 
 function jobManifestKey(jobId: string): string {
+  return `oleriq/state/jobs/${jobId}.json`;
+}
+
+function legacyJobManifestKey(jobId: string): string {
   return `clearpage/state/jobs/${jobId}.json`;
 }
 
@@ -162,6 +170,12 @@ async function readJson<T>(relativeKey: string): Promise<T | null> {
   } catch {
     return null;
   }
+}
+
+async function readJsonWithFallback<T>(primaryKey: string, legacyKey: string): Promise<T | null> {
+  const primary = await readJson<T>(primaryKey);
+  if (primary) return primary;
+  return await readJson<T>(legacyKey);
 }
 
 function normalizeSettings(input: unknown): ReaderSettings {
@@ -248,7 +262,11 @@ export async function persistDurableUploadRecord(input: DurableUploadRecord): Pr
 }
 
 async function getDurableUploadRecords(sessionId: string | null, uploadIds: string[]): Promise<DurableUploadRecord[]> {
-  const records = await Promise.all(uploadIds.map((uploadId) => readJson<DurableUploadRecord>(uploadRecordKey(uploadId))));
+  const records = await Promise.all(
+    uploadIds.map((uploadId) =>
+      readJsonWithFallback<DurableUploadRecord>(uploadRecordKey(uploadId), legacyUploadRecordKey(uploadId)),
+    ),
+  );
   return records.filter((record): record is DurableUploadRecord => {
     if (!record) return false;
     return record.sessionId === sessionId;
@@ -353,7 +371,7 @@ export async function createDurableDocumentBatchJob(input: {
 }
 
 async function loadManifest(jobId: string): Promise<DurableDocumentBatchManifest | null> {
-  return await readJson<DurableDocumentBatchManifest>(jobManifestKey(jobId));
+  return await readJsonWithFallback<DurableDocumentBatchManifest>(jobManifestKey(jobId), legacyJobManifestKey(jobId));
 }
 
 async function saveManifest(manifest: DurableDocumentBatchManifest): Promise<void> {

@@ -25,7 +25,7 @@ async function runSingleUrlBatch(urls, format, suffix, attempt) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': `${sessionId}-${suffix}-attempt-${attempt}`,
+      'x-oleriq-session': `${sessionId}-${suffix}-attempt-${attempt}`,
     },
     body: JSON.stringify({
       urls,
@@ -54,7 +54,7 @@ async function runSingleUrlBatch(urls, format, suffix, attempt) {
       `${baseUrl}/api/batch-jobs?jobId=${encodeURIComponent(jobId)}&limit=50&offset=0`,
       {
         headers: {
-          'x-clearpage-session': `${sessionId}-${suffix}-attempt-${attempt}`,
+          'x-oleriq-session': `${sessionId}-${suffix}-attempt-${attempt}`,
         },
       },
     );

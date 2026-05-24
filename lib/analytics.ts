@@ -1,6 +1,7 @@
 import type { NextApiRequest } from 'next';
 
 import db from '@/lib/db';
+import { LEGACY_SESSION_HEADER, SESSION_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
 
 export type AnalyticsEventInput = {
   sessionId?: string | null;
@@ -78,15 +79,8 @@ function getForwardedIp(req: NextApiRequest): string {
 }
 
 function extractSessionId(req: NextApiRequest): string | null {
-  const sessionHeader = req.headers['x-clearpage-session'];
-
-  if (typeof sessionHeader === 'string') {
-    return trimNullable(sessionHeader, 128);
-  }
-
-  if (Array.isArray(sessionHeader) && sessionHeader[0]) {
-    return trimNullable(sessionHeader[0], 128);
-  }
+  const sessionHeader = readHeaderValue(req.headers, SESSION_HEADER, LEGACY_SESSION_HEADER);
+  if (sessionHeader) return trimNullable(sessionHeader, 128);
 
   const bodyMaybe = req.body as { sessionId?: string } | undefined;
   return trimNullable(bodyMaybe?.sessionId, 128);

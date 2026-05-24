@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
+import { SESSION_HEADER } from '@/lib/internalIdentifiers';
 
 type FeedbackRow = {
   id: number;
@@ -134,7 +135,7 @@ export default function AdminPage() {
       const response = await fetch('/api/admin-auth', {
         method: 'GET',
         headers: {
-          'x-clearpage-session': getClientSessionId(),
+          [SESSION_HEADER]: getClientSessionId(),
         },
       });
 
@@ -159,7 +160,7 @@ export default function AdminPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-clearpage-session': getClientSessionId(),
+          [SESSION_HEADER]: getClientSessionId(),
         },
         body: JSON.stringify({ username, password }),
       });
@@ -188,7 +189,7 @@ export default function AdminPage() {
     await fetch('/api/admin-auth', {
       method: 'DELETE',
       headers: {
-        'x-clearpage-session': getClientSessionId(),
+        [SESSION_HEADER]: getClientSessionId(),
       },
     });
 
@@ -214,12 +215,12 @@ export default function AdminPage() {
       const [analyticsRes, feedbackRes] = await Promise.all([
         fetch('/api/analytics?limit=150', {
           headers: {
-            'x-clearpage-session': getClientSessionId(),
+            [SESSION_HEADER]: getClientSessionId(),
           },
         }),
         fetch('/api/feedback', {
           headers: {
-            'x-clearpage-session': getClientSessionId(),
+            [SESSION_HEADER]: getClientSessionId(),
           },
         }),
       ]);
@@ -258,7 +259,7 @@ export default function AdminPage() {
     const response = await fetch(`/api/feedback?id=${id}`, {
       method: 'DELETE',
       headers: {
-        'x-clearpage-session': getClientSessionId(),
+        [SESSION_HEADER]: getClientSessionId(),
       },
     });
 
@@ -280,7 +281,7 @@ export default function AdminPage() {
     try {
       const response = await fetch(`/api/analytics?sessionId=${encodeURIComponent(sessionId)}`, {
         headers: {
-          'x-clearpage-session': getClientSessionId(),
+          [SESSION_HEADER]: getClientSessionId(),
         },
       });
 

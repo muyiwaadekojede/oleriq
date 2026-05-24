@@ -3,11 +3,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { streamStoredObjectToResponse } from '@/lib/batchStorage';
 import { getDurableDocumentBatchItem, shouldUseDurableDocumentBatchState } from '@/lib/durableDocumentBatch';
 import { getBatchJob, getBatchJobItem } from '@/lib/batchQueue';
+import { LEGACY_SESSION_HEADER, SESSION_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
 
 function sessionFromHeader(req: NextApiRequest): string | null {
-  const header = req.headers['x-clearpage-session'];
-  if (typeof header === 'string' && header.trim()) return header.trim().slice(0, 128);
-  if (Array.isArray(header) && header[0]?.trim()) return header[0].trim().slice(0, 128);
+  const header = readHeaderValue(req.headers, SESSION_HEADER, LEGACY_SESSION_HEADER);
+  if (header) return header.slice(0, 128);
   return null;
 }
 

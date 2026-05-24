@@ -1,6 +1,10 @@
 'use client';
 
-const SESSION_KEY = 'clearpage_session_id';
+import {
+  LEGACY_SESSION_STORAGE_KEY,
+  SESSION_HEADER,
+  SESSION_STORAGE_KEY,
+} from '@/lib/internalIdentifiers';
 
 type ClientAnalyticsEvent = {
   eventName: string;
@@ -60,14 +64,21 @@ export function getClientSessionId(): string {
     return 'server-session';
   }
 
-  const existing = window.localStorage.getItem(SESSION_KEY);
+  const existing = window.localStorage.getItem(SESSION_STORAGE_KEY);
   if (existing) return existing;
+
+  const legacy = window.localStorage.getItem(LEGACY_SESSION_STORAGE_KEY);
+  if (legacy) {
+    window.localStorage.setItem(SESSION_STORAGE_KEY, legacy);
+    window.localStorage.removeItem(LEGACY_SESSION_STORAGE_KEY);
+    return legacy;
+  }
 
   const next = typeof crypto !== 'undefined' && 'randomUUID' in crypto
     ? crypto.randomUUID()
     : `sess-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
-  window.localStorage.setItem(SESSION_KEY, next);
+  window.localStorage.setItem(SESSION_STORAGE_KEY, next);
   return next;
 }
 
@@ -82,7 +93,7 @@ export async function trackClientEvent(event: ClientAnalyticsEvent): Promise<voi
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-clearpage-session': sessionId,
+        [SESSION_HEADER]: sessionId,
       },
       body: JSON.stringify({
         sessionId,

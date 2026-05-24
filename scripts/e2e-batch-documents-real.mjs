@@ -131,7 +131,7 @@ async function waitForBatchDetail(sessionId, jobId) {
       `${baseUrl}/api/batch-jobs?jobId=${encodeURIComponent(jobId)}&limit=50&offset=0`,
       {
         headers: {
-          'x-clearpage-session': sessionId,
+          'x-oleriq-session': sessionId,
         },
       },
     );
@@ -201,7 +201,7 @@ async function runSingleConversion(browser, inputFixture, targetFormat) {
     if (!jobId) {
       fail(`${inputName} -> ${targetFormat} did not return a batch job id: ${JSON.stringify(createJson)}`);
     }
-    const sessionId = await page.evaluate(() => window.localStorage.getItem('clearpage_session_id') || '');
+    const sessionId = await page.evaluate(() => window.localStorage.getItem('oleriq_session_id') || '');
     if (!sessionId) {
       fail(`${inputName} -> ${targetFormat} did not expose a browser session id.`);
     }
@@ -267,7 +267,7 @@ async function runSingleConversion(browser, inputFixture, targetFormat) {
       `${baseUrl}/api/batch-jobs/download?jobId=${encodeURIComponent(jobId)}&itemId=${encodeURIComponent(String(successfulItem.id))}`,
       {
         headers: {
-          'x-clearpage-session': sessionId,
+          'x-oleriq-session': sessionId,
         },
       },
     );

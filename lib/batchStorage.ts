@@ -36,7 +36,7 @@ type StoredObjectDetails = {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __clearpageBatchStorageCleanupAt: number | undefined;
+  var __oleriqBatchStorageCleanupAt: number | undefined;
 }
 
 const FILESYSTEM_ROOT = path.join(resolveDataDir(), 'batch-storage');
@@ -67,7 +67,7 @@ function normalizeSessionSegment(sessionId: string | null): string {
 
 function buildObjectPath(sessionId: string | null, bucket: 'uploads' | 'outputs', filename: string): string {
   const safeBase = sanitizeFilename(filename, bucket).slice(0, 180) || bucket;
-  return `clearpage/${bucket}/${normalizeSessionSegment(sessionId)}/${crypto.randomUUID()}-${safeBase}`;
+  return `oleriq/${bucket}/${normalizeSessionSegment(sessionId)}/${crypto.randomUUID()}-${safeBase}`;
 }
 
 export function getBatchUploadStorageMode(): UploadStorageMode {
@@ -122,9 +122,9 @@ async function removeStoredObject(objectKey: string): Promise<void> {
 }
 
 export async function cleanupBatchStorageArtifacts(): Promise<void> {
-  const lastRun = global.__clearpageBatchStorageCleanupAt || 0;
+  const lastRun = global.__oleriqBatchStorageCleanupAt || 0;
   if (Date.now() - lastRun < CLEANUP_INTERVAL_MS) return;
-  global.__clearpageBatchStorageCleanupAt = Date.now();
+  global.__oleriqBatchStorageCleanupAt = Date.now();
 
   const cutoffIso = new Date(Date.now() - DOCUMENT_RETENTION_MS).toISOString();
   const uploadRows = db

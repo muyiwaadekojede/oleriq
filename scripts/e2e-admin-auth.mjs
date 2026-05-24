@@ -22,7 +22,7 @@ async function readCredentials(pathname, baseUrl) {
   if (!isLocalTarget) {
     return {
       username: 'admin',
-      password: 'clearpage-admin',
+      password: 'oleriq-admin',
     };
   }
 
@@ -41,7 +41,7 @@ async function readCredentials(pathname, baseUrl) {
   } catch {
     return {
       username: 'admin',
-      password: 'clearpage-admin',
+      password: 'oleriq-admin',
     };
   }
 }
@@ -66,6 +66,10 @@ export async function loginAsAdmin(baseUrl) {
   const cookie = extractCookie(response.headers.get('set-cookie'));
   if (!cookie) {
     throw new Error('Admin login did not return a session cookie.');
+  }
+
+  if (!cookie.startsWith('oleriq_admin=')) {
+    throw new Error(`Expected admin login cookie to use oleriq_admin, got: ${cookie}`);
   }
 
   return {

@@ -150,7 +150,7 @@ async function uploadAndFinalize(filePath, contentType) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': sessionId,
+      'x-oleriq-session': sessionId,
     },
     body: JSON.stringify({
       mode: 'filesystem',
@@ -175,7 +175,7 @@ async function runBatch(uploadId, format, images) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': sessionId,
+      'x-oleriq-session': sessionId,
     },
     body: JSON.stringify({
       inputMode: 'document',
@@ -202,7 +202,7 @@ async function runBatch(uploadId, format, images) {
     const response = await fetch(
       `${baseUrl}/api/batch-jobs?jobId=${encodeURIComponent(jobId)}&limit=50&offset=0`,
       {
-        headers: { 'x-clearpage-session': sessionId },
+        headers: { 'x-oleriq-session': sessionId },
       },
     );
     const json = await response.json();
@@ -212,7 +212,7 @@ async function runBatch(uploadId, format, images) {
       const downloadResponse = await fetch(
         `${baseUrl}/api/batch-jobs/download?jobId=${encodeURIComponent(jobId)}&itemId=${item.id}`,
         {
-          headers: { 'x-clearpage-session': sessionId },
+          headers: { 'x-oleriq-session': sessionId },
         },
       );
       if (!downloadResponse.ok) {

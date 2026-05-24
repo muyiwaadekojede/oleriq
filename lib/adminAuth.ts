@@ -9,17 +9,20 @@ type AdminCredentials = {
   createdAt: string;
 };
 
-const ADMIN_COOKIE_NAME = 'clearpage_admin';
+const ADMIN_COOKIE_NAME = 'oleriq_admin';
+const LEGACY_ADMIN_COOKIE_NAME = 'clearpage_admin';
 const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12;
 
 let inMemoryCredentials: AdminCredentials | null = null;
 
 function resolveCredentialsDir(): string {
-  const custom = process.env.CLEARPAGE_SECRETS_DIR?.trim();
+  const custom =
+    process.env.OLERIQ_SECRETS_DIR?.trim() ||
+    process.env.CLEARPAGE_SECRETS_DIR?.trim();
   if (custom) return custom;
 
   if (process.env.VERCEL) {
-    return path.join('/tmp', 'clearpage-secrets');
+    return path.join('/tmp', 'oleriq-secrets');
   }
 
   return path.join(process.cwd(), 'secrets');
@@ -36,8 +39,8 @@ function randomToken(length: number): string {
 function buildGeneratedCredentials(): AdminCredentials {
   if (process.env.VERCEL) {
     return {
-      username: process.env.CLEARPAGE_FALLBACK_ADMIN_USER || 'admin',
-      password: process.env.CLEARPAGE_FALLBACK_ADMIN_PASS || 'clearpage-admin',
+      username: process.env.OLERIQ_FALLBACK_ADMIN_USER || process.env.CLEARPAGE_FALLBACK_ADMIN_USER || 'admin',
+      password: process.env.OLERIQ_FALLBACK_ADMIN_PASS || process.env.CLEARPAGE_FALLBACK_ADMIN_PASS || 'oleriq-admin',
       createdAt: new Date().toISOString(),
     };
   }
@@ -50,19 +53,23 @@ function buildGeneratedCredentials(): AdminCredentials {
 }
 
 function readCredentialsFromEnv(): AdminCredentials | null {
-  if (process.env.VERCEL && process.env.CLEARPAGE_USE_ENV_ADMIN !== '1') {
+  const useEnvFlag = process.env.OLERIQ_USE_ENV_ADMIN ?? process.env.CLEARPAGE_USE_ENV_ADMIN;
+  if (process.env.VERCEL && useEnvFlag !== '1') {
     return null;
   }
 
-  const username = process.env.CLEARPAGE_ADMIN_USERNAME?.trim();
-  const password = process.env.CLEARPAGE_ADMIN_PASSWORD?.trim();
+  const username = process.env.OLERIQ_ADMIN_USERNAME?.trim() || process.env.CLEARPAGE_ADMIN_USERNAME?.trim();
+  const password = process.env.OLERIQ_ADMIN_PASSWORD?.trim() || process.env.CLEARPAGE_ADMIN_PASSWORD?.trim();
 
   if (!username || !password) return null;
 
   return {
     username,
     password,
-    createdAt: process.env.CLEARPAGE_ADMIN_CREATED_AT || new Date().toISOString(),
+    createdAt:
+      process.env.OLERIQ_ADMIN_CREATED_AT ||
+      process.env.CLEARPAGE_ADMIN_CREATED_AT ||
+      new Date().toISOString(),
   };
 }
 
@@ -212,7 +219,7 @@ export function clearAdminLoginCookie(res: NextApiResponse): void {
 export function isAdminAuthenticated(req: NextApiRequest): boolean {
   const credentials = readCredentials();
   const cookies = parseCookies(req.headers.cookie);
-  const token = cookies[ADMIN_COOKIE_NAME];
+  const token = cookies[ADMIN_COOKIE_NAME] || cookies[LEGACY_ADMIN_COOKIE_NAME];
   if (!token) return false;
   return verifySessionToken(token, credentials);
 }

@@ -17,7 +17,7 @@ const createResponse = await fetch(`${baseUrl}/api/batch-jobs`, {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-clearpage-session': sessionId,
+    'x-oleriq-session': sessionId,
   },
   body: JSON.stringify({
     urls,
@@ -45,7 +45,7 @@ let detail = null;
 while (Date.now() < timeoutAt) {
   const response = await fetch(`${baseUrl}/api/batch-jobs?jobId=${encodeURIComponent(jobId)}&limit=50&offset=0`, {
     headers: {
-      'x-clearpage-session': sessionId,
+      'x-oleriq-session': sessionId,
     },
   });
 

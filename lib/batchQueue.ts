@@ -1166,23 +1166,23 @@ type QueueRuntime = {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __clearpageBatchQueue: QueueRuntime | undefined;
+  var __oleriqBatchQueue: QueueRuntime | undefined;
 }
 
 function getRuntime(): QueueRuntime {
-  if (!global.__clearpageBatchQueue) {
-    global.__clearpageBatchQueue = {
+  if (!global.__oleriqBatchQueue) {
+    global.__oleriqBatchQueue = {
       running: false,
       bootstrapped: false,
       domainCooldowns: new Map(),
     };
   }
 
-  if (!global.__clearpageBatchQueue.domainCooldowns) {
-    global.__clearpageBatchQueue.domainCooldowns = new Map();
+  if (!global.__oleriqBatchQueue.domainCooldowns) {
+    global.__oleriqBatchQueue.domainCooldowns = new Map();
   }
 
-  return global.__clearpageBatchQueue;
+  return global.__oleriqBatchQueue;
 }
 
 async function waitForDomainCooldown(hostname: string): Promise<void> {

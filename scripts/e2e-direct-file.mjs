@@ -20,9 +20,9 @@ async function assertApiFallbackToOriginal() {
     throw new Error(`Direct file API fallback failed: ${response.status} ${raw}`);
   }
 
-  const fallbackHeader = response.headers.get('x-clearpage-fallback-format') || '';
+  const fallbackHeader = response.headers.get('x-oleriq-fallback-format') || '';
   if (fallbackHeader !== 'original') {
-    throw new Error(`Expected x-clearpage-fallback-format=original, got: ${fallbackHeader || '(missing)'}`);
+    throw new Error(`Expected x-oleriq-fallback-format=original, got: ${fallbackHeader || '(missing)'}`);
   }
 
   const contentDisposition = response.headers.get('content-disposition') || '';
@@ -33,6 +33,10 @@ async function assertApiFallbackToOriginal() {
 
 async function assertHomepageDirectPdfDownload(page) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  const sessionId = await page.evaluate(() => window.localStorage.getItem('oleriq_session_id') || '');
+  if (!sessionId) {
+    throw new Error('Expected homepage session id to be stored under oleriq_session_id.');
+  }
   await page.locator('#url-input').fill(smallDirectPdfUrl);
 
   await page.getByRole('button', { name: 'Convert URL' }).click();

@@ -15,6 +15,14 @@ function fail(message) {
   throw new Error(message);
 }
 
+async function assertPathExists(targetPath, message) {
+  try {
+    await fs.stat(targetPath);
+  } catch {
+    fail(message);
+  }
+}
+
 function isLocalBaseUrl() {
   return /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(baseUrl);
 }
@@ -173,6 +181,10 @@ async function assertApiDocumentBatch(textPath) {
     fail(`Local upload failed: ${uploadResponse.status} ${JSON.stringify(uploadJson)}`);
   }
 
+  if (!String(uploadJson.file.objectKey).startsWith('filesystem:oleriq/uploads/')) {
+    fail(`Expected uploaded document objectKey to use filesystem:oleriq/uploads/, got: ${JSON.stringify(uploadJson.file)}`);
+  }
+
   const completePayload = {
     mode: 'filesystem',
     objectKey: uploadJson.file.objectKey,
@@ -187,7 +199,7 @@ async function assertApiDocumentBatch(textPath) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': sessionId,
+      'x-oleriq-session': sessionId,
     },
     body: JSON.stringify(completePayload),
   });
@@ -196,11 +208,16 @@ async function assertApiDocumentBatch(textPath) {
     fail(`Upload completion failed: ${completeResponse.status} ${JSON.stringify(completeJson)}`);
   }
 
+  await assertPathExists(
+    path.join(process.cwd(), 'data', 'durable-document-batch', 'oleriq', 'state', 'uploads', `${completeJson.file.uploadId}.json`),
+    `Expected durable upload manifest under data/durable-document-batch/oleriq/state/uploads/${completeJson.file.uploadId}.json`,
+  );
+
   const createResponse = await fetch(`${baseUrl}/api/batch-jobs`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': sessionId,
+      'x-oleriq-session': sessionId,
     },
     body: JSON.stringify({
       inputMode: 'document',
@@ -220,6 +237,13 @@ async function assertApiDocumentBatch(textPath) {
     fail(`Document batch create failed: ${createResponse.status} ${JSON.stringify(createJson)}`);
   }
 
+  if (process.env.VERCEL) {
+    await assertPathExists(
+      path.join(process.cwd(), 'data', 'durable-document-batch', 'oleriq', 'state', 'jobs', `${createJson.job.jobId}.json`),
+      `Expected durable job manifest under data/durable-document-batch/oleriq/state/jobs/${createJson.job.jobId}.json`,
+    );
+  }
+
   const jobId = createJson.job.jobId;
   const timeoutAt = Date.now() + 180_000;
   let detail = null;
@@ -229,7 +253,7 @@ async function assertApiDocumentBatch(textPath) {
       `${baseUrl}/api/batch-jobs?jobId=${encodeURIComponent(jobId)}&limit=50&offset=0`,
       {
         headers: {
-          'x-clearpage-session': sessionId,
+          'x-oleriq-session': sessionId,
         },
       },
     );
@@ -253,6 +277,14 @@ async function assertApiDocumentBatch(textPath) {
 
   if (!Array.isArray(detail.items) || detail.items[0]?.status !== 'success' || !detail.items[0]?.id) {
     fail(`Document batch API returned unexpected items: ${JSON.stringify(detail)}`);
+  }
+
+  if (!String(detail.items[0].sourceObjectKey || '').startsWith('filesystem:oleriq/uploads/')) {
+    fail(`Expected sourceObjectKey to use filesystem:oleriq/uploads/, got: ${JSON.stringify(detail.items[0])}`);
+  }
+
+  if (!String(detail.items[0].outputObjectKey || '').startsWith('filesystem:oleriq/outputs/')) {
+    fail(`Expected outputObjectKey to use filesystem:oleriq/outputs/, got: ${JSON.stringify(detail.items[0])}`);
   }
 
   if (detail.job.degradedCount !== 1) {
@@ -286,7 +318,7 @@ async function assertApiDocumentBatch(textPath) {
     `${baseUrl}/api/batch-jobs/download?jobId=${encodeURIComponent(jobId)}&itemId=${detail.items[0].id}`,
     {
       headers: {
-        'x-clearpage-session': sessionId,
+        'x-oleriq-session': sessionId,
       },
     },
   );
@@ -444,7 +476,7 @@ async function assertApiDocumentStructureDiagnostics(structureHtmlPath) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': structureSessionId,
+      'x-oleriq-session': structureSessionId,
     },
     body: JSON.stringify(completePayload),
   });
@@ -457,7 +489,7 @@ async function assertApiDocumentStructureDiagnostics(structureHtmlPath) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': structureSessionId,
+      'x-oleriq-session': structureSessionId,
     },
     body: JSON.stringify({
       inputMode: 'document',
@@ -486,7 +518,7 @@ async function assertApiDocumentStructureDiagnostics(structureHtmlPath) {
       `${baseUrl}/api/batch-jobs?jobId=${encodeURIComponent(jobId)}&limit=50&offset=0`,
       {
         headers: {
-          'x-clearpage-session': structureSessionId,
+          'x-oleriq-session': structureSessionId,
         },
       },
     );
@@ -579,7 +611,7 @@ async function assertApiDocumentTxtStructureDiagnostics(structureHtmlPath) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': structureSessionId,
+      'x-oleriq-session': structureSessionId,
     },
     body: JSON.stringify(completePayload),
   });
@@ -592,7 +624,7 @@ async function assertApiDocumentTxtStructureDiagnostics(structureHtmlPath) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': structureSessionId,
+      'x-oleriq-session': structureSessionId,
     },
     body: JSON.stringify({
       inputMode: 'document',
@@ -621,7 +653,7 @@ async function assertApiDocumentTxtStructureDiagnostics(structureHtmlPath) {
       `${baseUrl}/api/batch-jobs?jobId=${encodeURIComponent(jobId)}&limit=50&offset=0`,
       {
         headers: {
-          'x-clearpage-session': structureSessionId,
+          'x-oleriq-session': structureSessionId,
         },
       },
     );
@@ -720,7 +752,7 @@ async function assertApiDocumentPdfTruncationDiagnostics(longPdfPath) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': truncationSessionId,
+      'x-oleriq-session': truncationSessionId,
     },
     body: JSON.stringify(completePayload),
   });
@@ -733,7 +765,7 @@ async function assertApiDocumentPdfTruncationDiagnostics(longPdfPath) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-clearpage-session': truncationSessionId,
+      'x-oleriq-session': truncationSessionId,
     },
     body: JSON.stringify({
       inputMode: 'document',
@@ -762,7 +794,7 @@ async function assertApiDocumentPdfTruncationDiagnostics(longPdfPath) {
       `${baseUrl}/api/batch-jobs?jobId=${encodeURIComponent(jobId)}&limit=50&offset=0`,
       {
         headers: {
-          'x-clearpage-session': truncationSessionId,
+          'x-oleriq-session': truncationSessionId,
         },
       },
     );
