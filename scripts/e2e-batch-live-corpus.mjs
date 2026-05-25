@@ -124,17 +124,44 @@ async function runUrlBatch(urls, format, suffix) {
     fail(`Live corpus ${format} batch should succeed on all curated public URLs: ${JSON.stringify(detail.job)}`);
   }
 
-  const usableItems = detail.items.filter((item) => item.status === 'success' && item.qualityState === 'usable');
-  const trustIssueItems = detail.items.filter(
-    (item) => item.status === 'success' && (item.qualityState === 'degraded' || item.qualityState === 'partial'),
-  );
-  if (usableItems.length === 0 || trustIssueItems.length === 0) {
-    fail(`Live corpus ${format} batch should exercise both usable and non-usable trust states: ${JSON.stringify(detail.items)}`);
+  const successfulItems = detail.items.filter((item) => item.status === 'success');
+  if (successfulItems.length === 0) {
+    fail(`Live corpus ${format} batch returned no successful items: ${JSON.stringify(detail.items)}`);
   }
 
-  const firstSuccessfulItem = detail.items.find((item) => item.status === 'success');
-  if (!firstSuccessfulItem || !Array.isArray(firstSuccessfulItem.diagnosticReasons) || !Array.isArray(firstSuccessfulItem.warnings)) {
-    fail(`Live corpus ${format} batch did not return the trust surface arrays: ${JSON.stringify(firstSuccessfulItem)}`);
+  for (const item of successfulItems) {
+    if (!Array.isArray(item.diagnosticReasons) || !Array.isArray(item.warnings)) {
+      fail(`Live corpus ${format} batch did not return the trust surface arrays: ${JSON.stringify(item)}`);
+    }
+  }
+
+  if (format === 'md') {
+    const structureLossItems = successfulItems.filter((item) =>
+      item.diagnosticReasons.some((reason) =>
+        [
+          'structure_heading_loss_risk',
+          'structure_table_loss_risk',
+          'structure_list_loss_risk',
+          'structure_code_block_loss_risk',
+        ].includes(reason),
+      ),
+    );
+
+    if (structureLossItems.length > 0) {
+      fail(`Live corpus md batch should clear avoidable structure-loss diagnostics after recovery: ${JSON.stringify(structureLossItems)}`);
+    }
+    return;
+  }
+
+  const disallowedTxtDiagnostics = successfulItems.filter((item) =>
+    item.diagnosticReasons.some(
+      (reason) =>
+        !['structure_table_loss_risk', 'document_txt_images_downgraded_to_captions'].includes(reason),
+    ),
+  );
+
+  if (disallowedTxtDiagnostics.length > 0) {
+    fail(`Live corpus txt batch returned unexpected diagnostics after recovery: ${JSON.stringify(disallowedTxtDiagnostics)}`);
   }
 }
 

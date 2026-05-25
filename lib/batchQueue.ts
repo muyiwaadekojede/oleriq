@@ -7,7 +7,8 @@ import { storeExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
 import { buildMarkdownExport } from '@/lib/exportMarkdown';
 import { buildTxtExport } from '@/lib/exportTxt';
-import { structuralDiagnosticReasonsForHtmlExport } from '@/lib/structuralFidelity';
+import { recoverDocumentFromHtml } from '@/lib/recoveredStructure';
+import { structuralDiagnosticReasonsForRecoveredDocumentExport } from '@/lib/structuralFidelity';
 import {
   deriveResultState,
   diagnosticReasonsForExtractErrorCode,
@@ -927,6 +928,7 @@ function exportTrustSurfaceForUrlResult(input: {
   diagnosticReasons: BatchDiagnosticReason[];
 } {
   const sourceHtml = input.result.contentVariants[input.imagesMode];
+  const sourceDocument = recoverDocumentFromHtml(sourceHtml);
   let outputContent = '';
 
   if (input.exportFormat === 'md') {
@@ -936,7 +938,7 @@ function exportTrustSurfaceForUrlResult(input: {
       sourceUrl: input.result.sourceUrl,
       siteName: input.result.siteName,
       publishedTime: input.result.publishedTime,
-      content: sourceHtml,
+      document: sourceDocument,
     });
   } else if (input.exportFormat === 'txt') {
     outputContent = buildTxtExport({
@@ -945,13 +947,13 @@ function exportTrustSurfaceForUrlResult(input: {
       sourceUrl: input.result.sourceUrl,
       siteName: input.result.siteName,
       publishedTime: input.result.publishedTime,
-      content: sourceHtml,
+      document: sourceDocument,
       textContent: input.result.textContent,
     });
   }
 
-  const exportDiagnosticReasons = structuralDiagnosticReasonsForHtmlExport({
-    sourceHtml,
+  const exportDiagnosticReasons = structuralDiagnosticReasonsForRecoveredDocumentExport({
+    sourceDocument,
     format: input.exportFormat,
     outputContent,
   });
@@ -1031,6 +1033,11 @@ async function runUrlJob(jobId: string, config: { imagesMode: ImageMode; exportF
           sourceUrl: result.sourceUrl,
           textContent: result.textContent,
           contentVariants: result.contentVariants,
+          recoveredDocumentVariants: {
+            on: recoverDocumentFromHtml(result.contentVariants.on),
+            off: recoverDocumentFromHtml(result.contentVariants.off),
+            captions: recoverDocumentFromHtml(result.contentVariants.captions),
+          },
         });
         const trustSurface = exportTrustSurfaceForUrlResult({
           exportFormat: config.exportFormat,

@@ -3,6 +3,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { trackAnalyticsEvent } from '@/lib/analytics';
 import { storeExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
+import { recoverDocumentFromHtml } from '@/lib/recoveredStructure';
 import { BATCH_HEADER, LEGACY_BATCH_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
 import { batchExtractRateLimiter, extractRateLimiter } from '@/lib/rateLimit';
 import type { ExtractResponse, ImageMode } from '@/lib/types';
@@ -248,6 +249,11 @@ export default async function handler(
     sourceUrl: result.sourceUrl,
     textContent: result.textContent,
     contentVariants: result.contentVariants,
+    recoveredDocumentVariants: {
+      on: recoverDocumentFromHtml(result.contentVariants.on),
+      off: recoverDocumentFromHtml(result.contentVariants.off),
+      captions: recoverDocumentFromHtml(result.contentVariants.captions),
+    },
   });
 
   return res.status(200).json({

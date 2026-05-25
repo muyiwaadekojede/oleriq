@@ -3,6 +3,12 @@ import { posix as pathPosix } from 'node:path';
 import { buildMarkdownExport } from '@/lib/exportMarkdown';
 import { buildPdfConversionSource } from '@/lib/pdfConversion';
 import { buildTxtExport } from '@/lib/exportTxt';
+import {
+  recoverDocumentFromHtml,
+  recoverDocumentFromStructuredText,
+  serializeRecoveredDocumentToHtml,
+  type RecoveredDocument,
+} from '@/lib/recoveredStructure';
 import { sanitizeFilename } from '@/lib/sanitise';
 import { structuralDiagnosticReasonsForDocumentExport } from '@/lib/structuralFidelity';
 import { deriveResultState, warningForDiagnosticReason } from '@/lib/trustGuidance';
@@ -51,6 +57,7 @@ export type ConversionSource = {
   title: string;
   textContent: string;
   htmlContent: string;
+  recoveredDocument: RecoveredDocument;
   diagnosticReasons?: BatchDiagnosticReason[];
   warnings?: string[];
 };
@@ -178,6 +185,20 @@ function isHtmlLike(input: { contentType: string; filename: string; text: string
   if (input.filename.toLowerCase().endsWith('.html') || input.filename.toLowerCase().endsWith('.htm')) return true;
   const sample = input.text.slice(0, 400).toLowerCase();
   return sample.includes('<html') || sample.includes('<body') || sample.includes('<p');
+}
+
+function structuredTextKindFromFilename(filename: string): Parameters<typeof recoverDocumentFromStructuredText>[0]['kind'] {
+  const extension = extensionFromName(filename);
+  if (extension === '.md') return 'markdown';
+  if (extension === '.rst') return 'rst';
+  if (extension === '.csv') return 'csv';
+  if (extension === '.tsv') return 'tsv';
+  if (extension === '.json') return 'json';
+  if (extension === '.xml') return 'xml';
+  if (extension === '.yaml') return 'yaml';
+  if (extension === '.yml') return 'yml';
+  if (extension === '.log') return 'log';
+  return 'plain';
 }
 
 async function htmlToText(html: string): Promise<string> {
@@ -319,6 +340,7 @@ async function buildDocxConversionSource(input: {
     title: input.title,
     textContent: await htmlToText(htmlContent),
     htmlContent,
+    recoveredDocument: recoverDocumentFromHtml(htmlContent),
   };
 }
 
@@ -450,6 +472,7 @@ async function buildEpubConversionSource(input: {
       title: metadataTitle || input.titleFallback,
       textContent: await htmlToText(htmlContent),
       htmlContent,
+      recoveredDocument: recoverDocumentFromHtml(htmlContent),
     };
   } finally {
     packageDom.window.close();
@@ -491,17 +514,25 @@ export async function buildConversionSource(input: {
     if (!decodedText) return null;
 
     if (isHtmlLike({ contentType: input.contentType, filename: input.rawFilename, text: decodedText })) {
+      const recoveredDocument = recoverDocumentFromHtml(decodedText);
       return {
         title,
         textContent: await htmlToText(decodedText),
         htmlContent: decodedText,
+        recoveredDocument,
       };
     }
+
+    const recoveredDocument = recoverDocumentFromStructuredText({
+      text: decodedText,
+      kind: structuredTextKindFromFilename(input.rawFilename),
+    });
 
     return {
       title,
       textContent: decodedText,
-      htmlContent: textToSimpleHtml(decodedText),
+      htmlContent: serializeRecoveredDocumentToHtml(recoveredDocument) || textToSimpleHtml(decodedText),
+      recoveredDocument,
     };
   }
 
@@ -574,6 +605,7 @@ export async function convertDocumentBuffer(input: {
     html: source.htmlContent,
     mode: effectiveImageMode,
   });
+  const preparedRecoveredDocument = recoverDocumentFromHtml(preparedHtmlContent);
   const preparedTextContent =
     effectiveImageMode === 'on' ? source.textContent : await htmlToText(preparedHtmlContent);
 
@@ -584,10 +616,10 @@ export async function convertDocumentBuffer(input: {
       sourceUrl: sourceLabel,
       siteName: 'Uploaded Document',
       publishedTime: 'Unknown',
-      content: preparedHtmlContent,
+      document: preparedRecoveredDocument,
     });
     const structuralReasons = structuralDiagnosticReasonsForDocumentExport({
-      sourceHtml: preparedHtmlContent,
+      sourceDocument: preparedRecoveredDocument,
       format: input.format,
       outputContent: markdown,
     });
@@ -622,11 +654,11 @@ export async function convertDocumentBuffer(input: {
       sourceUrl: sourceLabel,
       siteName: 'Uploaded Document',
       publishedTime: 'Unknown',
-      content: preparedHtmlContent,
+      document: preparedRecoveredDocument,
       textContent: preparedTextContent,
     });
     const structuralReasons = structuralDiagnosticReasonsForDocumentExport({
-      sourceHtml: preparedHtmlContent,
+      sourceDocument: preparedRecoveredDocument,
       format: input.format,
       outputContent: txt,
     });
@@ -660,10 +692,20 @@ export async function convertDocumentBuffer(input: {
       title: source.title,
       byline: 'Unknown',
       sourceUrl: sourceLabel,
-      content: preparedHtmlContent,
+      document: preparedRecoveredDocument,
     });
-    const warnings = [...baseWarnings];
-    const diagnosticReasons = [...baseDiagnosticReasons];
+    const structuralReasons = structuralDiagnosticReasonsForDocumentExport({
+      sourceDocument: preparedRecoveredDocument,
+      format: input.format,
+      outputContent: '',
+    });
+    const diagnosticReasons = [...new Set([...baseDiagnosticReasons, ...structuralReasons])];
+    const warnings = [
+      ...baseWarnings,
+      ...structuralReasons
+        .map((reason) => warningForDiagnosticReason(reason))
+        .filter((warning): warning is string => Boolean(warning)),
+    ];
     const resultState: ExtractResultState = deriveResultState({
       diagnosticReasons,
       warnings,
@@ -683,13 +725,23 @@ export async function convertDocumentBuffer(input: {
 
   const { exportPdfBuffer } = await getPdfExporter();
   const pdf = await exportPdfBuffer({
-    content: preparedHtmlContent,
+    document: preparedRecoveredDocument,
     title: source.title,
     byline: 'Unknown',
     settings: input.settings,
   });
-  const warnings = [...baseWarnings];
-  const diagnosticReasons = [...baseDiagnosticReasons];
+  const structuralReasons = structuralDiagnosticReasonsForDocumentExport({
+    sourceDocument: preparedRecoveredDocument,
+    format: input.format,
+    outputContent: '',
+  });
+  const diagnosticReasons = [...new Set([...baseDiagnosticReasons, ...structuralReasons])];
+  const warnings = [
+    ...baseWarnings,
+    ...structuralReasons
+      .map((reason) => warningForDiagnosticReason(reason))
+      .filter((warning): warning is string => Boolean(warning)),
+  ];
   const resultState: ExtractResultState = deriveResultState({
     diagnosticReasons,
     warnings,

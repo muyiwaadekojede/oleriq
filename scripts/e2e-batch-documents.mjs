@@ -378,7 +378,7 @@ async function assertUiDocumentImageMode(fixtures, semanticFixtures) {
     });
 
     await page.goto(`${baseUrl}/batch`, { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Documents' }).click();
+    await switchToDocumentsMode(page);
 
     const pdfUpload = await readUploadPayload(semanticFixtures.pdfInline);
     const textUpload = await readLocalUploadPayload(fixtures.textPath, 'text/plain');
@@ -544,24 +544,30 @@ async function assertApiDocumentStructureDiagnostics(structureHtmlPath) {
     fail(`Structure fixture batch returned unexpected items: ${JSON.stringify(detail)}`);
   }
 
-  if (detail.job.degradedCount !== 1) {
-    fail(`Expected one degraded structure-rich document result, got: ${JSON.stringify(detail.job)}`);
+  if (detail.job.degradedCount !== 0) {
+    fail(`Expected zero degraded structure-rich Markdown document results after recovery, got: ${JSON.stringify(detail.job)}`);
   }
 
-  if (detail.items[0].qualityState !== 'degraded') {
-    fail(`Expected degraded qualityState for structure-rich markdown export, got: ${JSON.stringify(detail.items[0])}`);
+  if (detail.items[0].qualityState !== 'usable') {
+    fail(`Expected usable qualityState for structure-rich markdown export after recovery, got: ${JSON.stringify(detail.items[0])}`);
   }
 
-  if (
-    !Array.isArray(detail.items[0].diagnosticReasons) ||
-    !detail.items[0].diagnosticReasons.includes('structure_table_loss_risk')
-  ) {
-    fail(`Expected structure_table_loss_risk diagnosticReason, got: ${JSON.stringify(detail.items[0])}`);
+  if (!Array.isArray(detail.items[0].diagnosticReasons)) {
+    fail(`Expected structure-rich markdown export to return diagnosticReasons array, got: ${JSON.stringify(detail.items[0])}`);
   }
 
-  if (!Array.isArray(detail.items[0].warnings) || detail.items[0].warnings.length === 0) {
-    fail(`Expected structure-loss warning text for structure-rich markdown export, got: ${JSON.stringify(detail.items[0])}`);
+  if (detail.items[0].diagnosticReasons.length !== 0) {
+    fail(`Expected structure-rich markdown export to clear structure diagnosticReasons after recovery, got: ${JSON.stringify(detail.items[0])}`);
   }
+
+  if (!Array.isArray(detail.items[0].warnings) || detail.items[0].warnings.length !== 0) {
+    fail(`Expected structure-rich markdown export warnings to clear after recovery, got: ${JSON.stringify(detail.items[0])}`);
+  }
+}
+
+async function switchToDocumentsMode(page) {
+  await page.getByRole('button', { name: 'Documents', exact: true }).click();
+  await page.locator(`${batchSurfaceSelector}[data-batch-mode="document"]`).waitFor({ timeout: 30_000 });
 }
 
 async function assertApiDocumentTxtStructureDiagnostics(structureHtmlPath) {
@@ -680,7 +686,7 @@ async function assertApiDocumentTxtStructureDiagnostics(structureHtmlPath) {
   }
 
   if (detail.job.degradedCount !== 1) {
-    fail(`Expected one degraded structure-rich TXT document result, got: ${JSON.stringify(detail.job)}`);
+    fail(`Expected one degraded structure-rich TXT document result from remaining table-loss risk, got: ${JSON.stringify(detail.job)}`);
   }
 
   if (detail.items[0].qualityState !== 'degraded') {
@@ -695,8 +701,8 @@ async function assertApiDocumentTxtStructureDiagnostics(structureHtmlPath) {
   }
 
   for (const reason of ['structure_heading_loss_risk', 'structure_list_loss_risk', 'structure_code_block_loss_risk']) {
-    if (!detail.items[0].diagnosticReasons.includes(reason)) {
-      fail(`Expected ${reason} diagnosticReason on TXT export, got: ${JSON.stringify(detail.items[0])}`);
+    if (detail.items[0].diagnosticReasons.includes(reason)) {
+      fail(`Expected TXT structure recovery to clear ${reason}, got: ${JSON.stringify(detail.items[0])}`);
     }
   }
 
@@ -947,7 +953,7 @@ async function assertUiDocumentDiagnostics(fixtures, semanticFixtures) {
     });
 
     await page.goto(`${baseUrl}/batch`, { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Documents' }).click();
+    await switchToDocumentsMode(page);
 
     const pdfUpload = await readUploadPayload(semanticFixtures.pdfInline);
     const textUpload = await readLocalUploadPayload(fixtures.textPath, 'text/plain');
@@ -1009,7 +1015,7 @@ async function assertUiPass1FixtureAcceptance(realFixtures, fixtures) {
 
   try {
     await page.goto(`${baseUrl}/batch`, { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: 'Documents' }).click();
+    await switchToDocumentsMode(page);
 
     const uploads = await Promise.all([
       readUploadPayload(realFixtures.docx),

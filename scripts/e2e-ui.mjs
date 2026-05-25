@@ -34,10 +34,6 @@ try {
     .getByText('This can look finished while tables lose shape.')
     .first()
     .waitFor({ timeout: 10_000 });
-  await page
-    .getByText('This can look finished while deeper heading levels flatten.')
-    .first()
-    .waitFor({ timeout: 10_000 });
 
   await page.getByRole('button', { name: 'New URL' }).first().click();
 

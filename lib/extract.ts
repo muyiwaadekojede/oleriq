@@ -5,8 +5,9 @@ import { Agent as UndiciAgent } from 'undici';
 import { getBrowser } from './browser';
 import { buildMarkdownExport } from './exportMarkdown';
 import { buildTxtExport } from './exportTxt';
+import { recoverDocumentFromHtml } from './recoveredStructure';
 import { sanitizeHtml } from './sanitise';
-import { structuralDiagnosticReasonsForHtmlExport } from './structuralFidelity';
+import { structuralDiagnosticReasonsForRecoveredDocumentExport } from './structuralFidelity';
 import { diagnosticReasonsForExtractionPath, deriveResultState, resultStateForExtractionPath } from './trustGuidance';
 import type { ExtractErrorCode, ExtractionPath, ExtractResponse, ImageMode, PageComplexitySignal } from './types';
 
@@ -676,7 +677,7 @@ function buildExportDiagnosticReasonsByFormat(input: {
   sourceUrl: string;
   siteName: string;
   publishedTime: string;
-  content: string;
+  document: ReturnType<typeof recoverDocumentFromHtml>;
   textContent: string;
 }) {
   const markdown = buildMarkdownExport({
@@ -685,7 +686,7 @@ function buildExportDiagnosticReasonsByFormat(input: {
     sourceUrl: input.sourceUrl,
     siteName: input.siteName,
     publishedTime: input.publishedTime,
-    content: input.content,
+    document: input.document,
   });
 
   const txt = buildTxtExport({
@@ -694,20 +695,30 @@ function buildExportDiagnosticReasonsByFormat(input: {
     sourceUrl: input.sourceUrl,
     siteName: input.siteName,
     publishedTime: input.publishedTime,
-    content: input.content,
+    document: input.document,
     textContent: input.textContent,
   });
 
   return {
-    md: structuralDiagnosticReasonsForHtmlExport({
-      sourceHtml: input.content,
+    md: structuralDiagnosticReasonsForRecoveredDocumentExport({
+      sourceDocument: input.document,
       format: 'md',
       outputContent: markdown,
     }),
-    txt: structuralDiagnosticReasonsForHtmlExport({
-      sourceHtml: input.content,
+    txt: structuralDiagnosticReasonsForRecoveredDocumentExport({
+      sourceDocument: input.document,
       format: 'txt',
       outputContent: txt,
+    }),
+    docx: structuralDiagnosticReasonsForRecoveredDocumentExport({
+      sourceDocument: input.document,
+      format: 'docx',
+      outputContent: '',
+    }),
+    pdf: structuralDiagnosticReasonsForRecoveredDocumentExport({
+      sourceDocument: input.document,
+      format: 'pdf',
+      outputContent: '',
     }),
   };
 }
@@ -1009,6 +1020,7 @@ async function buildResponseFromFallbackContent(input: {
     off: sanitizeHtml(variants.off.content),
     captions: sanitizeHtml(variants.captions.content),
   };
+  const recoveredDocument = recoverDocumentFromHtml(finalizedVariants.on);
   const title = normalizeExtractText(input.title) || 'Untitled Article';
   const byline = normalizeExtractText(input.byline) || 'Unknown';
   const siteName = normalizeExtractText(input.siteName) || getHostSiteName(input.sourceUrl);
@@ -1019,7 +1031,7 @@ async function buildResponseFromFallbackContent(input: {
     sourceUrl: input.sourceUrl.toString(),
     siteName,
     publishedTime,
-    content: finalizedVariants.on,
+    document: recoveredDocument,
     textContent,
   });
   const warnings = warningsForExtractionPath(input.extractionPath);
@@ -1456,6 +1468,7 @@ export async function extractFromUrl(
           off: sanitizeHtml(variants.off.content),
           captions: sanitizeHtml(variants.captions.content),
         };
+        const recoveredDocument = recoverDocumentFromHtml(finalizedVariants.on);
         const imageCount = variants.on.totalImages;
 
         const title = deriveBestTitle(
@@ -1473,7 +1486,7 @@ export async function extractFromUrl(
           sourceUrl: parsedUrl.toString(),
           siteName,
           publishedTime,
-          content: finalizedVariants.on,
+          document: recoveredDocument,
           textContent,
         });
 

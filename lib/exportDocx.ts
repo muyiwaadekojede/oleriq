@@ -5,10 +5,16 @@ import {
   ImageRun,
   Packer,
   Paragraph,
+  Table,
+  TableCell,
+  TableRow,
   TextRun,
+  WidthType,
+  type FileChild,
   type ParagraphChild,
 } from 'docx';
-import { JSDOM } from 'jsdom';
+
+import type { RecoveredBlock, RecoveredDocument, RecoveredInline } from '@/lib/recoveredStructure';
 
 type InlineStyle = {
   bold?: boolean;
@@ -28,10 +34,6 @@ async function fetchWithTimeout(url: string, timeoutMs: number): Promise<Respons
   } finally {
     clearTimeout(timeoutId);
   }
-}
-
-function collapseWhitespace(value: string): string {
-  return value.replace(/\s+/g, ' ');
 }
 
 function parseDataUri(src: string): { data: Buffer; mime: string } | null {
@@ -90,227 +92,287 @@ async function buildImageRunFromSrc(src: string): Promise<ImageRun | null> {
   });
 }
 
-async function inlineFromNode(node: Node, style: InlineStyle = {}): Promise<ParagraphChild[]> {
-  if (node.nodeType === node.TEXT_NODE) {
-    const text = collapseWhitespace(node.textContent || '');
-    if (!text.trim()) return [];
-
-    return [
-      new TextRun({
-        text,
-        bold: style.bold,
-        italics: style.italics,
-        font: style.code ? 'Courier New' : undefined,
-      }),
-    ];
-  }
-
-  if (node.nodeType !== node.ELEMENT_NODE) {
-    return [];
-  }
-
-  const element = node as HTMLElement;
-  const tag = element.tagName.toLowerCase();
-
-  if (tag === 'strong' || tag === 'b') {
-    return inlineFromChildren(element, { ...style, bold: true });
-  }
-
-  if (tag === 'em' || tag === 'i') {
-    return inlineFromChildren(element, { ...style, italics: true });
-  }
-
-  if (tag === 'code') {
-    return inlineFromChildren(element, { ...style, code: true });
-  }
-
-  if (tag === 'br') {
-    return [new TextRun({ text: '', break: 1 })];
-  }
-
-  if (tag === 'a') {
-    const href = element.getAttribute('href');
-    const children = await inlineFromChildren(element, style);
-
-    if (!href) return children;
-
-    const textChildren = children.filter((child): child is TextRun => child instanceof TextRun);
-
-    if (textChildren.length === 0) {
-      const fallbackText = collapseWhitespace(element.textContent || '').trim() || href;
-      return [new ExternalHyperlink({ link: href, children: [new TextRun({ text: fallbackText })] })];
-    }
-
-    return [new ExternalHyperlink({ link: href, children: textChildren })];
-  }
-
-  if (tag === 'img') {
-    const src = element.getAttribute('src')?.trim();
-    if (!src) {
-      const alt = element.getAttribute('alt') || 'image unavailable';
-      return [new TextRun({ text: `[Image: ${alt}]`, italics: true })];
-    }
-
-    const imageRun = await buildImageRunFromSrc(src);
-    if (!imageRun) {
-      const alt = element.getAttribute('alt') || 'image unavailable';
-      return [new TextRun({ text: `[Image: ${alt}]`, italics: true })];
-    }
-
-    return [imageRun];
-  }
-
-  return inlineFromChildren(element, style);
+function headingForLevel(level: number): (typeof HeadingLevel)[keyof typeof HeadingLevel] | undefined {
+  if (level === 1) return HeadingLevel.HEADING_1;
+  if (level === 2) return HeadingLevel.HEADING_2;
+  if (level === 3) return HeadingLevel.HEADING_3;
+  if (level === 4) return HeadingLevel.HEADING_4;
+  if (level === 5) return HeadingLevel.HEADING_5;
+  if (level === 6) return HeadingLevel.HEADING_6;
+  return undefined;
 }
 
-async function inlineFromChildren(element: HTMLElement, style: InlineStyle = {}): Promise<ParagraphChild[]> {
+async function paragraphChildrenFromInlines(inlines: RecoveredInline[], style: InlineStyle = {}): Promise<ParagraphChild[]> {
   const children: ParagraphChild[] = [];
 
-  for (const child of Array.from(element.childNodes)) {
-    const parts = await inlineFromNode(child, style);
-    children.push(...parts);
+  for (const inline of inlines) {
+    if (inline.type === 'text') {
+      if (inline.text.length === 0) continue;
+      children.push(
+        new TextRun({
+          text: inline.text,
+          bold: style.bold,
+          italics: style.italics,
+          font: style.code ? 'Courier New' : undefined,
+        }),
+      );
+      continue;
+    }
+
+    if (inline.type === 'lineBreak') {
+      children.push(new TextRun({ text: '', break: 1 }));
+      continue;
+    }
+
+    if (inline.type === 'code') {
+      children.push(
+        new TextRun({
+          text: inline.text,
+          bold: style.bold,
+          italics: style.italics,
+          font: 'Courier New',
+        }),
+      );
+      continue;
+    }
+
+    if (inline.type === 'strong') {
+      children.push(...(await paragraphChildrenFromInlines(inline.children, { ...style, bold: true })));
+      continue;
+    }
+
+    if (inline.type === 'emphasis') {
+      children.push(...(await paragraphChildrenFromInlines(inline.children, { ...style, italics: true })));
+      continue;
+    }
+
+    if (inline.type === 'link') {
+      const linkChildren = (await paragraphChildrenFromInlines(inline.children, style)).filter(
+        (child): child is TextRun => child instanceof TextRun,
+      );
+      if (linkChildren.length > 0) {
+        children.push(new ExternalHyperlink({ link: inline.href, children: linkChildren }));
+      }
+      continue;
+    }
+
+    if (inline.type === 'image') {
+      const imageRun = await buildImageRunFromSrc(inline.src);
+      if (imageRun) {
+        children.push(imageRun);
+      } else {
+        children.push(new TextRun({ text: `[Image: ${inline.alt || inline.title || 'image'}]`, italics: true }));
+      }
+    }
   }
 
   return children;
 }
 
-function headingForTag(
-  tag: string,
-): (typeof HeadingLevel)[keyof typeof HeadingLevel] | undefined {
-  if (tag === 'h1') return HeadingLevel.HEADING_1;
-  if (tag === 'h2') return HeadingLevel.HEADING_2;
-  if (tag === 'h3') return HeadingLevel.HEADING_3;
-  if (tag === 'h4') return HeadingLevel.HEADING_4;
-  if (tag === 'h5') return HeadingLevel.HEADING_5;
-  if (tag === 'h6') return HeadingLevel.HEADING_6;
-  return undefined;
+function nonEmptyParagraph(
+  children: ParagraphChild[],
+  options: NonNullable<ConstructorParameters<typeof Paragraph>[0]> = {},
+): Paragraph {
+  return new Paragraph(
+    Object.assign({}, options as object, {
+      children: children.length > 0 ? children : [new TextRun({ text: '' })],
+    }) as ConstructorParameters<typeof Paragraph>[0],
+  );
 }
 
-async function paragraphsFromElement(element: HTMLElement): Promise<Paragraph[]> {
-  const tag = element.tagName.toLowerCase();
+async function tableFromBlock(block: Extract<RecoveredBlock, { type: 'table' }>): Promise<Table> {
+  const rows: TableRow[] = [];
 
-  const heading = headingForTag(tag);
-  if (heading) {
-    const children = await inlineFromChildren(element);
-    return [
-      new Paragraph({
-        heading,
-        children: children.length > 0 ? children : [new TextRun({ text: '' })],
-      }),
-    ];
-  }
-
-  if (tag === 'p') {
-    const children = await inlineFromChildren(element);
-    return [new Paragraph({ children })];
-  }
-
-  if (tag === 'blockquote') {
-    const children = await inlineFromChildren(element);
-    return [
-      new Paragraph({
-        indent: { left: 420 },
-        children,
-      }),
-    ];
-  }
-
-  if (tag === 'pre') {
-    const text = element.textContent || '';
-    return [
-      new Paragraph({
-        children: [
-          new TextRun({
-            text,
-            font: 'Courier New',
+  if (block.table.headers.length > 0) {
+    rows.push(
+      new TableRow({
+        tableHeader: true,
+        children: await Promise.all(
+          block.table.headers.map(async (cell) => {
+            const children = await paragraphChildrenFromInlines(cell);
+            return new TableCell({
+              children: [nonEmptyParagraph(children)],
+            });
           }),
-        ],
+        ),
       }),
-    ];
+    );
   }
 
-  if (tag === 'ul') {
-    const out: Paragraph[] = [];
-    for (const li of Array.from(element.children)) {
-      if (li.tagName.toLowerCase() !== 'li') continue;
-      const children = await inlineFromChildren(li as HTMLElement);
-      out.push(
-        new Paragraph({
-          bullet: { level: 0 },
-          children,
+  for (const row of block.table.rows) {
+    rows.push(
+      new TableRow({
+        children: await Promise.all(
+          row.map(async (cell) => {
+            const children = await paragraphChildrenFromInlines(cell);
+            return new TableCell({
+              children: [nonEmptyParagraph(children)],
+            });
+          }),
+        ),
+      }),
+    );
+  }
+
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows,
+  });
+}
+
+async function childrenFromRecoveredBlocks(blocks: RecoveredBlock[], listLevel = 0): Promise<FileChild[]> {
+  const children: FileChild[] = [];
+
+  for (const block of blocks) {
+    if (block.type === 'heading') {
+      children.push(
+        nonEmptyParagraph(await paragraphChildrenFromInlines(block.inlines), {
+          heading: headingForLevel(block.level),
         }),
       );
+      continue;
     }
-    return out;
-  }
 
-  if (tag === 'ol') {
-    const out: Paragraph[] = [];
-    let index = 1;
+    if (block.type === 'paragraph') {
+      children.push(nonEmptyParagraph(await paragraphChildrenFromInlines(block.inlines)));
+      continue;
+    }
 
-    for (const li of Array.from(element.children)) {
-      if (li.tagName.toLowerCase() !== 'li') continue;
-      const children = await inlineFromChildren(li as HTMLElement);
-      out.push(
+    if (block.type === 'code') {
+      children.push(
         new Paragraph({
-          children: [new TextRun({ text: `${index}. ` }), ...children],
+          children: [
+            new TextRun({
+              text: block.code,
+              font: 'Courier New',
+            }),
+          ],
         }),
       );
-      index += 1;
+      continue;
     }
 
-    return out;
-  }
+    if (block.type === 'blockquote') {
+      for (const quoteBlock of block.blocks) {
+        if (quoteBlock.type === 'paragraph') {
+          children.push(
+            nonEmptyParagraph(await paragraphChildrenFromInlines(quoteBlock.inlines), {
+              indent: { left: 420 },
+            }),
+          );
+          continue;
+        }
+        if (quoteBlock.type === 'heading') {
+          children.push(
+            nonEmptyParagraph(await paragraphChildrenFromInlines(quoteBlock.inlines), {
+              heading: headingForLevel(quoteBlock.level),
+              indent: { left: 420 },
+            }),
+          );
+          continue;
+        }
+        if (quoteBlock.type === 'code') {
+          children.push(
+            new Paragraph({
+              indent: { left: 420 },
+              children: [
+                new TextRun({
+                  text: quoteBlock.code,
+                  font: 'Courier New',
+                }),
+              ],
+            }),
+          );
+          continue;
+        }
 
-  if (tag === 'img') {
-    const src = element.getAttribute('src')?.trim() || '';
-    const imageRun = src ? await buildImageRunFromSrc(src) : null;
-
-    if (imageRun) {
-      return [new Paragraph({ children: [imageRun] })];
+        children.push(...(await childrenFromRecoveredBlocks([quoteBlock], listLevel)));
+      }
+      continue;
     }
 
-    const alt = element.getAttribute('alt') || 'image unavailable';
-    return [new Paragraph({ children: [new TextRun({ text: `[Image: ${alt}]`, italics: true })] })];
+    if (block.type === 'figure') {
+      if (block.figure.src) {
+        const imageRun = await buildImageRunFromSrc(block.figure.src);
+        if (imageRun) {
+          children.push(new Paragraph({ children: [imageRun] }));
+        }
+      }
+
+      const caption = block.figure.caption || block.figure.alt || block.figure.title;
+      if (caption) {
+        children.push(new Paragraph({ children: [new TextRun({ text: caption, italics: true })] }));
+      }
+      continue;
+    }
+
+    if (block.type === 'table') {
+      children.push(await tableFromBlock(block));
+      continue;
+    }
+
+    if (block.type === 'list') {
+      const start = block.list.start || 1;
+
+      for (const [index, item] of block.list.items.entries()) {
+        const [firstBlock, ...restBlocks] = item.blocks;
+        const markerChildren =
+          firstBlock?.type === 'paragraph'
+            ? await paragraphChildrenFromInlines(firstBlock.inlines)
+            : firstBlock?.type === 'heading'
+              ? await paragraphChildrenFromInlines(firstBlock.inlines)
+              : [];
+
+        if (block.list.ordered) {
+          children.push(
+            nonEmptyParagraph(
+              [new TextRun({ text: `${start + index}. ` }), ...markerChildren],
+              {
+                indent: { left: 360 * listLevel },
+              },
+            ),
+          );
+        } else {
+          children.push(
+            nonEmptyParagraph(markerChildren, {
+              bullet: { level: Math.min(listLevel, 8) },
+            }),
+          );
+        }
+
+        const nestedBlocks =
+          firstBlock && firstBlock.type !== 'paragraph' && firstBlock.type !== 'heading'
+            ? [firstBlock, ...restBlocks]
+            : restBlocks;
+        if (nestedBlocks.length > 0) {
+          children.push(...(await childrenFromRecoveredBlocks(nestedBlocks, listLevel + 1)));
+        }
+      }
+    }
   }
 
-  const out: Paragraph[] = [];
-  for (const child of Array.from(element.children)) {
-    out.push(...(await paragraphsFromElement(child as HTMLElement)));
-  }
-
-  return out;
+  return children;
 }
 
 export async function exportDocxBuffer(input: {
   title: string;
   byline: string;
   sourceUrl: string;
-  content: string;
+  document: RecoveredDocument;
 }): Promise<Buffer> {
-  const dom = new JSDOM(`<body>${input.content}</body>`);
+  const children = await childrenFromRecoveredBlocks(input.document.blocks);
 
-  try {
-    const paragraphs: Paragraph[] = [];
+  const document = new Document({
+    creator: input.byline || 'Unknown',
+    title: input.title,
+    description: input.sourceUrl,
+    subject: input.sourceUrl,
+    sections: [
+      {
+        children: children.length > 0 ? children : [new Paragraph({ children: [new TextRun('')] })],
+      },
+    ],
+  });
 
-    for (const node of Array.from(dom.window.document.body.children)) {
-      paragraphs.push(...(await paragraphsFromElement(node as HTMLElement)));
-    }
-
-    const document = new Document({
-      creator: input.byline || 'Unknown',
-      title: input.title,
-      description: input.sourceUrl,
-      subject: input.sourceUrl,
-      sections: [
-        {
-          children: paragraphs.length > 0 ? paragraphs : [new Paragraph({ children: [new TextRun('')] })],
-        },
-      ],
-    });
-
-    return await Packer.toBuffer(document);
-  } finally {
-    dom.window.close();
-  }
+  return await Packer.toBuffer(document);
 }

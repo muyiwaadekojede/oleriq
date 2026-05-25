@@ -1,4 +1,5 @@
 import type { ConversionSource } from '@/lib/documentConversion';
+import { recoverDocumentFromHtml } from '@/lib/recoveredStructure';
 
 type Matrix = [number, number, number, number, number, number];
 
@@ -581,6 +582,7 @@ export async function buildPdfConversionSource(input: {
       title: input.title,
       textContent,
       htmlContent,
+      recoveredDocument: recoverDocumentFromHtml(htmlContent),
       diagnosticReasons: truncated ? ['document_pdf_truncated_pages'] : [],
       warnings: truncated ? ['Only part of this PDF was converted in this run.'] : [],
     };

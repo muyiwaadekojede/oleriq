@@ -33,6 +33,7 @@ async function assertApiFallbackToOriginal() {
 
 async function assertHomepageDirectPdfDownload(page) {
   await page.goto(baseUrl, { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => window.localStorage.getItem('oleriq_session_id') || '', { timeout: 30_000 });
   const sessionId = await page.evaluate(() => window.localStorage.getItem('oleriq_session_id') || '');
   if (!sessionId) {
     throw new Error('Expected homepage session id to be stored under oleriq_session_id.');

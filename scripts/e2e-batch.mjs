@@ -136,8 +136,8 @@ if (!Array.isArray(structureRow.diagnosticReasons) || !structureRow.diagnosticRe
 }
 
 for (const reason of ['structure_heading_loss_risk', 'structure_list_loss_risk', 'structure_code_block_loss_risk']) {
-  if (!structureRow.diagnosticReasons.includes(reason)) {
-    throw new Error(`Structure-rich URL row must expose ${reason}: ${JSON.stringify(structureRow)}`);
+  if (structureRow.diagnosticReasons.includes(reason)) {
+    throw new Error(`Structure-rich URL row should clear ${reason} after TXT structure recovery: ${JSON.stringify(structureRow)}`);
   }
 }
 

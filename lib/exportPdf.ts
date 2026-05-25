@@ -1,6 +1,7 @@
 import { JSDOM } from 'jsdom';
 
 import { getBrowser } from './browser';
+import { renderRecoveredDocumentToText, serializeRecoveredDocumentToHtml, type RecoveredDocument } from './recoveredStructure';
 import { clampNumber, escapeHtml } from './sanitise';
 import type { ReaderSettings } from './types';
 
@@ -104,21 +105,13 @@ export function renderStyledArticleHtml(
 </html>`;
 }
 
-function toPlainTextLines(html: string): string[] {
-  const dom = new JSDOM(`<article>${html}</article>`);
-  const blocks = Array.from(
-    dom.window.document.querySelectorAll('h1,h2,h3,h4,h5,h6,p,li,blockquote,pre,code'),
-  );
-
-  const lines: string[] = [];
-  for (const block of blocks) {
-    const text = block.textContent?.trim();
-    if (!text) continue;
-    lines.push(text);
-    lines.push('');
+function toPlainTextLines(document: RecoveredDocument): string[] {
+  const text = renderRecoveredDocumentToText(document);
+  if (!text.trim()) {
+    return ['No readable text content was available.'];
   }
 
-  return lines.length > 0 ? lines : ['No readable text content was available.'];
+  return text.split('\n');
 }
 
 function wrapLines(input: string[], maxCharsPerLine: number): string[] {
@@ -159,7 +152,7 @@ function pdfEscape(text: string): string {
 }
 
 function buildFallbackPdf(params: {
-  content: string;
+  document: RecoveredDocument;
   title: string;
   byline: string;
   settings: ReaderSettings;
@@ -173,7 +166,7 @@ function buildFallbackPdf(params: {
 
   const titleLine = (params.title || 'Untitled Article').trim();
   const bylineLine = (params.byline || 'Unknown').trim();
-  const contentLines = wrapLines(toPlainTextLines(params.content), 90);
+  const contentLines = wrapLines(toPlainTextLines(params.document), 90);
   const allLines = [titleLine, bylineLine ? `By: ${bylineLine}` : '', '', ...contentLines];
 
   const pages: string[][] = [];
@@ -245,11 +238,13 @@ function buildFallbackPdf(params: {
 }
 
 export async function exportPdfBuffer(params: {
-  content: string;
+  document: RecoveredDocument;
   title: string;
   byline: string;
   settings: ReaderSettings;
 }): Promise<Buffer> {
+  const articleHtml = serializeRecoveredDocumentToHtml(params.document);
+
   try {
     const browser = await getBrowser();
     if (!browser) {
@@ -260,7 +255,7 @@ export async function exportPdfBuffer(params: {
     try {
       const page = await context.newPage();
       const html = renderStyledArticleHtml(
-        params.content,
+        articleHtml,
         params.title,
         params.byline,
         params.settings,

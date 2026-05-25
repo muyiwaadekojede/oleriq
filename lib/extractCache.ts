@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 
+import type { RecoveredDocument } from './recoveredStructure';
 import type { ImageMode } from './types';
 
 export type ExtractSnapshot = {
@@ -10,6 +11,7 @@ export type ExtractSnapshot = {
   sourceUrl: string;
   textContent: string;
   contentVariants: Record<ImageMode, string>;
+  recoveredDocumentVariants: Record<ImageMode, RecoveredDocument>;
 };
 
 type CacheEntry = {

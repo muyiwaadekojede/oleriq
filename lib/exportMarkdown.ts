@@ -1,4 +1,4 @@
-import TurndownService from 'turndown';
+import { renderRecoveredDocumentToMarkdown, type RecoveredDocument } from '@/lib/recoveredStructure';
 
 function escapeYamlString(value: string): string {
   return (value || '').replace(/"/g, '\\"');
@@ -10,26 +10,9 @@ export function buildMarkdownExport(input: {
   sourceUrl: string;
   siteName: string;
   publishedTime: string;
-  content: string;
+  document: RecoveredDocument;
 }): string {
-  const turndown = new TurndownService({
-    headingStyle: 'atx',
-    codeBlockStyle: 'fenced',
-    bulletListMarker: '-',
-    emDelimiter: '*',
-    strongDelimiter: '**',
-  });
-
-  turndown.addRule('preserveImageCaptions', {
-    filter: (node) => {
-      if (node.nodeName !== 'EM') return false;
-      const text = node.textContent || '';
-      return /^\[Image:\s*/.test(text);
-    },
-    replacement: (content) => `*${content}*`,
-  });
-
-  const markdownBody = turndown.turndown(input.content).trim();
+  const markdownBody = renderRecoveredDocumentToMarkdown(input.document).trim();
   const extractedAt = new Date().toISOString();
 
   const frontmatter = [

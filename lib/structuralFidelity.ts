@@ -1,62 +1,5 @@
-import { JSDOM } from 'jsdom';
-
+import { countRecoveredTables, recoveredDocumentSignals, type RecoveredDocument } from '@/lib/recoveredStructure';
 import type { BatchDiagnosticReason, ExportFormat } from '@/lib/types';
-
-function countHtmlHeadings(html: string): { total: number; deeperThanH3: number } {
-  const dom = new JSDOM(`<body>${html}</body>`);
-
-  try {
-    const headings = Array.from(dom.window.document.querySelectorAll('h1, h2, h3, h4, h5, h6')).filter((heading) => {
-      const text = heading.textContent || '';
-      return text.trim().length > 0;
-    });
-
-    return {
-      total: headings.length,
-      deeperThanH3: headings.filter((heading) => Number.parseInt(heading.tagName.slice(1), 10) > 3).length,
-    };
-  } finally {
-    dom.window.close();
-  }
-}
-
-function countHtmlTables(html: string): number {
-  const dom = new JSDOM(`<body>${html}</body>`);
-
-  try {
-    return dom.window.document.querySelectorAll('table').length;
-  } finally {
-    dom.window.close();
-  }
-}
-
-function htmlHasNestedLists(html: string): boolean {
-  const dom = new JSDOM(`<body>${html}</body>`);
-
-  try {
-    return Array.from(dom.window.document.querySelectorAll('li')).some((item) =>
-      Array.from(item.children).some((child) => {
-        const tag = child.tagName.toLowerCase();
-        return tag === 'ul' || tag === 'ol';
-      }),
-    );
-  } finally {
-    dom.window.close();
-  }
-}
-
-function htmlHasCodeBlock(html: string): boolean {
-  const dom = new JSDOM(`<body>${html}</body>`);
-
-  try {
-    return Array.from(dom.window.document.querySelectorAll('pre')).some((block) => {
-      const text = block.textContent || '';
-      return text.trim().length > 0;
-    });
-  } finally {
-    dom.window.close();
-  }
-}
 
 function isMarkdownTableSeparator(line: string): boolean {
   const trimmed = line.trim();
@@ -79,62 +22,61 @@ function countMarkdownTables(markdown: string): number {
   return tableCount;
 }
 
-function countTxtHeadingMarkers(outputContent: string): number {
-  return outputContent
-    .replace(/\r/g, '')
-    .split('\n')
-    .map((line) => line.trim())
-    .filter((line) => /^(===|---|~~~)\s+\S/.test(line)).length;
+function txtHasHeadingMarkers(outputContent: string): boolean {
+  return /\[H[1-6]\]\s+\S/.test(outputContent);
 }
 
-export function structuralDiagnosticReasonsForHtmlExport(input: {
-  sourceHtml: string;
+function txtHasNestedListIndent(outputContent: string): boolean {
+  return /^\s{2,}[-*]\s+\S/m.test(outputContent) || /^\s{2,}\d+\.\s+\S/m.test(outputContent);
+}
+
+function txtHasCodeFence(outputContent: string): boolean {
+  return /```/.test(outputContent);
+}
+
+export function structuralDiagnosticReasonsForRecoveredDocumentExport(input: {
+  sourceDocument: RecoveredDocument;
   format: ExportFormat;
   outputContent: string;
 }): BatchDiagnosticReason[] {
+  const signals = recoveredDocumentSignals(input.sourceDocument);
   const reasons: BatchDiagnosticReason[] = [];
-  const sourceHeadingStats = countHtmlHeadings(input.sourceHtml);
-  const sourceTableCount = countHtmlTables(input.sourceHtml);
 
-  if (input.format === 'txt') {
-    if (
-      sourceHeadingStats.deeperThanH3 > 0 &&
-      countTxtHeadingMarkers(input.outputContent) < sourceHeadingStats.total
-    ) {
-      reasons.push('structure_heading_loss_risk');
-    }
-
-    if (sourceTableCount > 0) {
+  if (input.format === 'md') {
+    if (signals.hasTable && countMarkdownTables(input.outputContent) < countRecoveredTables(input.sourceDocument)) {
       reasons.push('structure_table_loss_risk');
     }
 
-    if (htmlHasNestedLists(input.sourceHtml)) {
+    return reasons;
+  }
+
+  if (input.format === 'txt') {
+    if (signals.hasDeepHeading && !txtHasHeadingMarkers(input.outputContent)) {
+      reasons.push('structure_heading_loss_risk');
+    }
+
+    if (signals.hasTable) {
+      reasons.push('structure_table_loss_risk');
+    }
+
+    if (signals.hasNestedList && !txtHasNestedListIndent(input.outputContent)) {
       reasons.push('structure_list_loss_risk');
     }
 
-    if (htmlHasCodeBlock(input.sourceHtml)) {
+    if (signals.hasCodeBlock && !txtHasCodeFence(input.outputContent)) {
       reasons.push('structure_code_block_loss_risk');
     }
 
     return reasons;
   }
 
-  if (sourceTableCount === 0 || input.format !== 'md') {
-    return [];
-  }
-
-  const outputTableCount = countMarkdownTables(input.outputContent);
-  if (outputTableCount >= sourceTableCount) {
-    return [];
-  }
-
-  return ['structure_table_loss_risk'];
+  return [];
 }
 
 export function structuralDiagnosticReasonsForDocumentExport(input: {
-  sourceHtml: string;
+  sourceDocument: RecoveredDocument;
   format: ExportFormat;
   outputContent: string;
 }): BatchDiagnosticReason[] {
-  return structuralDiagnosticReasonsForHtmlExport(input);
+  return structuralDiagnosticReasonsForRecoveredDocumentExport(input);
 }

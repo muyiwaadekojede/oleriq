@@ -7,6 +7,7 @@ import { exportPdfBuffer } from '@/lib/exportPdf';
 import { buildTxtExport } from '@/lib/exportTxt';
 import { getExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
+import { recoverDocumentFromHtml } from '@/lib/recoveredStructure';
 import { sanitizeFilename } from '@/lib/sanitise';
 import { clampNumber } from '@/lib/sanitise';
 import type { ExportFormat, ImageMode, ReaderSettings } from '@/lib/types';
@@ -70,6 +71,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   let siteName = (body.siteName || 'Unknown').trim();
   let publishedTime = (body.publishedTime || 'Unknown').trim();
   let textContent = (body.textContent || '').trim();
+  let recoveredDocument = typeof body.content === 'string' && body.content.trim()
+    ? recoverDocumentFromHtml(body.content)
+    : null;
   const images: ImageMode =
     body.images === 'off' || body.images === 'captions' || body.images === 'on'
       ? body.images
@@ -111,6 +115,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (snapshot) {
       content = snapshot.contentVariants[images];
+      recoveredDocument = snapshot.recoveredDocumentVariants[images];
       textContent = snapshot.textContent;
       title = snapshot.title || title;
       byline = snapshot.byline || byline;
@@ -159,6 +164,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     content = extracted.content;
+    recoveredDocument = recoverDocumentFromHtml(extracted.content);
     textContent = extracted.textContent;
     title = extracted.title || title;
     byline = extracted.byline || byline;
@@ -172,7 +178,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     if (format === 'pdf') {
       const buffer = await exportPdfBuffer({
-        content,
+        document: recoveredDocument || recoverDocumentFromHtml(content),
         title,
         byline,
         settings,
@@ -198,7 +204,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sourceUrl,
         siteName,
         publishedTime,
-        content,
+        document: recoveredDocument || recoverDocumentFromHtml(content),
         textContent,
       });
 
@@ -222,7 +228,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sourceUrl,
         siteName,
         publishedTime,
-        content,
+        document: recoveredDocument || recoverDocumentFromHtml(content),
       });
 
       res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
@@ -242,7 +248,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       title,
       byline,
       sourceUrl,
-      content,
+      document: recoveredDocument || recoverDocumentFromHtml(content),
     });
 
     res.setHeader(
