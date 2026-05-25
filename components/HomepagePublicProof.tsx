@@ -44,19 +44,13 @@ export function HomepagePublicProof() {
   const formattedValue = useMemo(() => formatProofValue(proof?.value ?? null), [proof?.value]);
 
   return (
-    <section data-homepage-public-proof className="px-6 pb-20">
-      <div className="mx-auto max-w-3xl border-t border-[var(--color-border)] pt-14 text-left">
-        <p className="text-sm font-medium text-[var(--color-muted)]">Usage proof</p>
-        <p className="mt-4 text-5xl font-semibold text-[var(--color-ink)] md:text-6xl">
-          <span className="logo-mark">{formattedValue}</span>{' '}
-          <span className="text-3xl font-medium text-[var(--color-ink)] md:text-4xl">
-            {proof?.label || 'files converted'}
-          </span>
-        </p>
-        <p className="mt-4 max-w-2xl text-base text-[var(--color-muted)]">
-          Across homepage, batch, and direct-file flows. Updated weekly.
-        </p>
-      </div>
-    </section>
+    <div
+      data-homepage-public-proof
+      aria-label={`${formattedValue} ${proof?.label || 'files converted'}`}
+      className="text-sm text-[var(--color-muted)]"
+    >
+      <span className="font-semibold text-[var(--color-ink)]">{formattedValue}</span>{' '}
+      <span>{proof?.label || 'files converted'}</span>
+    </div>
   );
 }

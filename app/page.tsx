@@ -525,8 +525,8 @@ export default function Page() {
             directFileDownloading={directFileDownloading}
             onDirectFileFormatChange={(format) => setDirectFileFormat(format)}
             onDirectFileDownload={() => void handleDirectFileDownload()}
+            proofContent={<HomepagePublicProof />}
           />
-          <HomepagePublicProof />
         </div>
       ) : (
         <div

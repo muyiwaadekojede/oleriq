@@ -39,7 +39,7 @@ if (urlInputSource.includes('usageMetrics?:') || urlInputSource.includes('hasUsa
 }
 
 if (!appPageSource.includes('HomepagePublicProof')) {
-  failures.push('Homepage must render the dedicated below-fold public proof component.');
+  failures.push('Homepage must render the dedicated public proof component.');
 }
 
 if (!homepageProofSource.includes('data-homepage-public-proof')) {
@@ -50,12 +50,24 @@ if (!homepageProofSource.includes('files converted')) {
   failures.push('Homepage public proof copy must reference files converted.');
 }
 
-if (!homepageProofSource.includes('Updated weekly.')) {
-  failures.push('Homepage public proof support line must explain the weekly refresh cadence.');
+if (homepageProofSource.includes('Usage proof')) {
+  failures.push('Homepage public proof must stay minimal and must not render a Usage proof eyebrow.');
 }
 
-if (urlInputSource.includes('data-homepage-public-proof') || urlInputSource.includes('files converted')) {
-  failures.push('Homepage public proof must not render inside UrlInput.');
+if (homepageProofSource.includes('Updated weekly.')) {
+  failures.push('Homepage public proof must stay minimal and must not render an Updated weekly support line.');
+}
+
+if (!appPageSource.includes('proofContent={<HomepagePublicProof />}')) {
+  failures.push('Homepage must pass the public proof component into UrlInput for inline placement.');
+}
+
+if (!urlInputSource.includes('proofContent?: ReactNode')) {
+  failures.push('Homepage input component must define an inline proofContent slot.');
+}
+
+if (!urlInputSource.includes('!loading && proofContent')) {
+  failures.push('Homepage input component must render inline proof content in the idle state.');
 }
 
 if (!urlInputSource.includes('data-homepage-hero="primary"')) {

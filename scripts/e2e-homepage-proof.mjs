@@ -10,17 +10,26 @@ async function main() {
   try {
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
 
-    const proof = page.locator('[data-homepage-public-proof]').first();
+    const hero = page.locator('[data-homepage-hero="primary"]').first();
+    const proof = hero.locator('[data-homepage-public-proof]').first();
     await proof.waitFor({ timeout: 60_000 });
     await proof.getByText(/files converted/i).waitFor({ timeout: 60_000 });
 
-    const box = await proof.boundingBox();
-    if (!box) {
+    const proofBox = await proof.boundingBox();
+    const buttonBox = await page.getByRole('button', { name: 'Convert URL' }).boundingBox();
+    if (!proofBox || !buttonBox) {
       throw new Error('Homepage public proof did not render a measurable box.');
     }
 
-    if (box.y < 700) {
-      throw new Error(`Homepage public proof must stay below the hero fold. Got y=${box.y}.`);
+    const buttonBottom = buttonBox.y + buttonBox.height;
+    if (proofBox.y <= buttonBottom) {
+      throw new Error(`Homepage public proof must render below the action row. Got proof y=${proofBox.y}, button bottom=${buttonBottom}.`);
+    }
+
+    if (proofBox.y - buttonBottom > 80) {
+      throw new Error(
+        `Homepage public proof must stay immediately below the action row. Gap was ${proofBox.y - buttonBottom}px.`,
+      );
     }
 
     await page.locator('#url-input').fill(articleUrl);

@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { useRef } from 'react';
 
 type UrlInputProps = {
@@ -17,6 +18,7 @@ type UrlInputProps = {
   directFileDownloading?: boolean;
   onDirectFileFormatChange?: (format: 'pdf' | 'txt' | 'md' | 'docx') => void;
   onDirectFileDownload?: () => void;
+  proofContent?: ReactNode;
 };
 
 export function UrlInput({
@@ -34,6 +36,7 @@ export function UrlInput({
   directFileDownloading,
   onDirectFileFormatChange,
   onDirectFileDownload,
+  proofContent,
 }: UrlInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -81,7 +84,11 @@ export function UrlInput({
           </button>
         </div>
 
-        <p className="mt-3 min-h-5 text-sm text-[var(--color-muted)]">
+        {!loading && proofContent ? (
+          <div className="mt-3 min-h-5 text-center">{proofContent}</div>
+        ) : null}
+
+        <p className="mt-2 min-h-5 text-sm text-[var(--color-muted)]">
           {loading ? 'Converting page into a clean document...' : statusMessage || ''}
         </p>
         {loading ? (
