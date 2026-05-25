@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { FailureModal } from '@/components/FailureModal';
+import { HomepagePublicProof } from '@/components/HomepagePublicProof';
 import { ReadingPreview } from '@/components/ReadingPreview';
 import { SettingsSidebar } from '@/components/SettingsSidebar';
 import { UrlInput } from '@/components/UrlInput';
@@ -525,6 +526,7 @@ export default function Page() {
             onDirectFileFormatChange={(format) => setDirectFileFormat(format)}
             onDirectFileDownload={() => void handleDirectFileDownload()}
           />
+          <HomepagePublicProof />
         </div>
       ) : (
         <div

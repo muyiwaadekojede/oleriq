@@ -47,7 +47,7 @@ export function UrlInput({
   const stageWidth = `${(activeStage / stageCount) * 100}%`;
 
   return (
-    <div className="cp-shell cp-enter flex min-h-screen items-center justify-center px-6 py-10">
+    <div data-homepage-hero="primary" className="cp-shell cp-enter flex min-h-screen items-center justify-center px-6 py-10">
       <div className="w-full max-w-3xl text-center">
         <h1 className="logo-mark text-6xl font-semibold text-[var(--color-ink)]">Oleriq</h1>
         <p className="mx-auto mt-2 max-w-2xl text-lg text-[var(--color-muted)]">{subtitle}</p>

@@ -7,6 +7,8 @@ import { exportPdfBuffer } from '@/lib/exportPdf';
 import { buildTxtExport } from '@/lib/exportTxt';
 import { getExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
+import { BATCH_HEADER, LEGACY_BATCH_HEADER, LEGACY_SESSION_HEADER, SESSION_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
+import { recordPublicConversionEvent } from '@/lib/publicProof';
 import { recoverDocumentFromHtml } from '@/lib/recoveredStructure';
 import { sanitizeFilename } from '@/lib/sanitise';
 import { clampNumber } from '@/lib/sanitise';
@@ -43,6 +45,15 @@ function normalizeSettings(input: Partial<ReaderSettings> | undefined): ReaderSe
         ? input.colorTheme
         : DEFAULT_SETTINGS.colorTheme,
   };
+}
+
+function sessionIdFromRequest(req: NextApiRequest): string | null {
+  const header = readHeaderValue(req.headers, SESSION_HEADER, LEGACY_SESSION_HEADER);
+  return header ? header.slice(0, 128) : null;
+}
+
+function sourceSurfaceFromRequest(req: NextApiRequest): 'homepage_export' | 'batch_url_export' {
+  return readHeaderValue(req.headers, BATCH_HEADER, LEGACY_BATCH_HEADER) ? 'batch_url_export' : 'homepage_export';
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -194,6 +205,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sourceUrl,
         exportFormat: format,
       });
+      recordPublicConversionEvent({
+        sessionId: sessionIdFromRequest(req),
+        sourceSurface: sourceSurfaceFromRequest(req),
+        conversionKind: 'converted',
+        exportFormat: format,
+      });
       return res.status(200).send(buffer);
     }
 
@@ -216,6 +233,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         status: 'success',
         pagePath: '/',
         sourceUrl,
+        exportFormat: format,
+      });
+      recordPublicConversionEvent({
+        sessionId: sessionIdFromRequest(req),
+        sourceSurface: sourceSurfaceFromRequest(req),
+        conversionKind: 'converted',
         exportFormat: format,
       });
       return res.status(200).send(Buffer.from(txt, 'utf8'));
@@ -241,6 +264,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sourceUrl,
         exportFormat: format,
       });
+      recordPublicConversionEvent({
+        sessionId: sessionIdFromRequest(req),
+        sourceSurface: sourceSurfaceFromRequest(req),
+        conversionKind: 'converted',
+        exportFormat: format,
+      });
       return res.status(200).send(Buffer.from(markdown, 'utf8'));
     }
 
@@ -262,6 +291,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       status: 'success',
       pagePath: '/',
       sourceUrl,
+      exportFormat: format,
+    });
+    recordPublicConversionEvent({
+      sessionId: sessionIdFromRequest(req),
+      sourceSurface: sourceSurfaceFromRequest(req),
+      conversionKind: 'converted',
       exportFormat: format,
     });
     return res.status(200).send(docx);

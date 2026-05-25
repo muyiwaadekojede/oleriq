@@ -7,6 +7,7 @@ import { storeExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
 import { buildMarkdownExport } from '@/lib/exportMarkdown';
 import { buildTxtExport } from '@/lib/exportTxt';
+import { recordPublicConversionEvent } from '@/lib/publicProof';
 import { recoverDocumentFromHtml } from '@/lib/recoveredStructure';
 import { structuralDiagnosticReasonsForRecoveredDocumentExport } from '@/lib/structuralFidelity';
 import {
@@ -1137,6 +1138,12 @@ async function runDocumentJob(
         outputObjectKey: storedOutput.objectKey,
         outputFilename: converted.filename,
         outputFormat: config.exportFormat,
+      });
+      recordPublicConversionEvent({
+        sessionId: config.sessionId,
+        sourceSurface: 'batch_document',
+        conversionKind: 'converted',
+        exportFormat: config.exportFormat,
       });
     } catch (error) {
       markItemFailure({

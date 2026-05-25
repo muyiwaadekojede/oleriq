@@ -88,7 +88,8 @@ Rules:
 - one dominant task
 - one dominant interactive surface on first view
 - no stacked marketing sections
-- no inline trust widgets, metrics, or decorative product chrome
+- no inline trust widgets, metrics, or decorative product chrome inside the hero or input surface
+- one quiet below-fold public proof section is allowed on `/` if it stays subordinate to the main task surface and only proves published conversion volume
 - minimal navigation and minimal branching
 - defer limits, help, and secondary status until they are relevant or clearly subordinate to the main task
 - external systems may influence critique and copy quality, but not override the restraint model

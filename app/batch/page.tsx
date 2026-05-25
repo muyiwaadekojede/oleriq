@@ -8,7 +8,7 @@ import { BatchDocumentPanel, type DocumentUploadItem } from '@/components/BatchD
 import { BatchUrlPanel } from '@/components/BatchUrlPanel';
 import type { BatchItemResult } from '@/components/batchTypes';
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
-import { FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
+import { BATCH_HEADER, FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
 import type { BatchDiagnosticReason, BatchInputMode, ExportFormat, ImageMode, ReaderSettings } from '@/lib/types';
 
 type BatchJobStatus = 'idle' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
@@ -293,7 +293,10 @@ export default function BatchPage() {
   const documentProcessing = documentJobStatus === 'queued' || documentJobStatus === 'running';
 
   function buildHeaders(): HeadersInit {
-    return sessionIdRef.current ? { [SESSION_HEADER]: sessionIdRef.current } : {};
+    return {
+      ...(sessionIdRef.current ? { [SESSION_HEADER]: sessionIdRef.current } : {}),
+      [BATCH_HEADER]: '1',
+    };
   }
 
   async function readErrorMessage(response: Response): Promise<string> {

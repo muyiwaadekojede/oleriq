@@ -7,11 +7,13 @@ const repoRoot = path.resolve(__dirname, '..');
 
 const appPagePath = path.join(repoRoot, 'app', 'page.tsx');
 const appLayoutPath = path.join(repoRoot, 'app', 'layout.tsx');
+const homepageProofPath = path.join(repoRoot, 'components', 'HomepagePublicProof.tsx');
 const urlInputPath = path.join(repoRoot, 'components', 'UrlInput.tsx');
 
-const [appPageSource, appLayoutSource, urlInputSource] = await Promise.all([
+const [appPageSource, appLayoutSource, homepageProofSource, urlInputSource] = await Promise.all([
   readFile(appPagePath, 'utf8'),
   readFile(appLayoutPath, 'utf8'),
+  readFile(homepageProofPath, 'utf8'),
   readFile(urlInputPath, 'utf8'),
 ]);
 
@@ -34,6 +36,30 @@ if (urlInputSource.includes('Need bulk processing? Open Batch Workspace')) {
 
 if (urlInputSource.includes('usageMetrics?:') || urlInputSource.includes('hasUsageData && usageMetrics')) {
   failures.push('Homepage input component must not define or render usage metrics.');
+}
+
+if (!appPageSource.includes('HomepagePublicProof')) {
+  failures.push('Homepage must render the dedicated below-fold public proof component.');
+}
+
+if (!homepageProofSource.includes('data-homepage-public-proof')) {
+  failures.push('Homepage public proof component must expose a stable data-homepage-public-proof marker.');
+}
+
+if (!homepageProofSource.includes('files converted')) {
+  failures.push('Homepage public proof copy must reference files converted.');
+}
+
+if (!homepageProofSource.includes('Updated weekly.')) {
+  failures.push('Homepage public proof support line must explain the weekly refresh cadence.');
+}
+
+if (urlInputSource.includes('data-homepage-public-proof') || urlInputSource.includes('files converted')) {
+  failures.push('Homepage public proof must not render inside UrlInput.');
+}
+
+if (!urlInputSource.includes('data-homepage-hero="primary"')) {
+  failures.push('Homepage hero must expose a stable data-homepage-hero marker.');
 }
 
 if (!appPageSource.includes(`subtitle="${expectedSubtitle}"`)) {

@@ -9,6 +9,7 @@ import {
   MAX_DOCUMENT_BATCH_BYTES,
   MAX_DOCUMENT_BATCH_FILES,
 } from '@/lib/documentConversion';
+import { recordPublicConversionEvent } from '@/lib/publicProof';
 import { hasPartialOutputReasons, normalizeStoredResultState } from '@/lib/trustGuidance';
 import type { BatchDiagnosticReason, ExportFormat, ExtractResultState, ReaderSettings } from '@/lib/types';
 
@@ -457,6 +458,12 @@ async function progressManifest(manifest: DurableDocumentBatchManifest): Promise
       manifest.job.successCount += 1;
       manifest.job.lastErrorCode = null;
       manifest.job.lastErrorMessage = null;
+      recordPublicConversionEvent({
+        sessionId: manifest.job.sessionId,
+        sourceSurface: 'batch_document',
+        conversionKind: 'converted',
+        exportFormat: manifest.job.exportFormat,
+      });
     } catch (error) {
       const durationMs = Date.now() - startedAt;
       const message = error instanceof Error ? error.message : 'Failed to convert file.';

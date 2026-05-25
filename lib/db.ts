@@ -225,6 +225,43 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS public_conversion_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_time TEXT NOT NULL,
+    session_id TEXT,
+    source_surface TEXT NOT NULL,
+    conversion_kind TEXT NOT NULL,
+    export_format TEXT,
+    metadata TEXT
+  )
+`);
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_public_conversion_events_time
+  ON public_conversion_events(event_time DESC)
+`);
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_public_conversion_events_session
+  ON public_conversion_events(session_id)
+`);
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_public_conversion_events_kind
+  ON public_conversion_events(conversion_kind)
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS public_proof_snapshots (
+    metric_key TEXT PRIMARY KEY,
+    metric_value INTEGER NOT NULL,
+    label TEXT NOT NULL,
+    published_at TEXT NOT NULL,
+    next_refresh_at TEXT NOT NULL
+  )
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS batch_jobs (
     id TEXT PRIMARY KEY,
     session_id TEXT,
