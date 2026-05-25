@@ -11,6 +11,10 @@ export class InMemoryRateLimiter {
     private readonly windowMs: number,
   ) {}
 
+  get limit(): number {
+    return this.maxRequests;
+  }
+
   consume(key: string): { allowed: boolean; remaining: number; resetAt: number } {
     const now = Date.now();
     const current = this.store.get(key);
@@ -39,5 +43,6 @@ export class InMemoryRateLimiter {
   }
 }
 
-export const extractRateLimiter = new InMemoryRateLimiter(10, 60_000);
+export const HOMEPAGE_EXTRACT_RATE_LIMIT = process.env.NODE_ENV === 'production' ? 10 : 120;
+export const extractRateLimiter = new InMemoryRateLimiter(HOMEPAGE_EXTRACT_RATE_LIMIT, 60_000);
 export const batchExtractRateLimiter = new InMemoryRateLimiter(12_000, 60 * 60_000);

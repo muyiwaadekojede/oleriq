@@ -15,7 +15,7 @@ import {
   MAX_BATCH_JOB_URLS,
   normalizeBatchUrls,
 } from '@/lib/batchQueue';
-import { LEGACY_SESSION_HEADER, SESSION_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
+import { AUTH_SESSION_HEADER, LEGACY_SESSION_HEADER, SESSION_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
 
 export const config = {
   api: {
@@ -29,6 +29,12 @@ function sessionFromHeader(req: NextApiRequest): string | null {
   const header = readHeaderValue(req.headers, SESSION_HEADER, LEGACY_SESSION_HEADER);
   if (header) return header.slice(0, 128);
 
+  return null;
+}
+
+function authSessionFromHeader(req: NextApiRequest): string | null {
+  const header = readHeaderValue(req.headers, AUTH_SESSION_HEADER);
+  if (header) return header.slice(0, 128);
   return null;
 }
 
@@ -72,6 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     void cleanupBatchStorageArtifacts();
     const sessionId = sessionFromHeader(req);
+    const authSessionId = authSessionFromHeader(req);
     const body = req.body as {
       inputMode?: string;
       urls?: string[] | string;
@@ -140,6 +147,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const created = createBatchJob({
         sessionId,
+        authSessionId: inputMode === 'url' ? authSessionId : null,
         inputMode,
         urls: normalizedUrls,
         files,

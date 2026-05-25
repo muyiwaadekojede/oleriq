@@ -2,13 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { AuthenticatedSessionManager } from '@/components/AuthenticatedSessionManager';
 import { FailureModal } from '@/components/FailureModal';
 import { HomepagePublicProof } from '@/components/HomepagePublicProof';
 import { ReadingPreview } from '@/components/ReadingPreview';
 import { SettingsSidebar } from '@/components/SettingsSidebar';
 import { UrlInput } from '@/components/UrlInput';
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
-import { FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
+import { AUTH_SESSION_HEADER, FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
+import { useAuthenticatedSessions } from '@/lib/useAuthenticatedSessions';
 import type {
   ExportFormat,
   ExtractErrorCode,
@@ -50,6 +52,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
 const HOME_PROGRESS_STAGES = ['Connecting', 'Reading page', 'Building document'] as const;
 
 export default function Page() {
+  const [clientSessionId, setClientSessionId] = useState('');
   const [url, setUrl] = useState('');
   const [extracting, setExtracting] = useState(false);
   const [images, setImages] = useState<ImageMode>('on');
@@ -62,13 +65,16 @@ export default function Page() {
   const [directFileFormat, setDirectFileFormat] = useState<ExportFormat>('md');
   const [directFileDownloading, setDirectFileDownloading] = useState(false);
   const [progressStageIndex, setProgressStageIndex] = useState(0);
+  const [showAuthDisclosure, setShowAuthDisclosure] = useState(false);
 
   const sessionIdRef = useRef<string>('');
+  const authSessions = useAuthenticatedSessions(clientSessionId);
 
   useEffect(() => {
     setSettings((current) => ({ ...current, colorTheme: initialThemeFromSystem() }));
 
     sessionIdRef.current = getClientSessionId();
+    setClientSessionId(sessionIdRef.current);
     void trackClientEvent({
       eventName: 'page_view',
       eventGroup: 'navigation',
@@ -103,6 +109,7 @@ export default function Page() {
     return {
       'Content-Type': 'application/json',
       ...(sessionIdRef.current ? { [SESSION_HEADER]: sessionIdRef.current } : {}),
+      ...(authSessions.selectedSessionId ? { [AUTH_SESSION_HEADER]: authSessions.selectedSessionId } : {}),
     };
   }
 
@@ -526,6 +533,43 @@ export default function Page() {
             onDirectFileFormatChange={(format) => setDirectFileFormat(format)}
             onDirectFileDownload={() => void handleDirectFileDownload()}
             proofContent={<HomepagePublicProof />}
+            secondaryContent={
+              <div
+                data-auth-disclosure="homepage"
+                data-auth-disclosure-open={showAuthDisclosure ? 'true' : 'false'}
+                className="mx-auto max-w-3xl"
+              >
+                <button
+                  type="button"
+                  aria-expanded={showAuthDisclosure ? 'true' : 'false'}
+                  aria-controls="homepage-auth-session-disclosure"
+                  onClick={() => setShowAuthDisclosure((current) => !current)}
+                  className="text-sm font-medium text-[var(--color-muted)] underline-offset-2 hover:text-[var(--color-ink)] hover:underline"
+                >
+                  Use authenticated session
+                </button>
+
+                {showAuthDisclosure ? (
+                  <div id="homepage-auth-session-disclosure" className="mt-3">
+                    <AuthenticatedSessionManager
+                      sessions={authSessions.sessions}
+                      selectedSessionId={authSessions.selectedSessionId}
+                      labelDraft={authSessions.labelDraft}
+                      loading={authSessions.loading}
+                      importing={authSessions.importing}
+                      deletingSessionId={authSessions.deletingSessionId}
+                      errorMessage={authSessions.errorMessage}
+                      onLabelDraftChange={authSessions.setLabelDraft}
+                      onSelectSession={authSessions.setSelectedSessionId}
+                      onImportFile={authSessions.importSessionFile}
+                      onClearSelection={authSessions.clearSelection}
+                      onDeleteSession={authSessions.deleteSession}
+                      compact={true}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            }
           />
         </div>
       ) : (

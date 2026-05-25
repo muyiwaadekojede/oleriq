@@ -2,9 +2,15 @@ export type ImageMode = 'on' | 'off' | 'captions';
 export type ExportFormat = 'pdf' | 'txt' | 'md' | 'docx';
 export type BatchInputMode = 'url' | 'document';
 export type ExtractResultState = 'usable' | 'partial' | 'degraded';
-export type ExtractionPath = 'readability' | 'browser_fallback' | 'rsc_fallback' | 'syndication_fallback';
+export type ExtractionPath =
+  | 'readability'
+  | 'browser_fallback'
+  | 'authenticated_session'
+  | 'rsc_fallback'
+  | 'syndication_fallback';
 export type PageComplexitySignal = 'standard' | 'dynamic_page_likely' | 'unknown';
 export type BatchDiagnosticReason =
+  | 'extract_authenticated_session_used'
   | 'extract_browser_fallback_used'
   | 'extract_rsc_fallback_used'
   | 'extract_rsc_structure_flattened'
@@ -20,6 +26,10 @@ export type BatchDiagnosticReason =
 export type ExtractErrorCode =
   | 'FETCH_FAILED'
   | 'EXTRACTION_FAILED'
+  | 'AUTH_SESSION_INVALID'
+  | 'AUTH_SESSION_EXPIRED'
+  | 'AUTH_SESSION_DOMAIN_MISMATCH'
+  | 'AUTH_SESSION_NOT_FOUND'
   | 'PAYWALL_DETECTED'
   | 'EMPTY_CONTENT'
   | 'TIMEOUT'

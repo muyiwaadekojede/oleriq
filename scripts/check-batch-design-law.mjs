@@ -75,6 +75,9 @@ async function assertSetupState(page) {
   if (surfaceText.includes('Limit 50,000 URLs')) {
     fail('URL technical limits should stay hidden before More options opens.');
   }
+  if (surfaceText.includes('Authenticated session')) {
+    fail('URL setup should keep authenticated session controls inside More options.');
+  }
   if (surfaceText.includes('Download 0')) {
     fail('Setup state should not show bulk download controls.');
   }
@@ -90,6 +93,8 @@ async function assertSetupState(page) {
   await page.locator('[data-batch-more-options][data-batch-more-options-open="true"]').waitFor({ timeout: 30_000 });
   await assertText(page, 'Import');
   await assertText(page, 'Limit 50,000 URLs');
+  await assertText(page, 'Authenticated session');
+  await page.locator('[data-batch-auth-session-manager]').waitFor({ timeout: 30_000 });
 
   await page.getByRole('button', { name: 'Documents' }).click();
   await assertStage(page, 'setup');
@@ -103,6 +108,7 @@ async function assertSetupState(page) {
   }
   await assertTextAbsent(page, 'Document images');
   await assertTextAbsent(page, '60 MB per file');
+  await assertTextAbsent(page, 'Authenticated session');
 
   const documentMoreOptionsButton = page.getByRole('button', { name: 'More options' });
   await documentMoreOptionsButton.click();
@@ -110,6 +116,7 @@ async function assertSetupState(page) {
   await assertText(page, 'Document images');
   await assertText(page, '60 MB per file');
   await assertText(page, '2.0 GB total');
+  await assertTextAbsent(page, 'Authenticated session');
 }
 
 

@@ -3,7 +3,11 @@ import type { BatchDiagnosticReason, ExtractErrorCode, ExtractResultState, Extra
 const EXTRACT_ERROR_GUIDANCE: Record<ExtractErrorCode, string> = {
   FETCH_FAILED: 'Retry with the article URL itself, confirm the page loads publicly, and try again after a short wait if the site is blocking automated requests.',
   EXTRACTION_FAILED: 'Retry with the exact article page instead of a homepage or listing page. If it still fails, use the feedback form so we can inspect that layout.',
-  PAYWALL_DETECTED: 'Open a publicly accessible version of the article, then retry. Oleriq cannot extract content that requires a login or subscription.',
+  AUTH_SESSION_INVALID: 'Re-import a fresh authenticated session for this site, then retry the exact page again.',
+  AUTH_SESSION_EXPIRED: 'Import the authenticated session again. Imported sessions expire after 24 hours.',
+  AUTH_SESSION_DOMAIN_MISMATCH: 'Use an authenticated session that matches this site or switch back to the public page if one exists.',
+  AUTH_SESSION_NOT_FOUND: 'Select or import an authenticated session again before retrying this page.',
+  PAYWALL_DETECTED: 'Use a public version of the page, or import an authenticated session if you already have access.',
   EMPTY_CONTENT: 'Retry with a more specific article URL. Pages with only embeds, navigation, or heavy scripts often return empty readable text.',
   TIMEOUT: 'Retry once, then switch to a lighter page or wait for the site to respond faster. Slow or script-heavy pages can time out before extraction finishes.',
   DIRECT_FILE_URL: 'Use direct download for this file link, or switch to the batch documents flow if you want to convert uploaded files instead.',
@@ -14,6 +18,7 @@ const BATCH_ERROR_GUIDANCE: Record<string, string> = {
 };
 
 const DIAGNOSTIC_REASON_LABELS: Record<BatchDiagnosticReason, string> = {
+  extract_authenticated_session_used: 'Imported authenticated session used',
   extract_browser_fallback_used: 'Browser rendering required',
   extract_rsc_fallback_used: 'Recovered from page data',
   extract_rsc_structure_flattened: 'Some structure may come back flatter',
@@ -29,6 +34,7 @@ const DIAGNOSTIC_REASON_LABELS: Record<BatchDiagnosticReason, string> = {
 
 const DIAGNOSTIC_REASON_GUIDANCE: Partial<Record<BatchDiagnosticReason, string>> = {
   extract_browser_fallback_used: 'Check tables, embeds, and layout before you export.',
+  extract_authenticated_session_used: 'This output came from an imported logged-in session for this site.',
   extract_rsc_structure_flattened: 'Check headings, tables, and code blocks before you download.',
   extract_syndication_fallback_used: 'Compare this export with the live page if full coverage matters.',
   document_pdf_truncated_pages: 'Split the PDF if pages beyond this first section matter.',
@@ -49,6 +55,8 @@ const DIAGNOSTIC_REASON_WARNINGS: Partial<Record<BatchDiagnosticReason, string>>
   structure_list_loss_risk: 'This can look finished while nested lists flatten.',
   structure_code_block_loss_risk: 'This can look finished while code spacing is reduced.',
 };
+
+const INFORMATIONAL_REASONS = new Set<BatchDiagnosticReason>(['extract_authenticated_session_used']);
 
 export function nextStepGuidanceForErrorCode(errorCode: string | null | undefined): string | null {
   if (!errorCode) return null;
@@ -91,11 +99,17 @@ export function deriveResultState(input: {
   diagnosticReasons: BatchDiagnosticReason[];
   warnings?: string[];
 }): ExtractResultState {
+  const actionableDiagnosticReasons = input.diagnosticReasons.filter((reason) => !INFORMATIONAL_REASONS.has(reason));
+
   if (input.baseState === 'partial' || hasPartialOutputReasons(input.diagnosticReasons)) {
     return 'partial';
   }
 
-  if (input.baseState === 'degraded' || input.diagnosticReasons.length > 0 || (input.warnings || []).length > 0) {
+  if (
+    input.baseState === 'degraded' ||
+    actionableDiagnosticReasons.length > 0 ||
+    (input.warnings || []).length > 0
+  ) {
     return 'degraded';
   }
 
@@ -125,6 +139,8 @@ export function resultStateForExtractionPath(path: ExtractionPath): ExtractResul
 
 export function diagnosticReasonsForExtractionPath(path: ExtractionPath): BatchDiagnosticReason[] {
   switch (path) {
+    case 'authenticated_session':
+      return ['extract_authenticated_session_used'];
     case 'browser_fallback':
       return ['extract_browser_fallback_used'];
     case 'rsc_fallback':
@@ -145,6 +161,7 @@ export function diagnosticReasonsForExtractErrorCode(errorCode: string | null | 
 }
 
 export function extractionPathLabel(path: string): string {
+  if (path === 'authenticated_session') return 'Authenticated session';
   if (path === 'browser_fallback') return 'Browser fallback';
   if (path === 'rsc_fallback') return 'RSC fallback';
   if (path === 'syndication_fallback') return 'Syndication fallback';

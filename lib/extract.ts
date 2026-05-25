@@ -2,6 +2,7 @@ import { Readability } from '@mozilla/readability';
 import { JSDOM } from 'jsdom';
 import { Agent as UndiciAgent } from 'undici';
 
+import { resolveAuthenticatedSession } from './authenticatedSessions';
 import { getBrowser } from './browser';
 import { buildMarkdownExport } from './exportMarkdown';
 import { buildTxtExport } from './exportTxt';
@@ -10,6 +11,7 @@ import { sanitizeHtml } from './sanitise';
 import { structuralDiagnosticReasonsForRecoveredDocumentExport } from './structuralFidelity';
 import { diagnosticReasonsForExtractionPath, deriveResultState, resultStateForExtractionPath } from './trustGuidance';
 import type { ExtractErrorCode, ExtractionPath, ExtractResponse, ImageMode, PageComplexitySignal } from './types';
+import type { ImportedStorageState } from './authenticatedSessions';
 
 const PAYWALL_MARKERS = [
   'subscriber-only',
@@ -99,6 +101,12 @@ class ExtractPipelineError extends Error {
     this.code = code;
   }
 }
+
+export type ExtractFromUrlOptions = {
+  visitedUrls?: Set<string>;
+  ownerSessionId?: string | null;
+  authSessionId?: string | null;
+};
 
 function countWords(input: string): number {
   return input.trim().split(/\s+/).filter(Boolean).length;
@@ -723,13 +731,23 @@ function buildExportDiagnosticReasonsByFormat(input: {
   };
 }
 
-async function fetchRenderedHtml(url: string): Promise<string> {
+async function fetchRenderedHtml(
+  url: string,
+  storageState?: ImportedStorageState | null,
+): Promise<string> {
   let context: any = null;
+  const requiresAuthenticatedBrowser = Boolean(storageState);
 
   try {
     const browser = await getBrowser();
 
     if (!browser) {
+      if (requiresAuthenticatedBrowser) {
+        throw new ExtractPipelineError(
+          'EXTRACTION_FAILED',
+          'Authenticated extraction is unavailable because browser automation could not start.',
+        );
+      }
       return await fetchHtmlWithTimeout(url, 30_000);
     }
 
@@ -741,6 +759,7 @@ async function fetchRenderedHtml(url: string): Promise<string> {
       extraHTTPHeaders: {
         'accept-language': 'en-US,en;q=0.9',
       },
+      ...(storageState ? { storageState } : {}),
     });
 
     const page = await context.newPage();
@@ -768,7 +787,17 @@ async function fetchRenderedHtml(url: string): Promise<string> {
     }
 
     if (maybeError.name === 'TimeoutError') {
+      if (requiresAuthenticatedBrowser) {
+        throw new ExtractPipelineError('TIMEOUT', 'The authenticated page took too long to load.');
+      }
       return await fetchHtmlWithTimeout(url, 30_000);
+    }
+
+    if (requiresAuthenticatedBrowser) {
+      throw new ExtractPipelineError(
+        'EXTRACTION_FAILED',
+        'Authenticated extraction failed before the page could be rendered.',
+      );
     }
 
     // Fallback for serverless environments where browser launch/context may fail.
@@ -1245,10 +1274,11 @@ function deriveMediumPublicationFallbackUrls(inputUrl: URL): string[] {
 export async function extractFromUrl(
   url: string,
   images: ImageMode,
-  visitedUrls?: Set<string>,
+  options?: ExtractFromUrlOptions,
 ): Promise<ExtractResponse> {
   let parsedUrl: URL;
-  const visited = visitedUrls ?? new Set<string>();
+  const visited = options?.visitedUrls ?? new Set<string>();
+  const authSelected = Boolean(options?.authSessionId);
 
   try {
     parsedUrl = new URL(url);
@@ -1287,10 +1317,13 @@ export async function extractFromUrl(
   }
   visited.add(normalizedUrl);
 
-  const mediumCustomDomainUrls = deriveMediumCustomDomainUrls(parsedUrl);
+  const mediumCustomDomainUrls = authSelected ? [] : deriveMediumCustomDomainUrls(parsedUrl);
   if (mediumCustomDomainUrls.length > 0) {
     for (const candidate of mediumCustomDomainUrls) {
-      const customDomainResult = await extractFromUrl(candidate, images, visited);
+      const customDomainResult = await extractFromUrl(candidate, images, {
+        ...options,
+        visitedUrls: visited,
+      });
       if (customDomainResult.success) {
         return {
           ...customDomainResult,
@@ -1300,10 +1333,13 @@ export async function extractFromUrl(
     }
   }
 
-  const mediumPublicationFallbackUrls = deriveMediumPublicationFallbackUrls(parsedUrl);
+  const mediumPublicationFallbackUrls = authSelected ? [] : deriveMediumPublicationFallbackUrls(parsedUrl);
   if (mediumPublicationFallbackUrls.length > 0) {
     for (const candidate of mediumPublicationFallbackUrls) {
-      const mediumResult = await extractFromUrl(candidate, images, visited);
+      const mediumResult = await extractFromUrl(candidate, images, {
+        ...options,
+        visitedUrls: visited,
+      });
       if (mediumResult.success) {
         return {
           ...mediumResult,
@@ -1318,19 +1354,36 @@ export async function extractFromUrl(
     let browserAttempted = false;
     let extractionPath: ExtractionPath = 'readability';
     let pageComplexitySignal: PageComplexitySignal = 'unknown';
+    let authenticatedStorageState: ImportedStorageState | null = null;
 
-    try {
-      html = await fetchHtmlWithTimeout(parsedUrl.toString(), 20_000);
-      pageComplexitySignal = pageComplexitySignalFromHtml(html);
-    } catch (fetchError) {
-      if (!shouldEscalateToBrowserFromFetchError(fetchError)) {
-        throw fetchError;
-      }
+    if (authSelected) {
+      const resolvedSession = resolveAuthenticatedSession({
+        ownerSessionId: options?.ownerSessionId,
+        authSessionId: options?.authSessionId,
+        targetUrl: parsedUrl.toString(),
+      });
+      authenticatedStorageState = resolvedSession.storageState;
+    }
 
-      html = await fetchRenderedHtml(parsedUrl.toString());
+    if (authenticatedStorageState) {
+      html = await fetchRenderedHtml(parsedUrl.toString(), authenticatedStorageState);
       browserAttempted = true;
-      extractionPath = 'browser_fallback';
+      extractionPath = 'authenticated_session';
       pageComplexitySignal = pageComplexitySignalFromHtml(html);
+    } else {
+      try {
+        html = await fetchHtmlWithTimeout(parsedUrl.toString(), 20_000);
+        pageComplexitySignal = pageComplexitySignalFromHtml(html);
+      } catch (fetchError) {
+        if (!shouldEscalateToBrowserFromFetchError(fetchError)) {
+          throw fetchError;
+        }
+
+        html = await fetchRenderedHtml(parsedUrl.toString());
+        browserAttempted = true;
+        extractionPath = 'browser_fallback';
+        pageComplexitySignal = pageComplexitySignalFromHtml(html);
+      }
     }
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
@@ -1343,12 +1396,16 @@ export async function extractFromUrl(
           continue;
         }
 
-        const syndicationFallback = await trySyndicationFallback(parsedUrl, images, {
-          browserAttempted,
-          pageComplexitySignal,
-        });
-        if (syndicationFallback) {
-          return syndicationFallback;
+        if (!authenticatedStorageState) {
+          if (!authenticatedStorageState) {
+            const syndicationFallback = await trySyndicationFallback(parsedUrl, images, {
+              browserAttempted,
+              pageComplexitySignal,
+            });
+            if (syndicationFallback) {
+              return syndicationFallback;
+            }
+          }
         }
 
         return buildExtractFailure({
@@ -1418,6 +1475,18 @@ export async function extractFromUrl(
         }
 
         if (wordCount < 220 && hasPaywallSignals(`${html}\n${textContent}`)) {
+          if (authenticatedStorageState) {
+            return {
+              success: false,
+              errorCode: 'AUTH_SESSION_INVALID',
+              errorMessage:
+                'The imported authenticated session did not unlock this page. Re-import a fresh session and retry.',
+              attemptedExtractionPath: extractionPath,
+              browserAttempted,
+              pageComplexitySignal,
+            };
+          }
+
           return {
             success: false,
             errorCode: 'PAYWALL_DETECTED',
@@ -1443,12 +1512,14 @@ export async function extractFromUrl(
             return rscFallback;
           }
 
-          const syndicationFallback = await trySyndicationFallback(parsedUrl, images, {
-            browserAttempted,
-            pageComplexitySignal,
-          });
-          if (syndicationFallback) {
-            return syndicationFallback;
+          if (!authenticatedStorageState) {
+            const syndicationFallback = await trySyndicationFallback(parsedUrl, images, {
+              browserAttempted,
+              pageComplexitySignal,
+            });
+            if (syndicationFallback) {
+              return syndicationFallback;
+            }
           }
 
           return buildExtractFailure({
@@ -1534,7 +1605,7 @@ export async function extractFromUrl(
   } catch (error) {
     const maybeError = error as ExtractPipelineError;
     const fallbackCodes: ExtractErrorCode[] = ['FETCH_FAILED', 'TIMEOUT', 'EXTRACTION_FAILED'];
-    if (maybeError?.code && fallbackCodes.includes(maybeError.code)) {
+    if (!authSelected && maybeError?.code && fallbackCodes.includes(maybeError.code)) {
       const syndicationFallback = await trySyndicationFallback(parsedUrl, images, {
         pageComplexitySignal: 'unknown',
       });

@@ -19,6 +19,7 @@ type UrlInputProps = {
   onDirectFileFormatChange?: (format: 'pdf' | 'txt' | 'md' | 'docx') => void;
   onDirectFileDownload?: () => void;
   proofContent?: ReactNode;
+  secondaryContent?: ReactNode;
 };
 
 export function UrlInput({
@@ -37,6 +38,7 @@ export function UrlInput({
   onDirectFileFormatChange,
   onDirectFileDownload,
   proofContent,
+  secondaryContent,
 }: UrlInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -86,6 +88,9 @@ export function UrlInput({
 
         {!loading && proofContent ? (
           <div className="mt-3 min-h-5 text-center">{proofContent}</div>
+        ) : null}
+        {!loading && secondaryContent ? (
+          <div className="mt-3 text-left">{secondaryContent}</div>
         ) : null}
 
         <p className="mt-2 min-h-5 text-sm text-[var(--color-muted)]">

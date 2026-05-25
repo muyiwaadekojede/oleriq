@@ -3,12 +3,14 @@
 import { upload } from '@vercel/blob/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { AuthenticatedSessionManager } from '@/components/AuthenticatedSessionManager';
 import { BatchBelowFoldContent } from '@/components/BatchBelowFoldContent';
 import { BatchDocumentPanel, type DocumentUploadItem } from '@/components/BatchDocumentPanel';
 import { BatchUrlPanel } from '@/components/BatchUrlPanel';
 import type { BatchItemResult } from '@/components/batchTypes';
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
-import { BATCH_HEADER, FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
+import { AUTH_SESSION_HEADER, BATCH_HEADER, FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
+import { useAuthenticatedSessions } from '@/lib/useAuthenticatedSessions';
 import type { BatchDiagnosticReason, BatchInputMode, ExportFormat, ImageMode, ReaderSettings } from '@/lib/types';
 
 type BatchJobStatus = 'idle' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled';
@@ -200,6 +202,7 @@ function mapBatchItem(item: BatchItemApi): BatchItemResult {
 }
 
 export default function BatchPage() {
+  const [clientSessionId, setClientSessionId] = useState('');
   const [mode, setMode] = useState<BatchInputMode>('url');
   const [uploadConfig, setUploadConfig] = useState<UploadConfig>(DEFAULT_UPLOAD_CONFIG);
 
@@ -243,9 +246,11 @@ export default function BatchPage() {
 
   const sessionIdRef = useRef('');
   const imagesRef = useRef<ImageMode>('off');
+  const authSessions = useAuthenticatedSessions(clientSessionId);
 
   useEffect(() => {
     sessionIdRef.current = getClientSessionId();
+    setClientSessionId(sessionIdRef.current);
 
     void trackClientEvent({
       eventName: 'batch_page_opened',
@@ -292,10 +297,11 @@ export default function BatchPage() {
   const batchProcessing = batchJobStatus === 'queued' || batchJobStatus === 'running';
   const documentProcessing = documentJobStatus === 'queued' || documentJobStatus === 'running';
 
-  function buildHeaders(): HeadersInit {
+  function buildHeaders(includeAuth = false): HeadersInit {
     return {
       ...(sessionIdRef.current ? { [SESSION_HEADER]: sessionIdRef.current } : {}),
       [BATCH_HEADER]: '1',
+      ...(includeAuth && authSessions.selectedSessionId ? { [AUTH_SESSION_HEADER]: authSessions.selectedSessionId } : {}),
     };
   }
 
@@ -710,7 +716,7 @@ export default function BatchPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...buildHeaders(),
+          ...buildHeaders(true),
         },
         body: JSON.stringify({
           inputMode: 'url',
@@ -794,7 +800,7 @@ export default function BatchPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...buildHeaders(),
+          ...buildHeaders(true),
         },
         body: JSON.stringify({
           inputMode: 'document',
@@ -1260,6 +1266,24 @@ export default function BatchPage() {
               onDownloadAll={() => void handleDownloadAllBatch()}
               onRetryFailed={() => void retryFailedUrlBatch()}
               retryingFailed={batchRetryingFailed}
+              authSessionContent={
+                <AuthenticatedSessionManager
+                  sessions={authSessions.sessions}
+                  selectedSessionId={authSessions.selectedSessionId}
+                  labelDraft={authSessions.labelDraft}
+                  loading={authSessions.loading}
+                  importing={authSessions.importing}
+                  deletingSessionId={authSessions.deletingSessionId}
+                  errorMessage={authSessions.errorMessage}
+                  onLabelDraftChange={authSessions.setLabelDraft}
+                  onSelectSession={authSessions.setSelectedSessionId}
+                  onImportFile={authSessions.importSessionFile}
+                  onClearSelection={authSessions.clearSelection}
+                  onDeleteSession={authSessions.deleteSession}
+                  compact={true}
+                  dataMarker="data-batch-auth-session-manager"
+                />
+              }
             />
           ) : (
             <BatchDocumentPanel

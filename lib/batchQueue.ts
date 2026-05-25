@@ -430,6 +430,7 @@ export function getBatchJobItem(jobId: string, itemId: number): BatchItemRow | n
 
 export function createBatchJob(input: {
   sessionId: string | null;
+  authSessionId?: string | null;
   inputMode?: unknown;
   urls?: string[];
   files?: BatchDocumentUploadInput[];
@@ -488,6 +489,7 @@ export function createBatchJob(input: {
         INSERT INTO batch_jobs (
           id,
           session_id,
+          auth_session_id,
           status,
           input_mode,
           export_format,
@@ -505,9 +507,9 @@ export function createBatchJob(input: {
           last_error_code,
           last_error_message
         )
-        VALUES (?, ?, 'queued', 'document', ?, ?, ?, ?, 0, 0, 0, NULL, ?, NULL, NULL, ?, NULL, NULL)
+        VALUES (?, ?, ?, 'queued', 'document', ?, ?, ?, ?, 0, 0, 0, NULL, ?, NULL, NULL, ?, NULL, NULL)
         `,
-      ).run(jobId, input.sessionId, format, images, settingsJson, uploads.length, now, now);
+      ).run(jobId, input.sessionId, input.authSessionId || null, format, images, settingsJson, uploads.length, now, now);
 
       const insertItem = db.prepare(
         `
@@ -575,6 +577,7 @@ export function createBatchJob(input: {
       INSERT INTO batch_jobs (
         id,
         session_id,
+        auth_session_id,
         status,
         input_mode,
         export_format,
@@ -592,9 +595,9 @@ export function createBatchJob(input: {
         last_error_code,
         last_error_message
       )
-      VALUES (?, ?, 'queued', 'url', ?, ?, ?, ?, 0, 0, 0, NULL, ?, NULL, NULL, ?, NULL, NULL)
+      VALUES (?, ?, ?, 'queued', 'url', ?, ?, ?, ?, 0, 0, 0, NULL, ?, NULL, NULL, ?, NULL, NULL)
       `,
-    ).run(jobId, input.sessionId, format, images, settingsJson, urls.length, now, now);
+    ).run(jobId, input.sessionId, input.authSessionId || null, format, images, settingsJson, urls.length, now, now);
 
     const insertItem = db.prepare(
       `
@@ -893,6 +896,7 @@ function getJobProcessingConfig(jobId: string): {
   exportFormat: ExportFormat;
   settingsJson: string | null;
   sessionId: string | null;
+  authSessionId: string | null;
 } | null {
   const row = db
     .prepare(
@@ -902,7 +906,8 @@ function getJobProcessingConfig(jobId: string): {
         images_mode AS imagesMode,
         export_format AS exportFormat,
         settings_json AS settingsJson,
-        session_id AS sessionId
+        session_id AS sessionId,
+        auth_session_id AS authSessionId
       FROM batch_jobs
       WHERE id = ?
       LIMIT 1
@@ -914,6 +919,7 @@ function getJobProcessingConfig(jobId: string): {
       exportFormat: ExportFormat;
       settingsJson: string | null;
       sessionId: string | null;
+      authSessionId: string | null;
     } | undefined;
 
   return row || null;
@@ -978,7 +984,15 @@ function exportTrustSurfaceForUrlResult(input: {
   };
 }
 
-async function runUrlJob(jobId: string, config: { imagesMode: ImageMode; exportFormat: ExportFormat }): Promise<void> {
+async function runUrlJob(
+  jobId: string,
+  config: {
+    imagesMode: ImageMode;
+    exportFormat: ExportFormat;
+    sessionId: string | null;
+    authSessionId: string | null;
+  },
+): Promise<void> {
   while (true) {
     const item = claimNextPendingItem(jobId);
     if (!item) break;
@@ -993,7 +1007,10 @@ async function runUrlJob(jobId: string, config: { imagesMode: ImageMode; exportF
       await waitForDomainCooldown(hostname);
 
       try {
-        const result = await extractFromUrl(item.url, config.imagesMode);
+        const result = await extractFromUrl(item.url, config.imagesMode, {
+          ownerSessionId: config.sessionId,
+          authSessionId: config.authSessionId,
+        });
 
         if (!result.success) {
           lastErrorCode = result.errorCode || 'EXTRACTION_FAILED';

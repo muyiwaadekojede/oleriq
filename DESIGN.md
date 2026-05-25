@@ -134,6 +134,7 @@ Users should not have to negotiate with several equal-weight boxes before they u
 - Content selection must start from user intent and product truth first. SEO shaping is allowed only after the page already explains the real job clearly.
 - Derived product pages must inherit homepage page-level grammar unless the job truly requires a stronger separation boundary.
 - The homepage may include one quiet inline public proof line. It must sit immediately below the primary action row, remain typographically small, and stay subordinate to the main input surface.
+- The homepage may also include one collapsed authenticated-session disclosure directly below that proof line. It must stay closed by default, remain visually secondary, and expand only into the minimum session controls needed for import and selection.
 
 ---
 
@@ -289,7 +290,7 @@ A page that already has one purpose gets nothing added to it. A new feature is a
 ### What this means in practice:
 
 - The homepage processes a single URL. The input and button are the entire page. **Nothing else belongs on it.**
-- The homepage processes a single URL. The input and button remain the entire first-screen task surface. The only allowed addition on this route is one quiet inline public proof line showing published conversion volume.
+- The homepage processes a single URL. The input and button remain the entire first-screen task surface. The only allowed additions on this route are one quiet inline public proof line showing published conversion volume and one collapsed authenticated-session disclosure directly below it.
 - A batch URL tool → `/batch` (its own page)
 - Analytics, usage counters, trust signals → `/stats` or `/dashboard` (its own page)
 - Any other feature or tool → its own route
@@ -301,7 +302,7 @@ Ask: *"Does this serve the exact same single purpose as the page it would live o
 If **yes** — it can live there.
 If **no** — create a new route.
 
-The only approved exception on `/` is the single inline public proof line described above. It exists to quietly prove product use, not to introduce a second task.
+The only approved exceptions on `/` are the single inline public proof line and the collapsed authenticated-session disclosure described above. They exist to support trust and access without creating a second primary task.
 
 Navigation to other features can be added later via a minimal plain-text link in a footer. Even that requires discussion before implementation. The default for any primary page is: no navigation bar, no footer, no extra links. Earn each one.
 
@@ -325,7 +326,7 @@ Never implement any of the following. No exceptions without a written, committed
 - Interface fragmentation where several bordered sections compete before the first task is clear
 - Empty activity, status, or help panels that appear before the user has done anything unless they are required for comprehension
 - Sidebar navigation
-- Inline analytics, counters, or trust widgets inside the homepage hero or input surface, except for the single approved public proof line
+- Inline analytics, counters, or trust widgets inside the homepage hero or input surface, except for the single approved public proof line and the single collapsed authenticated-session disclosure directly below it
 - Marketing copy or "product features" sections on functional pages
 - SEO-first copy that weakens job clarity or hides the real task behind generic product language
 - New page-level framing logic on derived product pages when the homepage grammar already solves the job
@@ -412,7 +413,7 @@ Every change to this file is a design system change. Treat it like a breaking AP
 Confirm every item before any UI change is merged:
 
 - [ ] The YAML tokens have been filled in from the existing codebase — no invented values, no TBD entries remaining.
-- [ ] The page has **one primary purpose**. Not one plus competing widgets. The only approved homepage exception is one quiet inline public proof line directly under the action row.
+- [ ] The page has **one primary purpose**. Not one plus competing widgets. The only approved homepage exceptions are one quiet inline public proof line directly under the action row and one collapsed authenticated-session disclosure directly below it.
 - [ ] Background is the `background` token — flat, no gradient, no texture.
 - [ ] No gradient, `backdrop-filter`, decorative shadow, or glow anywhere in the new code.
 - [ ] The heading uses the `heading` font token, bold, near-black, large.

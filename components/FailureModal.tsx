@@ -6,8 +6,8 @@ import { extractionPathLabel, nextStepGuidanceForErrorCode, pageComplexitySignal
 import type { ExtractErrorCode, ExtractionPath, PageComplexitySignal } from '@/lib/types';
 
 const REASONS = [
-  'The page exists and is publicly accessible',
-  'I can read it normally in my browser',
+  'The page exists and I should be able to access it',
+  'I can read it normally in my browser or with my own login',
   'It loaded but the extracted text was wrong or incomplete',
   'The images were missing or broken',
   'The formatting was incorrect in the downloaded file',
@@ -18,10 +18,18 @@ const REASONS = [
 const ERROR_MESSAGES: Record<ExtractErrorCode, string> = {
   FETCH_FAILED:
     'This URL could not be reached. It may be offline, private, or blocking automated requests.',
+  AUTH_SESSION_INVALID:
+    'The imported authenticated session did not unlock this page. Re-import a fresh session and retry.',
+  AUTH_SESSION_EXPIRED:
+    'The selected authenticated session expired. Import it again to continue.',
+  AUTH_SESSION_DOMAIN_MISMATCH:
+    'The selected authenticated session does not match this site.',
+  AUTH_SESSION_NOT_FOUND:
+    'The selected authenticated session is no longer available. Select or import it again.',
   EXTRACTION_FAILED:
     "We reached the page but couldn't identify the main article content. This sometimes happens with homepages, login pages, or highly dynamic layouts.",
   PAYWALL_DETECTED:
-    'This page appears to be behind a paywall or requires a login. Oleriq can only extract content that is publicly accessible.',
+    'This page appears to be behind a paywall or requires a login. Use a public version of the page, or import an authenticated session if you already have access.',
   EMPTY_CONTENT: 'The page loaded but contained no readable text content.',
   TIMEOUT:
     'The page took too long to load. This can happen with very slow servers or heavily JavaScript-dependent pages.',

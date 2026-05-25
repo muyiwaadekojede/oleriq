@@ -7,7 +7,14 @@ import { exportPdfBuffer } from '@/lib/exportPdf';
 import { buildTxtExport } from '@/lib/exportTxt';
 import { getExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
-import { BATCH_HEADER, LEGACY_BATCH_HEADER, LEGACY_SESSION_HEADER, SESSION_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
+import {
+  AUTH_SESSION_HEADER,
+  BATCH_HEADER,
+  LEGACY_BATCH_HEADER,
+  LEGACY_SESSION_HEADER,
+  SESSION_HEADER,
+  readHeaderValue,
+} from '@/lib/internalIdentifiers';
 import { recordPublicConversionEvent } from '@/lib/publicProof';
 import { recoverDocumentFromHtml } from '@/lib/recoveredStructure';
 import { sanitizeFilename } from '@/lib/sanitise';
@@ -54,6 +61,11 @@ function sessionIdFromRequest(req: NextApiRequest): string | null {
 
 function sourceSurfaceFromRequest(req: NextApiRequest): 'homepage_export' | 'batch_url_export' {
   return readHeaderValue(req.headers, BATCH_HEADER, LEGACY_BATCH_HEADER) ? 'batch_url_export' : 'homepage_export';
+}
+
+function authSessionIdFromRequest(req: NextApiRequest): string | null {
+  const header = readHeaderValue(req.headers, AUTH_SESSION_HEADER);
+  return header ? header.slice(0, 128) : null;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -120,6 +132,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   let content = typeof body.content === 'string' ? body.content : '';
+  const ownerSessionId = sessionIdFromRequest(req);
+  const authSessionId = authSessionIdFromRequest(req);
 
   if (!content && extractionId) {
     const snapshot = getExtractSnapshot(extractionId);
@@ -153,7 +167,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    const extracted = await extractFromUrl(sourceUrl, images);
+    const extracted = await extractFromUrl(sourceUrl, images, {
+      ownerSessionId,
+      authSessionId,
+    });
 
     if (!extracted.success) {
       trackAnalyticsEvent(req, {

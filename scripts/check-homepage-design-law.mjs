@@ -70,6 +70,22 @@ if (!urlInputSource.includes('!loading && proofContent')) {
   failures.push('Homepage input component must render inline proof content in the idle state.');
 }
 
+if (!urlInputSource.includes('secondaryContent?: ReactNode')) {
+  failures.push('Homepage input component must define an inline secondaryContent slot for authenticated extraction.');
+}
+
+if (!urlInputSource.includes('!loading && secondaryContent')) {
+  failures.push('Homepage input component must render inline secondary content in the idle state.');
+}
+
+if (!appPageSource.includes('data-auth-disclosure="homepage"')) {
+  failures.push('Homepage must render the authenticated-session disclosure directly below the proof line.');
+}
+
+if (!appPageSource.includes('Use authenticated session')) {
+  failures.push('Homepage must expose a Use authenticated session disclosure label.');
+}
+
 if (!urlInputSource.includes('data-homepage-hero="primary"')) {
   failures.push('Homepage hero must expose a stable data-homepage-hero marker.');
 }

@@ -4,7 +4,14 @@ import { trackAnalyticsEvent } from '@/lib/analytics';
 import { storeExtractSnapshot } from '@/lib/extractCache';
 import { extractFromUrl } from '@/lib/extract';
 import { recoverDocumentFromHtml } from '@/lib/recoveredStructure';
-import { BATCH_HEADER, LEGACY_BATCH_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
+import {
+  AUTH_SESSION_HEADER,
+  BATCH_HEADER,
+  LEGACY_BATCH_HEADER,
+  LEGACY_SESSION_HEADER,
+  SESSION_HEADER,
+  readHeaderValue,
+} from '@/lib/internalIdentifiers';
 import { batchExtractRateLimiter, extractRateLimiter } from '@/lib/rateLimit';
 import type { ExtractResponse, ImageMode } from '@/lib/types';
 
@@ -94,7 +101,11 @@ function markDomainTransientFailure(hostname: string): number {
   return cooldownMs;
 }
 
-async function extractWithHomepageRetries(url: string, images: ImageMode): Promise<ExtractResponse> {
+async function extractWithHomepageRetries(
+  url: string,
+  images: ImageMode,
+  options?: { ownerSessionId?: string | null; authSessionId?: string | null },
+): Promise<ExtractResponse> {
   const hostname = getHostFromUrl(url);
   let lastResult: ExtractResponse = {
     success: false,
@@ -104,7 +115,7 @@ async function extractWithHomepageRetries(url: string, images: ImageMode): Promi
 
   for (let attempt = 1; attempt <= HOMEPAGE_MAX_ATTEMPTS; attempt += 1) {
     await waitForDomainCooldown(hostname);
-    const result = await extractFromUrl(url, images);
+    const result = await extractFromUrl(url, images, options);
 
     if (result.success) {
       markDomainSuccess(hostname);
@@ -139,6 +150,16 @@ function getIp(req: NextApiRequest): string {
   return req.socket.remoteAddress || 'unknown';
 }
 
+function sessionIdFromRequest(req: NextApiRequest): string | null {
+  const header = readHeaderValue(req.headers, SESSION_HEADER, LEGACY_SESSION_HEADER);
+  return header ? header.slice(0, 128) : null;
+}
+
+function authSessionIdFromRequest(req: NextApiRequest): string | null {
+  const header = readHeaderValue(req.headers, AUTH_SESSION_HEADER);
+  return header ? header.slice(0, 128) : null;
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ExtractResponse | { success: false; errorMessage: string }>,
@@ -166,7 +187,7 @@ export default async function handler(
     },
   });
 
-  res.setHeader('X-RateLimit-Limit', isBatchRequest ? '12000' : '10');
+  res.setHeader('X-RateLimit-Limit', String(isBatchRequest ? batchExtractRateLimiter.limit : extractRateLimiter.limit));
   res.setHeader('X-RateLimit-Remaining', String(rate.remaining));
   res.setHeader('X-RateLimit-Reset', String(Math.ceil(rate.resetAt / 1000)));
 
@@ -204,17 +225,63 @@ export default async function handler(
   const images: ImageMode = VALID_IMAGE_MODES.includes(body.images as ImageMode)
     ? (body.images as ImageMode)
     : 'on';
+  const ownerSessionId = sessionIdFromRequest(req);
+  const authSessionId = authSessionIdFromRequest(req);
+  const pagePath = isBatchRequest ? '/batch' : '/';
+
+  if (authSessionId) {
+    trackAnalyticsEvent(req, {
+      eventName: 'authenticated_extract_attempt',
+      eventGroup: 'extract',
+      status: 'attempt',
+      pagePath,
+      attemptedUrl: body.url,
+      metadata: {
+        images,
+        isBatchRequest,
+      },
+    });
+  }
 
   const result = isBatchRequest
-    ? await extractFromUrl(body.url, images)
-    : await extractWithHomepageRetries(body.url, images);
+    ? await extractFromUrl(body.url, images, { ownerSessionId, authSessionId })
+    : await extractWithHomepageRetries(body.url, images, { ownerSessionId, authSessionId });
 
   if (!result.success) {
+    if (authSessionId) {
+      trackAnalyticsEvent(req, {
+        eventName: 'authenticated_extract_result',
+        eventGroup: 'extract',
+        status: 'failure',
+        pagePath,
+        attemptedUrl: body.url,
+        errorCode: result.errorCode,
+        errorMessage: result.errorMessage,
+        metadata: {
+          attemptedExtractionPath: result.attemptedExtractionPath || null,
+          browserAttempted: result.browserAttempted || false,
+          pageComplexitySignal: result.pageComplexitySignal || 'unknown',
+        },
+      });
+
+      if (result.errorCode === 'AUTH_SESSION_EXPIRED') {
+        trackAnalyticsEvent(req, {
+          eventName: 'authenticated_extract_session_expired',
+          eventGroup: 'extract',
+          status: 'failure',
+          pagePath,
+          attemptedUrl: body.url,
+          errorCode: result.errorCode,
+          errorMessage: result.errorMessage,
+        });
+      }
+    }
+
     trackAnalyticsEvent(req, {
       eventName: 'api_extract_result',
       eventGroup: 'extract',
       status: 'failure',
-      pagePath: '/',
+      pagePath,
       attemptedUrl: body.url,
       errorCode: result.errorCode,
       errorMessage: result.errorMessage,
@@ -225,11 +292,27 @@ export default async function handler(
     return res.status(400).json(result);
   }
 
+  if (authSessionId) {
+    trackAnalyticsEvent(req, {
+      eventName: 'authenticated_extract_result',
+      eventGroup: 'extract',
+      status: 'success',
+      pagePath,
+      attemptedUrl: body.url,
+      sourceUrl: result.sourceUrl,
+      metadata: {
+        extractionPath: result.extractionPath,
+        resultState: result.resultState,
+        wordCount: result.wordCount,
+      },
+    });
+  }
+
   trackAnalyticsEvent(req, {
     eventName: 'api_extract_result',
     eventGroup: 'extract',
     status: 'success',
-    pagePath: '/',
+    pagePath,
     attemptedUrl: body.url,
     sourceUrl: result.sourceUrl,
     metadata: {

@@ -90,6 +90,7 @@ Rules:
 - no stacked marketing sections
 - no inline trust widgets, metrics, or decorative product chrome inside the hero or input surface
 - one quiet inline public proof line is allowed on `/` if it sits directly below the action row, stays subordinate to the main task surface, and only proves published conversion volume
+- one collapsed authenticated-session disclosure is also allowed on `/` if it sits directly below the proof line, stays closed by default, and only reveals the minimum import and selection controls needed for logged-in extraction
 - minimal navigation and minimal branching
 - defer limits, help, and secondary status until they are relevant or clearly subordinate to the main task
 - external systems may influence critique and copy quality, but not override the restraint model

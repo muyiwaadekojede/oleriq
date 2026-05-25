@@ -6,11 +6,14 @@ export const LEGACY_SESSION_HEADER = 'x-clearpage-session';
 export const BATCH_HEADER = 'x-oleriq-batch';
 export const LEGACY_BATCH_HEADER = 'x-clearpage-batch';
 
+export const AUTH_SESSION_HEADER = 'x-oleriq-auth-session';
+
 export const FALLBACK_FORMAT_HEADER = 'x-oleriq-fallback-format';
 export const LEGACY_FALLBACK_FORMAT_HEADER = 'x-clearpage-fallback-format';
 
 export const SESSION_STORAGE_KEY = 'oleriq_session_id';
 export const LEGACY_SESSION_STORAGE_KEY = 'clearpage_session_id';
+export const AUTH_SESSION_STORAGE_KEY = 'oleriq_auth_session_id';
 
 export function readHeaderValue(
   headers: IncomingHttpHeaders,

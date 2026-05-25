@@ -262,9 +262,40 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS authenticated_sessions (
+    id TEXT PRIMARY KEY,
+    owner_session_id TEXT NOT NULL,
+    label TEXT NOT NULL,
+    import_kind TEXT NOT NULL,
+    encrypted_payload TEXT NOT NULL,
+    allowed_domain_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    last_used_at TEXT,
+    last_health_state TEXT NOT NULL
+  )
+`);
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_authenticated_sessions_owner
+  ON authenticated_sessions(owner_session_id, created_at DESC)
+`);
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_authenticated_sessions_expires
+  ON authenticated_sessions(expires_at)
+`);
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_authenticated_sessions_last_used
+  ON authenticated_sessions(last_used_at DESC)
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS batch_jobs (
     id TEXT PRIMARY KEY,
     session_id TEXT,
+    auth_session_id TEXT,
     status TEXT NOT NULL,
     input_mode TEXT NOT NULL DEFAULT 'url',
     export_format TEXT NOT NULL,
@@ -324,6 +355,7 @@ db.exec(`
   )
 `);
 
+ensureColumn('batch_jobs', 'auth_session_id', 'TEXT');
 ensureColumn('batch_jobs', 'input_mode', "TEXT NOT NULL DEFAULT 'url'");
 ensureColumn('batch_job_items', 'original_filename', 'TEXT');
 ensureColumn('batch_job_items', 'content_type', 'TEXT');
