@@ -53,6 +53,7 @@ const DEFAULT_SETTINGS: ReaderSettings = {
 const HOME_PROGRESS_STAGES = ['Connecting', 'Reading page', 'Building document'] as const;
 
 export default function Page() {
+  const [heroMode, setHeroMode] = useState<'url' | 'file'>('url');
   const [clientSessionId, setClientSessionId] = useState('');
   const [url, setUrl] = useState('');
   const [extracting, setExtracting] = useState(false);
@@ -67,9 +68,6 @@ export default function Page() {
   const [directFileDownloading, setDirectFileDownloading] = useState(false);
   const [progressStageIndex, setProgressStageIndex] = useState(0);
   const [showAuthDisclosure, setShowAuthDisclosure] = useState(false);
-  const [showFileWorkspace, setShowFileWorkspace] = useState(false);
-  const [fileWorkspaceOpenSignal, setFileWorkspaceOpenSignal] = useState(0);
-  const [fileActionLoading, setFileActionLoading] = useState(false);
 
   const sessionIdRef = useRef<string>('');
   const authSessions = useAuthenticatedSessions(clientSessionId);
@@ -115,15 +113,6 @@ export default function Page() {
       ...(sessionIdRef.current ? { [SESSION_HEADER]: sessionIdRef.current } : {}),
       ...(authSessions.selectedSessionId ? { [AUTH_SESSION_HEADER]: authSessions.selectedSessionId } : {}),
     };
-  }
-
-  function handleOpenFileWorkspace(): void {
-    setShowFileWorkspace(true);
-    setFileActionLoading(true);
-    window.setTimeout(() => {
-      setFileWorkspaceOpenSignal((current) => current + 1);
-      setFileActionLoading(false);
-    }, 0);
   }
 
   function submitDirectFileDownloadViaFrame(sourceUrl: string, format: ExportFormat): void {
@@ -524,6 +513,14 @@ export default function Page() {
       {!result ? (
         <div className="relative">
           <UrlInput
+            heroMode={heroMode}
+            onHeroModeChange={(mode) => {
+              if (mode === 'file') {
+                setHeroMode('file');
+              } else {
+                setHeroMode('url');
+              }
+            }}
             url={url}
             onUrlChange={(nextUrl) => {
               setUrl(nextUrl);
@@ -534,9 +531,7 @@ export default function Page() {
               }
             }}
             onSubmit={(submittedUrl) => void handleExtract(submittedUrl)}
-            onFileAction={handleOpenFileWorkspace}
             loading={extracting}
-            fileActionLoading={fileActionLoading}
             subtitle="Turn any URL or file into a clean, readable document in Markdown, TXT, DOCX, or PDF."
             statusMessage={inputStatusMessage}
             progressLabel={HOME_PROGRESS_STAGES[progressStageIndex]}
@@ -547,52 +542,27 @@ export default function Page() {
             directFileDownloading={directFileDownloading}
             onDirectFileFormatChange={(format) => setDirectFileFormat(format)}
             onDirectFileDownload={() => void handleDirectFileDownload()}
-            proofContent={<HomepagePublicProof />}
-            secondaryContent={
-              <div className="space-y-3">
-                {showFileWorkspace ? (
-                  <HomepageFileWorkspace
-                    sessionId={clientSessionId}
-                    openSignal={fileWorkspaceOpenSignal}
-                  />
-                ) : null}
-
-                <div
-                  data-auth-disclosure="homepage"
-                  data-auth-disclosure-open={showAuthDisclosure ? 'true' : 'false'}
-                  className="mx-auto max-w-3xl"
-                >
-                  <button
-                    type="button"
-                    aria-expanded={showAuthDisclosure ? 'true' : 'false'}
-                    aria-controls="homepage-auth-session-disclosure"
-                    onClick={() => setShowAuthDisclosure((current) => !current)}
-                    className="text-sm font-medium text-[var(--color-muted)] underline-offset-2 hover:text-[var(--color-ink)] hover:underline"
-                  >
-                    Use authenticated session
-                  </button>
-
-                  {showAuthDisclosure ? (
-                    <div id="homepage-auth-session-disclosure" className="mt-3">
-                      <AuthenticatedSessionManager
-                        sessions={authSessions.sessions}
-                        selectedSessionId={authSessions.selectedSessionId}
-                        labelDraft={authSessions.labelDraft}
-                        loading={authSessions.loading}
-                        importing={authSessions.importing}
-                        deletingSessionId={authSessions.deletingSessionId}
-                        errorMessage={authSessions.errorMessage}
-                        onLabelDraftChange={authSessions.setLabelDraft}
-                        onSelectSession={authSessions.setSelectedSessionId}
-                        onImportFile={authSessions.importSessionFile}
-                        onClearSelection={authSessions.clearSelection}
-                        onDeleteSession={authSessions.deleteSession}
-                        compact={true}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+            showFileWorkspace={heroMode === 'file'}
+            fileWorkspace={<HomepageFileWorkspace sessionId={clientSessionId} compactLayout={true} />}
+            publicProof={<HomepagePublicProof />}
+            showAdvancedDisclosure={showAuthDisclosure}
+            onToggleAdvancedDisclosure={() => setShowAuthDisclosure((current) => !current)}
+            advancedContent={
+              <AuthenticatedSessionManager
+                sessions={authSessions.sessions}
+                selectedSessionId={authSessions.selectedSessionId}
+                labelDraft={authSessions.labelDraft}
+                loading={authSessions.loading}
+                importing={authSessions.importing}
+                deletingSessionId={authSessions.deletingSessionId}
+                errorMessage={authSessions.errorMessage}
+                onLabelDraftChange={authSessions.setLabelDraft}
+                onSelectSession={authSessions.setSelectedSessionId}
+                onImportFile={authSessions.importSessionFile}
+                onClearSelection={authSessions.clearSelection}
+                onDeleteSession={authSessions.deleteSession}
+                compact={true}
+              />
             }
           />
         </div>

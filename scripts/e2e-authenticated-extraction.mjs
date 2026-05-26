@@ -215,34 +215,42 @@ async function assertUiPlacement() {
   try {
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
 
-    const disclosure = page.locator('[data-auth-disclosure="homepage"]');
-    await disclosure.waitFor({ timeout: 30_000 });
-    const disclosureState = await disclosure.getAttribute('data-auth-disclosure-open');
+    const hero = page.locator('[data-homepage-hero="primary"]').first();
+    await hero.waitFor({ timeout: 30_000 });
+
+    const activeSurface = hero.locator('[data-homepage-active-surface="url"]').first();
+    const disclosureButton = hero.getByRole('button', { name: 'Advanced options' });
+    const disclosureState = await disclosureButton.getAttribute('aria-expanded');
     if (disclosureState !== 'false') {
-      throw new Error(`Expected homepage auth disclosure to be closed by default, got ${disclosureState}`);
+      throw new Error(`Expected homepage advanced drawer to be closed by default, got ${disclosureState}`);
     }
 
     const proof = page.locator('[data-homepage-public-proof]');
-    const convertButton = page.getByRole('button', { name: 'Convert URL' });
-    const disclosureButton = page.getByRole('button', { name: 'Use authenticated session' });
-
-    const proofBox = await proof.boundingBox();
-    const convertButtonBox = await convertButton.boundingBox();
+    const activeSurfaceBox = await activeSurface.boundingBox();
     const disclosureButtonBox = await disclosureButton.boundingBox();
 
-    if (!proofBox || !convertButtonBox || !disclosureButtonBox) {
-      throw new Error('Could not measure homepage proof or disclosure placement.');
+    if (!activeSurfaceBox || !disclosureButtonBox) {
+      throw new Error('Could not measure homepage active surface or advanced drawer placement.');
     }
 
-    if (proofBox.y <= convertButtonBox.y + convertButtonBox.height) {
-      throw new Error('Homepage proof line should render below the primary action row.');
-    }
-
-    if (disclosureButtonBox.y <= proofBox.y + proofBox.height) {
-      throw new Error('Homepage auth disclosure should render below the public proof line.');
+    const proofCount = await proof.count();
+    if (proofCount > 0) {
+      const proofBox = await proof.first().boundingBox();
+      if (!proofBox) {
+        throw new Error('Could not measure homepage public proof placement.');
+      }
+      if (proofBox.y <= activeSurfaceBox.y + activeSurfaceBox.height) {
+        throw new Error('Homepage proof line should render below the active conversion surface.');
+      }
+      if (disclosureButtonBox.y <= proofBox.y + proofBox.height) {
+        throw new Error('Homepage advanced drawer trigger should render below the public proof line.');
+      }
+    } else if (disclosureButtonBox.y <= activeSurfaceBox.y + activeSurfaceBox.height) {
+      throw new Error('Homepage advanced drawer trigger should render below the active conversion surface.');
     }
 
     await disclosureButton.click();
+    await page.getByText('Use authenticated session', { exact: true }).waitFor({ timeout: 30_000 });
     await page.locator('[data-auth-session-manager]').waitFor({ timeout: 30_000 });
 
     await page.goto(`${baseUrl}/batch`, { waitUntil: 'networkidle' });

@@ -22,7 +22,8 @@ const expectedBrand = 'Oleriq';
 const retiredBrand = ['Clear', 'page'].join('');
 const expectedSubtitle = 'Turn any URL or file into a clean, readable document in Markdown, TXT, DOCX, or PDF.';
 const expectedCta = "{loading ? 'Converting...' : 'Convert URL'}";
-const expectedAttachCta = "{fileActionLoading ? 'Preparing files...' : 'Attach files'}";
+const expectedModeSwitchMarker = 'data-homepage-mode-switch';
+const forbiddenZeroProof = '0 files converted';
 
 if (appPageSource.includes('/api/public-metrics')) {
   failures.push('Homepage must not fetch public metrics.');
@@ -52,6 +53,10 @@ if (!homepageProofSource.includes('files converted')) {
   failures.push('Homepage public proof copy must reference files converted.');
 }
 
+if (!homepageProofSource.includes('proof?.value') || !homepageProofSource.includes('return null')) {
+  failures.push('Homepage public proof must hide itself when the proof count is missing or zero.');
+}
+
 if (homepageProofSource.includes('Usage proof')) {
   failures.push('Homepage public proof must stay minimal and must not render a Usage proof eyebrow.');
 }
@@ -60,36 +65,40 @@ if (homepageProofSource.includes('Updated weekly.')) {
   failures.push('Homepage public proof must stay minimal and must not render an Updated weekly support line.');
 }
 
-if (!appPageSource.includes('proofContent={<HomepagePublicProof />}')) {
-  failures.push('Homepage must pass the public proof component into UrlInput for inline placement.');
+if (!appPageSource.includes('heroMode')) {
+  failures.push('Homepage must hold an explicit heroMode state.');
 }
 
-if (!urlInputSource.includes('proofContent?: ReactNode')) {
-  failures.push('Homepage input component must define an inline proofContent slot.');
+if (!appPageSource.includes("setHeroMode('file')")) {
+  failures.push('Homepage must be able to switch into File mode.');
 }
 
-if (!urlInputSource.includes('!loading && proofContent')) {
-  failures.push('Homepage input component must render inline proof content in the idle state.');
+if (!appPageSource.includes("setHeroMode('url')")) {
+  failures.push('Homepage must be able to switch into URL mode.');
 }
 
-if (!urlInputSource.includes('secondaryContent?: ReactNode')) {
-  failures.push('Homepage input component must define an inline secondaryContent slot for authenticated extraction.');
+if (!appPageSource.includes('showFileWorkspace={heroMode === \'file\'}')) {
+  failures.push('Homepage must replace the hero with the file workspace only in File mode.');
 }
 
-if (!urlInputSource.includes('!loading && secondaryContent')) {
-  failures.push('Homepage input component must render inline secondary content in the idle state.');
+if (!appPageSource.includes('showAdvancedDisclosure={showAuthDisclosure}')) {
+  failures.push('Homepage must pass the advanced-disclosure state into UrlInput.');
 }
 
-if (!appPageSource.includes('data-auth-disclosure="homepage"')) {
-  failures.push('Homepage must render the authenticated-session disclosure directly below the proof line.');
+if (!appPageSource.includes('advancedContent={')) {
+  failures.push('Homepage must pass one shared advancedContent block into UrlInput.');
 }
 
-if (!appPageSource.includes('Use authenticated session')) {
-  failures.push('Homepage must expose a Use authenticated session disclosure label.');
+if (appPageSource.includes('secondaryContent={')) {
+  failures.push('Homepage must not use the old secondaryContent homepage slot.');
 }
 
 if (!urlInputSource.includes('data-homepage-hero="primary"')) {
   failures.push('Homepage hero must expose a stable data-homepage-hero marker.');
+}
+
+if (!urlInputSource.includes(expectedModeSwitchMarker)) {
+  failures.push('Homepage hero must expose a stable data-homepage-mode-switch marker.');
 }
 
 if (!appPageSource.includes(`subtitle="${expectedSubtitle}"`)) {
@@ -112,8 +121,8 @@ if (!urlInputSource.includes(expectedCta)) {
   failures.push('Homepage CTA must use Convert URL / Converting... copy.');
 }
 
-if (!urlInputSource.includes(expectedAttachCta)) {
-  failures.push('Homepage hero must expose an Attach files / Preparing files... CTA.');
+if (urlInputSource.includes('Attach files')) {
+  failures.push('Homepage hero must not render Attach files as a top-level peer action in the active URL row.');
 }
 
 if (!urlInputSource.includes('Conversion progress')) {
@@ -126,6 +135,34 @@ if (!urlInputSource.includes('role="progressbar"')) {
 
 if (!appLayoutSource.includes('data-font-system="newsreader-geist"')) {
   failures.push('Root layout must expose the Newsreader + Geist font-system contract.');
+}
+
+if (urlInputSource.includes(forbiddenZeroProof)) {
+  failures.push('Homepage hero must not hard-render a zero-value proof line.');
+}
+
+if (!urlInputSource.includes('Advanced options')) {
+  failures.push('Homepage hero must expose an Advanced options drawer.');
+}
+
+if (!urlInputSource.includes('Use authenticated session')) {
+  failures.push('Homepage hero must keep the authenticated-session control inside the advanced drawer.');
+}
+
+if (!urlInputSource.includes('showFileWorkspace?: boolean')) {
+  failures.push('Homepage hero component must accept a showFileWorkspace mode flag.');
+}
+
+if (!urlInputSource.includes('advancedContent?: ReactNode')) {
+  failures.push('Homepage hero component must accept one advancedContent slot.');
+}
+
+if (urlInputSource.includes('secondaryContent?: ReactNode')) {
+  failures.push('Homepage hero component must not expose the old secondaryContent slot.');
+}
+
+if (urlInputSource.includes('proofContent?: ReactNode')) {
+  failures.push('Homepage hero component must not expose the old proofContent slot.');
 }
 
 if (failures.length > 0) {

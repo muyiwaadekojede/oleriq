@@ -43,6 +43,10 @@ export function HomepagePublicProof() {
 
   const formattedValue = useMemo(() => formatProofValue(proof?.value ?? null), [proof?.value]);
 
+  if (!proof?.value || proof.value <= 0) {
+    return null;
+  }
+
   return (
     <div
       data-homepage-public-proof

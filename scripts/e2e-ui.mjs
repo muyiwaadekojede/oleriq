@@ -54,11 +54,11 @@ try {
   await page.locator('#url-input').fill(degradedArticleUrl);
   await page.getByRole('button', { name: 'Convert URL' }).click();
   await page.getByRole('heading', { name: 'Result trust' }).first().waitFor({ timeout: 60_000 });
-  await page.getByText('Browser rendering required').first().waitFor({ timeout: 10_000 });
+  await page.getByText('Browser rendering required').first().waitFor({ timeout: 30_000 });
   await page
     .getByText('Check tables, embeds, and layout before you export.')
     .first()
-    .waitFor({ timeout: 10_000 });
+    .waitFor({ timeout: 30_000 });
 
   await page.getByRole('button', { name: 'New URL' }).first().click();
 

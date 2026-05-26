@@ -79,7 +79,7 @@ type DocumentUploadEntry = DocumentUploadItem & {
 
 type HomepageFileWorkspaceProps = {
   sessionId: string;
-  openSignal: number;
+  compactLayout?: boolean;
 };
 
 const DOCUMENT_IMAGE_CAPABLE_EXTENSIONS = new Set(['.pdf', '.epub', '.html', '.htm', '.docx']);
@@ -152,7 +152,7 @@ function mapBatchItem(item: BatchItemApi): BatchItemResult {
   };
 }
 
-export function HomepageFileWorkspace({ sessionId, openSignal }: HomepageFileWorkspaceProps) {
+export function HomepageFileWorkspace({ sessionId, compactLayout = false }: HomepageFileWorkspaceProps) {
   const [uploadConfig, setUploadConfig] = useState<DocumentUploadConfig>(DEFAULT_DOCUMENT_UPLOAD_CONFIG);
   const [documentFormat, setDocumentFormat] = useState<ExportFormat>('pdf');
   const [documentUploads, setDocumentUploads] = useState<DocumentUploadEntry[]>([]);
@@ -828,12 +828,15 @@ export function HomepageFileWorkspace({ sessionId, openSignal }: HomepageFileWor
   }
 
   return (
-    <div data-homepage-file-workspace className="mx-auto mt-4 max-w-5xl">
+    <div
+      data-homepage-file-workspace
+      className={compactLayout ? 'mx-auto max-w-3xl' : 'mx-auto mt-4 max-w-5xl'}
+    >
       <BatchDocumentPanel
         mode="document"
         onModeChange={() => undefined}
         showModeSwitch={false}
-        externalOpenSignal={openSignal}
+        compactLayout={compactLayout}
         accept={uploadConfig.accept}
         files={documentUploads}
         format={documentFormat}

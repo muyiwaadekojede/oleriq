@@ -27,6 +27,7 @@ type BatchDocumentPanelProps = {
   onModeChange: (mode: BatchInputMode) => void;
   showModeSwitch?: boolean;
   externalOpenSignal?: number;
+  compactLayout?: boolean;
   accept: string;
   files: DocumentUploadItem[];
   format: ExportFormat;
@@ -98,6 +99,7 @@ export function BatchDocumentPanel({
   onModeChange,
   showModeSwitch = true,
   externalOpenSignal = 0,
+  compactLayout = false,
   accept,
   files,
   format,
@@ -170,7 +172,7 @@ export function BatchDocumentPanel({
       data-batch-surface="primary"
       data-batch-mode="document"
       data-batch-stage={stage}
-      className="mt-7 rounded-[2rem] border border-[var(--color-border)] bg-white p-6 text-left shadow-[0_1px_0_rgba(15,23,42,0.03)]"
+      className={`${compactLayout ? 'rounded-[1.5rem] p-5' : 'mt-7 rounded-[2rem] p-6'} border border-[var(--color-border)] bg-white text-left shadow-[0_1px_0_rgba(15,23,42,0.03)]`}
     >
       <div className="space-y-6">
         {showModeSwitch ? <BatchModeSwitch mode={mode} onModeChange={onModeChange} /> : null}
@@ -225,7 +227,10 @@ export function BatchDocumentPanel({
                   }}
                 />
 
-                <p id="document-dropzone-title" className="text-xl font-semibold text-[var(--color-ink)]">
+                <p
+                  id="document-dropzone-title"
+                  className={`${compactLayout ? 'text-lg' : 'text-xl'} font-semibold text-[var(--color-ink)]`}
+                >
                   {dropzoneTitle}
                 </p>
                 <p id="document-dropzone-help" className="mt-2 text-sm text-[var(--color-muted)]">
