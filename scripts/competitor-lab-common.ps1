@@ -1,7 +1,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$script:CompetitorLabDefaultPath = 'C:\Users\Godsgrace\Desktop\codez\clearpage-competitor-lab'
+$script:CompetitorLabDefaultPath = 'C:\Users\Godsgrace\Desktop\codez\oleriq-competitor-lab'
 $script:CompetitorLabAllowedCategories = @('direct_product', 'hybrid_or_adjacent_commercial', 'enabling_tool')
 $script:CompetitorLabAllowedLicenseClasses = @('permissive', 'weak_copyleft', 'strong_copyleft', 'unknown')
 $script:CompetitorLabAllowedReuseGates = @('reference_only', 'legal_review_required', 'approved_for_limited_adoption')

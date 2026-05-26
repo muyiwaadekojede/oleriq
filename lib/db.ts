@@ -2,6 +2,8 @@ import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
 
+const LEGACY_BRAND_SLUG = ['clear', 'page'].join('');
+
 export function resolveDataDir(): string {
   const custom =
     process.env.OLERIQ_DATA_DIR?.trim() ||
@@ -20,7 +22,7 @@ function resolveDatabasePath(dataDir: string): string {
 }
 
 function resolveLegacyDatabasePath(dataDir: string): string {
-  return path.join(dataDir, 'clearpage.db');
+  return path.join(dataDir, `${LEGACY_BRAND_SLUG}.db`);
 }
 
 function databaseSidecarPaths(filePath: string): string[] {

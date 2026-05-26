@@ -25,6 +25,7 @@ import {
   normalizeStoredResultState,
   warningForDiagnosticReason,
 } from '@/lib/trustGuidance';
+import { shouldWarmLocalDocumentWorkersInWebProcess } from '@/lib/documentBatchRuntime';
 import type {
   BatchDiagnosticReason,
   BatchDocumentUploadInput,
@@ -1657,6 +1658,10 @@ async function ensureLocalDocumentWorkerPool(): Promise<LocalDocumentWorkerPool>
 }
 
 export async function prepareDocumentBatchWorkers(): Promise<void> {
+  if (!shouldWarmLocalDocumentWorkersInWebProcess()) {
+    return;
+  }
+
   await ensureLocalDocumentWorkerPool();
 }
 

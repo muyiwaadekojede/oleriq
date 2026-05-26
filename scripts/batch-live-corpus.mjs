@@ -285,7 +285,7 @@ async function verifyUrlSource(source) {
     label: source.label,
     url: source.url,
     contentType,
-    verificationMethod: 'clearpage-html-fetch-signature',
+    verificationMethod: 'oleriq-html-fetch-signature',
     verifiedAt: new Date().toISOString(),
   };
 }

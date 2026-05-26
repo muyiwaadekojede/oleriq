@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AuthenticatedSessionManager } from '@/components/AuthenticatedSessionManager';
 import { FailureModal } from '@/components/FailureModal';
+import { HomepageFileWorkspace } from '@/components/HomepageFileWorkspace';
 import { HomepagePublicProof } from '@/components/HomepagePublicProof';
 import { ReadingPreview } from '@/components/ReadingPreview';
 import { SettingsSidebar } from '@/components/SettingsSidebar';
@@ -66,6 +67,9 @@ export default function Page() {
   const [directFileDownloading, setDirectFileDownloading] = useState(false);
   const [progressStageIndex, setProgressStageIndex] = useState(0);
   const [showAuthDisclosure, setShowAuthDisclosure] = useState(false);
+  const [showFileWorkspace, setShowFileWorkspace] = useState(false);
+  const [fileWorkspaceOpenSignal, setFileWorkspaceOpenSignal] = useState(0);
+  const [fileActionLoading, setFileActionLoading] = useState(false);
 
   const sessionIdRef = useRef<string>('');
   const authSessions = useAuthenticatedSessions(clientSessionId);
@@ -113,8 +117,17 @@ export default function Page() {
     };
   }
 
+  function handleOpenFileWorkspace(): void {
+    setShowFileWorkspace(true);
+    setFileActionLoading(true);
+    window.setTimeout(() => {
+      setFileWorkspaceOpenSignal((current) => current + 1);
+      setFileActionLoading(false);
+    }, 0);
+  }
+
   function submitDirectFileDownloadViaFrame(sourceUrl: string, format: ExportFormat): void {
-    const frameName = 'clearpage-direct-download-frame';
+    const frameName = 'oleriq-direct-download-frame';
     let frame = document.querySelector(`iframe[name="${frameName}"]`) as HTMLIFrameElement | null;
     if (!frame) {
       frame = document.createElement('iframe');
@@ -521,8 +534,10 @@ export default function Page() {
               }
             }}
             onSubmit={(submittedUrl) => void handleExtract(submittedUrl)}
+            onFileAction={handleOpenFileWorkspace}
             loading={extracting}
-            subtitle="Turn any URL into a clean, readable document in Markdown, TXT, DOCX, or PDF."
+            fileActionLoading={fileActionLoading}
+            subtitle="Turn any URL or file into a clean, readable document in Markdown, TXT, DOCX, or PDF."
             statusMessage={inputStatusMessage}
             progressLabel={HOME_PROGRESS_STAGES[progressStageIndex]}
             progressStep={progressStageIndex}
@@ -534,40 +549,49 @@ export default function Page() {
             onDirectFileDownload={() => void handleDirectFileDownload()}
             proofContent={<HomepagePublicProof />}
             secondaryContent={
-              <div
-                data-auth-disclosure="homepage"
-                data-auth-disclosure-open={showAuthDisclosure ? 'true' : 'false'}
-                className="mx-auto max-w-3xl"
-              >
-                <button
-                  type="button"
-                  aria-expanded={showAuthDisclosure ? 'true' : 'false'}
-                  aria-controls="homepage-auth-session-disclosure"
-                  onClick={() => setShowAuthDisclosure((current) => !current)}
-                  className="text-sm font-medium text-[var(--color-muted)] underline-offset-2 hover:text-[var(--color-ink)] hover:underline"
-                >
-                  Use authenticated session
-                </button>
-
-                {showAuthDisclosure ? (
-                  <div id="homepage-auth-session-disclosure" className="mt-3">
-                    <AuthenticatedSessionManager
-                      sessions={authSessions.sessions}
-                      selectedSessionId={authSessions.selectedSessionId}
-                      labelDraft={authSessions.labelDraft}
-                      loading={authSessions.loading}
-                      importing={authSessions.importing}
-                      deletingSessionId={authSessions.deletingSessionId}
-                      errorMessage={authSessions.errorMessage}
-                      onLabelDraftChange={authSessions.setLabelDraft}
-                      onSelectSession={authSessions.setSelectedSessionId}
-                      onImportFile={authSessions.importSessionFile}
-                      onClearSelection={authSessions.clearSelection}
-                      onDeleteSession={authSessions.deleteSession}
-                      compact={true}
-                    />
-                  </div>
+              <div className="space-y-3">
+                {showFileWorkspace ? (
+                  <HomepageFileWorkspace
+                    sessionId={clientSessionId}
+                    openSignal={fileWorkspaceOpenSignal}
+                  />
                 ) : null}
+
+                <div
+                  data-auth-disclosure="homepage"
+                  data-auth-disclosure-open={showAuthDisclosure ? 'true' : 'false'}
+                  className="mx-auto max-w-3xl"
+                >
+                  <button
+                    type="button"
+                    aria-expanded={showAuthDisclosure ? 'true' : 'false'}
+                    aria-controls="homepage-auth-session-disclosure"
+                    onClick={() => setShowAuthDisclosure((current) => !current)}
+                    className="text-sm font-medium text-[var(--color-muted)] underline-offset-2 hover:text-[var(--color-ink)] hover:underline"
+                  >
+                    Use authenticated session
+                  </button>
+
+                  {showAuthDisclosure ? (
+                    <div id="homepage-auth-session-disclosure" className="mt-3">
+                      <AuthenticatedSessionManager
+                        sessions={authSessions.sessions}
+                        selectedSessionId={authSessions.selectedSessionId}
+                        labelDraft={authSessions.labelDraft}
+                        loading={authSessions.loading}
+                        importing={authSessions.importing}
+                        deletingSessionId={authSessions.deletingSessionId}
+                        errorMessage={authSessions.errorMessage}
+                        onLabelDraftChange={authSessions.setLabelDraft}
+                        onSelectSession={authSessions.setSelectedSessionId}
+                        onImportFile={authSessions.importSessionFile}
+                        onClearSelection={authSessions.clearSelection}
+                        onDeleteSession={authSessions.deleteSession}
+                        compact={true}
+                      />
+                    </div>
+                  ) : null}
+                </div>
               </div>
             }
           />

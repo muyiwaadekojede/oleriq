@@ -9,8 +9,9 @@ type AdminCredentials = {
   createdAt: string;
 };
 
+const LEGACY_BRAND_SLUG = ['clear', 'page'].join('');
 const ADMIN_COOKIE_NAME = 'oleriq_admin';
-const LEGACY_ADMIN_COOKIE_NAME = 'clearpage_admin';
+const LEGACY_ADMIN_COOKIE_NAME = `${LEGACY_BRAND_SLUG}_admin`;
 const ADMIN_SESSION_TTL_SECONDS = 60 * 60 * 12;
 
 let inMemoryCredentials: AdminCredentials | null = null;

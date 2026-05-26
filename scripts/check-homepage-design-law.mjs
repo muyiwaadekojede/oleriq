@@ -19,8 +19,10 @@ const [appPageSource, appLayoutSource, homepageProofSource, urlInputSource] = aw
 
 const failures = [];
 const expectedBrand = 'Oleriq';
-const expectedSubtitle = 'Turn any URL into a clean, readable document in Markdown, TXT, DOCX, or PDF.';
+const retiredBrand = ['Clear', 'page'].join('');
+const expectedSubtitle = 'Turn any URL or file into a clean, readable document in Markdown, TXT, DOCX, or PDF.';
 const expectedCta = "{loading ? 'Converting...' : 'Convert URL'}";
+const expectedAttachCta = "{fileActionLoading ? 'Preparing files...' : 'Attach files'}";
 
 if (appPageSource.includes('/api/public-metrics')) {
   failures.push('Homepage must not fetch public metrics.');
@@ -102,12 +104,16 @@ if (!urlInputSource.includes(`>${expectedBrand}<`)) {
   failures.push('Homepage hero must render the approved Oleriq brand.');
 }
 
-if (urlInputSource.includes('Clearpage')) {
-  failures.push('Homepage surface must not leak the retired Clearpage brand.');
+if (urlInputSource.includes(retiredBrand)) {
+  failures.push('Homepage surface must not leak the retired legacy brand.');
 }
 
 if (!urlInputSource.includes(expectedCta)) {
   failures.push('Homepage CTA must use Convert URL / Converting... copy.');
+}
+
+if (!urlInputSource.includes(expectedAttachCta)) {
+  failures.push('Homepage hero must expose an Attach files / Preparing files... CTA.');
 }
 
 if (!urlInputSource.includes('Conversion progress')) {

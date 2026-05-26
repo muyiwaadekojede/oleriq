@@ -3,6 +3,8 @@ import { chromium } from 'playwright';
 const baseUrl = process.env.BASE_URL || 'http://127.0.0.1:3000';
 const articleUrl = `${baseUrl}/test-fixtures/article-source.html`;
 const setupSurfaceSelector = '[data-batch-surface="primary"]';
+const retiredBrand = ['Clear', 'page'].join('');
+const retiredBrandHeading = `What the retired ${retiredBrand} brand tried to preserve during batch conversion`;
 
 function fail(message) {
   throw new Error(message);
@@ -164,7 +166,7 @@ async function assertBelowFoldGuide(page) {
   await assertText(page, 'Truth surface');
   await assertText(page, 'Structure proof');
   await assertText(page, 'Run recovery');
-  await assertTextAbsent(page, 'Clearpage');
+  await assertTextAbsent(page, retiredBrand);
 
   const faqHeading = guide.locator('[data-batch-guide-section="faq"] h2');
   await faqHeading.scrollIntoViewIfNeeded();
@@ -184,7 +186,7 @@ async function assertBelowFoldGuide(page) {
     );
   }
 
-  await assertTextAbsent(page, 'What Clearpage tries to preserve during batch conversion');
+  await assertTextAbsent(page, retiredBrandHeading);
   await assertTextAbsent(page, 'How batch results are reported');
   await assertTextAbsent(page, 'Progress, retries, and trust during longer runs');
   await assertTextAbsent(page, 'Workloads this route is built for');

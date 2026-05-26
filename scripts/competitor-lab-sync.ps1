@@ -2,7 +2,7 @@
 param(
   [ValidateSet('direct', 'adjacent', 'all')]
   [string]$Cohort = 'all',
-  [string]$LabPath = 'C:\Users\Godsgrace\Desktop\codez\clearpage-competitor-lab'
+  [string]$LabPath = 'C:\Users\Godsgrace\Desktop\codez\oleriq-competitor-lab'
 )
 
 Set-StrictMode -Version Latest

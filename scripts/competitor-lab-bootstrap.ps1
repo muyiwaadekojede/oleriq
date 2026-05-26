@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [string]$LabPath = 'C:\Users\Godsgrace\Desktop\codez\clearpage-competitor-lab'
+  [string]$LabPath = 'C:\Users\Godsgrace\Desktop\codez\oleriq-competitor-lab'
 )
 
 Set-StrictMode -Version Latest

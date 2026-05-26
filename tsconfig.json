@@ -31,13 +31,26 @@
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "components/**/*.ts",
+    "components/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "pages/**/*.ts",
+    "pages/**/*.tsx",
+    "scripts/**/*.ts",
+    "scripts/**/*.tsx",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "workers/**/*.ts",
+    "workers/**/*.tsx",
+    "instrumentation.ts",
+    "next.config.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "competitor-lab"
+    "node_modules"
   ]
 }

@@ -1,0 +1,30 @@
+.tmp-*
+.git/
+.next/
+.vercel/
+node_modules/
+competitor-lab
+competitor-lab/
+data
+data/
+docs
+docs/
+scripts
+secrets
+secrets/
+tests
+tests/
+tests documents
+tests documents/
+.tmp-*/
+.tmp-*.log
+.tmp-*.out
+.tmp-*.err
+chat-transcript.md
+CHANGELOG.md
+DESIGN.md
+DESIGN_AUDIT.md
+PRODUCT.md
+README.md
+scripts/
+tsconfig.tsbuildinfo

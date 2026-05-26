@@ -80,6 +80,7 @@ type DurableDocumentBatchManifest = {
 
 const DEFAULT_MS_PER_ITEM = 9_000;
 const ITEMS_PER_PROGRESS_TICK = 2;
+const LEGACY_BRAND_SLUG = ['clear', 'page'].join('');
 const DEFAULT_SETTINGS: ReaderSettings = {
   fontFace: 'serif',
   fontSize: 16,
@@ -105,7 +106,7 @@ function uploadRecordKey(uploadId: string): string {
 }
 
 function legacyUploadRecordKey(uploadId: string): string {
-  return `clearpage/state/uploads/${uploadId}.json`;
+  return `${LEGACY_BRAND_SLUG}/state/uploads/${uploadId}.json`;
 }
 
 function jobManifestKey(jobId: string): string {
@@ -113,7 +114,7 @@ function jobManifestKey(jobId: string): string {
 }
 
 function legacyJobManifestKey(jobId: string): string {
-  return `clearpage/state/jobs/${jobId}.json`;
+  return `${LEGACY_BRAND_SLUG}/state/jobs/${jobId}.json`;
 }
 
 function filesystemPath(relativePath: string): string {

@@ -6,6 +6,7 @@ import { BatchModeSwitch } from '@/components/BatchModeSwitch';
 import { BatchReviewList } from '@/components/BatchReviewList';
 import { ImageToggle } from '@/components/ImageToggle';
 import type { BatchItemResult, BatchSurfaceStage } from '@/components/batchTypes';
+import { DOCUMENT_SUPPORTED_COPY } from '@/lib/documentSupport';
 import type { BatchInputMode, ExportFormat, ImageMode } from '@/lib/types';
 
 type UploadStatus = 'queued' | 'uploading' | 'uploaded' | 'failed';
@@ -24,6 +25,8 @@ export type DocumentUploadItem = {
 type BatchDocumentPanelProps = {
   mode: BatchInputMode;
   onModeChange: (mode: BatchInputMode) => void;
+  showModeSwitch?: boolean;
+  externalOpenSignal?: number;
   accept: string;
   files: DocumentUploadItem[];
   format: ExportFormat;
@@ -55,6 +58,12 @@ type BatchDocumentPanelProps = {
   onDownloadAll: () => void;
   onRetryFailed: () => void;
   retryingFailed: boolean;
+  dropzoneTitle?: string;
+  dropzoneHelp?: string;
+  selectFilesLabel?: string;
+  submitIdleLabel?: string;
+  submitProcessingLabel?: string;
+  supportedFormatsCopy?: string;
 };
 
 const EXPORT_FORMATS: ExportFormat[] = ['pdf', 'txt', 'md', 'docx'];
@@ -87,6 +96,8 @@ function currentStage(processing: boolean, results: BatchItemResult[]): BatchSur
 export function BatchDocumentPanel({
   mode,
   onModeChange,
+  showModeSwitch = true,
+  externalOpenSignal = 0,
   accept,
   files,
   format,
@@ -117,6 +128,12 @@ export function BatchDocumentPanel({
   onDownloadAll,
   onRetryFailed,
   retryingFailed,
+  dropzoneTitle = 'Drop documents here or choose files.',
+  dropzoneHelp = 'Press Enter or Space to open the file picker, or drop files directly into this area.',
+  selectFilesLabel = 'Select Files',
+  submitIdleLabel = 'Start Batch',
+  submitProcessingLabel = 'Processing Batch...',
+  supportedFormatsCopy = DOCUMENT_SUPPORTED_COPY,
 }: BatchDocumentPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -133,6 +150,11 @@ export function BatchDocumentPanel({
       setShowMoreOptions(false);
     }
   }, [stage]);
+
+  useEffect(() => {
+    if (externalOpenSignal <= 0 || stage !== 'setup') return;
+    openFilePicker();
+  }, [externalOpenSignal, stage]);
 
   function handleDrop(filesToAdd: FileList | null): void {
     if (!filesToAdd || filesToAdd.length === 0) return;
@@ -151,7 +173,7 @@ export function BatchDocumentPanel({
       className="mt-7 rounded-[2rem] border border-[var(--color-border)] bg-white p-6 text-left shadow-[0_1px_0_rgba(15,23,42,0.03)]"
     >
       <div className="space-y-6">
-        <BatchModeSwitch mode={mode} onModeChange={onModeChange} />
+        {showModeSwitch ? <BatchModeSwitch mode={mode} onModeChange={onModeChange} /> : null}
 
         {stage === 'setup' ? (
           <>
@@ -204,11 +226,12 @@ export function BatchDocumentPanel({
                 />
 
                 <p id="document-dropzone-title" className="text-xl font-semibold text-[var(--color-ink)]">
-                  Drop documents here or choose files.
+                  {dropzoneTitle}
                 </p>
                 <p id="document-dropzone-help" className="mt-2 text-sm text-[var(--color-muted)]">
-                  Press Enter or Space to open the file picker, or drop files directly into this area.
+                  {dropzoneHelp}
                 </p>
+                <p className="mt-2 text-sm text-[var(--color-muted)]">{supportedFormatsCopy}</p>
                 <button
                   type="button"
                   onClick={(event) => {
@@ -217,7 +240,7 @@ export function BatchDocumentPanel({
                   }}
                   className="mt-4 rounded-full border border-[var(--color-border)] px-5 py-2 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
                 >
-                  Select Files
+                  {selectFilesLabel}
                 </button>
               </div>
 
@@ -292,7 +315,7 @@ export function BatchDocumentPanel({
                   disabled={processing || uploading || uploadedCount === 0}
                   className="h-12 rounded-2xl bg-[var(--color-accent)] px-6 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {processing ? 'Processing Batch...' : 'Start Batch'}
+                  {processing ? submitProcessingLabel : submitIdleLabel}
                 </button>
 
                 <button

@@ -1,0 +1,2 @@
+export const DOCUMENT_SUPPORTED_COPY =
+  'Supports PDF, DOCX, EPUB, TXT, MD, HTML/HTM, CSV/TSV, JSON, XML, YAML/YML, LOG, and RST.';

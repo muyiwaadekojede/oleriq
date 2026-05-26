@@ -3,6 +3,11 @@ export async function register() {
     return;
   }
 
+  const { shouldWarmLocalDocumentWorkersInWebProcess } = await import('@/lib/documentBatchRuntime');
+  if (!shouldWarmLocalDocumentWorkersInWebProcess()) {
+    return;
+  }
+
   const { prepareDocumentBatchWorkers } = await import('@/lib/batchQueue');
   await prepareDocumentBatchWorkers();
 }

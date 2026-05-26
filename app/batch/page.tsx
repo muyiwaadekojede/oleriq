@@ -9,6 +9,11 @@ import { BatchDocumentPanel, type DocumentUploadItem } from '@/components/BatchD
 import { BatchUrlPanel } from '@/components/BatchUrlPanel';
 import type { BatchItemResult } from '@/components/batchTypes';
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
+import {
+  DEFAULT_DOCUMENT_UPLOAD_CONFIG,
+  createDocumentUploadConfigGate,
+  type DocumentUploadConfig,
+} from '@/lib/documentUploadConfig';
 import { AUTH_SESSION_HEADER, BATCH_HEADER, FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
 import { useAuthenticatedSessions } from '@/lib/useAuthenticatedSessions';
 import type { BatchDiagnosticReason, BatchInputMode, ExportFormat, ImageMode, ReaderSettings } from '@/lib/types';
@@ -69,18 +74,6 @@ type BatchItemApi = {
   errorMessage: string | null;
 };
 
-type UploadConfig = {
-  success: boolean;
-  mode: 'blob' | 'filesystem';
-  accept: string;
-  limits: {
-    maxFileBytes: number;
-    maxFiles: number;
-    maxBatchBytes: number;
-    retentionHours: number;
-  };
-};
-
 type UploadedDocumentRef = {
   uploadId: string;
   originalFilename: string;
@@ -101,17 +94,6 @@ const DEFAULT_SETTINGS: ReaderSettings = {
   fontSize: 16,
   lineSpacing: 1.6,
   colorTheme: 'light',
-};
-const DEFAULT_UPLOAD_CONFIG: UploadConfig = {
-  success: true,
-  mode: 'filesystem',
-  accept: '.pdf,.docx,.epub,.txt,.md,.html,.htm,.csv,.tsv,.json,.xml,.yaml,.yml,.log,.rst',
-  limits: {
-    maxFileBytes: 60 * 1024 * 1024,
-    maxFiles: 500,
-    maxBatchBytes: 2 * 1024 * 1024 * 1024,
-    retentionHours: 24,
-  },
 };
 const DOCUMENT_IMAGE_CAPABLE_EXTENSIONS = new Set(['.pdf', '.epub', '.html', '.htm', '.docx']);
 
@@ -224,7 +206,7 @@ function mapBatchItem(item: BatchItemApi): BatchItemResult {
 export default function BatchPage() {
   const [clientSessionId, setClientSessionId] = useState('');
   const [mode, setMode] = useState<BatchInputMode>('url');
-  const [uploadConfig, setUploadConfig] = useState<UploadConfig>(DEFAULT_UPLOAD_CONFIG);
+  const [uploadConfig, setUploadConfig] = useState<DocumentUploadConfig>(DEFAULT_DOCUMENT_UPLOAD_CONFIG);
 
   const [batchUrlsInput, setBatchUrlsInput] = useState('');
   const [batchFormat, setBatchFormat] = useState<ExportFormat>('md');
@@ -266,6 +248,19 @@ export default function BatchPage() {
 
   const sessionIdRef = useRef('');
   const imagesRef = useRef<ImageMode>('off');
+  const uploadConfigGateRef = useRef(
+    createDocumentUploadConfigGate(async () => {
+      const response = await fetch('/api/batch-upload-config');
+      if (!response.ok) {
+        throw new Error('Could not prepare uploads right now. Retry.');
+      }
+      const json = (await response.json()) as DocumentUploadConfig;
+      if (!json.success) {
+        throw new Error('Could not prepare uploads right now. Retry.');
+      }
+      return json;
+    }),
+  );
   const authSessions = useAuthenticatedSessions(clientSessionId);
 
   useEffect(() => {
@@ -279,18 +274,7 @@ export default function BatchPage() {
       pagePath: '/batch',
     });
 
-    void (async () => {
-      try {
-        const response = await fetch('/api/batch-upload-config');
-        if (!response.ok) return;
-        const json = (await response.json()) as UploadConfig;
-        if (json.success) {
-          setUploadConfig(json);
-        }
-      } catch {
-        // Fallback config is good enough for local rendering.
-      }
-    })();
+    void ensureUploadConfigReady(true).catch(() => undefined);
   }, []);
 
   const parsedBatchUrls = useMemo(() => parseBatchUrls(batchUrlsInput), [batchUrlsInput]);
@@ -323,6 +307,19 @@ export default function BatchPage() {
       [BATCH_HEADER]: '1',
       ...(includeAuth && authSessions.selectedSessionId ? { [AUTH_SESSION_HEADER]: authSessions.selectedSessionId } : {}),
     };
+  }
+
+  async function ensureUploadConfigReady(silent = false): Promise<DocumentUploadConfig> {
+    try {
+      const config = await uploadConfigGateRef.current.ensureReady();
+      setUploadConfig(config);
+      return config;
+    } catch (error) {
+      if (!silent) {
+        setDocumentRunMessage(error instanceof Error ? error.message : 'Could not prepare uploads right now. Retry.');
+      }
+      throw error;
+    }
   }
 
   async function readErrorMessage(response: Response): Promise<string> {
@@ -947,7 +944,7 @@ export default function BatchPage() {
     }
   }
 
-  async function uploadSingleDocument(entry: DocumentUploadEntry): Promise<void> {
+  async function uploadSingleDocument(entry: DocumentUploadEntry, activeUploadConfig: DocumentUploadConfig): Promise<void> {
     setDocumentUploads((current) =>
       current.map((item) =>
         item.id === entry.id
@@ -964,7 +961,7 @@ export default function BatchPage() {
     try {
       let uploadRef: UploadedDocumentRef;
 
-      if (uploadConfig.mode === 'blob') {
+      if (activeUploadConfig.mode === 'blob') {
         const pathname = `${sanitizePathSegment(sessionIdRef.current || 'anonymous')}/${Date.now()}-${sanitizePathSegment(entry.name)}`;
         const blob = await upload(pathname, entry.file, {
           access: 'private',
@@ -1105,17 +1102,31 @@ export default function BatchPage() {
   async function handleSelectDocumentFiles(files: File[]): Promise<void> {
     if (files.length === 0) return;
 
+    const waitingForUploadConfig = !uploadConfigGateRef.current.isReady();
+    if (waitingForUploadConfig) {
+      setDocumentRunMessage('Preparing upload settings...');
+    }
+
+    let activeUploadConfig: DocumentUploadConfig;
+    try {
+      activeUploadConfig = await ensureUploadConfigReady();
+    } catch {
+      return;
+    }
+
     const currentCount = documentUploads.length;
     const currentBytes = documentUploads.reduce((sum, item) => sum + item.size, 0);
-    if (currentCount + files.length > uploadConfig.limits.maxFiles) {
-      setDocumentRunMessage(`Document limit exceeded. Max allowed is ${uploadConfig.limits.maxFiles.toLocaleString()} files.`);
+    if (currentCount + files.length > activeUploadConfig.limits.maxFiles) {
+      setDocumentRunMessage(
+        `Document limit exceeded. Max allowed is ${activeUploadConfig.limits.maxFiles.toLocaleString()} files.`,
+      );
       return;
     }
 
     const nextBytes = currentBytes + files.reduce((sum, file) => sum + file.size, 0);
-    if (nextBytes > uploadConfig.limits.maxBatchBytes) {
+    if (nextBytes > activeUploadConfig.limits.maxBatchBytes) {
       setDocumentRunMessage(
-        `Document selection exceeds the total technical limit of ${formatBytes(uploadConfig.limits.maxBatchBytes)}.`,
+        `Document selection exceeds the total technical limit of ${formatBytes(activeUploadConfig.limits.maxBatchBytes)}.`,
       );
       return;
     }
@@ -1130,20 +1141,22 @@ export default function BatchPage() {
       progress: 0,
     }));
 
-    setDocumentRunMessage('');
+    if (waitingForUploadConfig) {
+      setDocumentRunMessage('');
+    }
     setDocumentUploads((current) => [...current, ...entries]);
     setDocumentUploading(true);
 
     try {
       for (const entry of entries) {
-        if (entry.size > uploadConfig.limits.maxFileBytes) {
+        if (entry.size > activeUploadConfig.limits.maxFileBytes) {
           setDocumentUploads((current) =>
             current.map((item) =>
               item.id === entry.id
                 ? {
                     ...item,
                     status: 'failed',
-                    error: `File exceeds the per-file limit of ${formatBytes(uploadConfig.limits.maxFileBytes)}.`,
+                    error: `File exceeds the per-file limit of ${formatBytes(activeUploadConfig.limits.maxFileBytes)}.`,
                   }
                 : item,
             ),
@@ -1151,7 +1164,7 @@ export default function BatchPage() {
           continue;
         }
 
-        await uploadSingleDocument(entry);
+        await uploadSingleDocument(entry, activeUploadConfig);
       }
     } finally {
       setDocumentUploading(false);

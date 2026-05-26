@@ -1,5 +1,5 @@
 {
-  "name": "clearpage",
+  "name": "oleriq",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -20,6 +20,7 @@
     "e2e:analytics": "node scripts/e2e-analytics.mjs",
     "e2e:public-metrics": "node scripts/e2e-public-metrics.mjs",
     "e2e:homepage-proof": "node scripts/e2e-homepage-proof.mjs",
+    "e2e:homepage-files": "node scripts/e2e-homepage-files.mjs",
     "e2e:authenticated-extraction": "node scripts/e2e-authenticated-extraction.mjs",
     "e2e:structure-recovery": "node scripts/e2e-structure-recovery.mjs",
     "e2e:batch": "node scripts/e2e-batch.mjs",
@@ -31,7 +32,7 @@
     "e2e:homepage-live-corpus": "node scripts/e2e-homepage-live-corpus.mjs",
     "e2e:ui": "node scripts/e2e-ui.mjs",
     "e2e:direct-file": "node scripts/e2e-direct-file.mjs",
-    "e2e:full": "npm run e2e:extract && npm run e2e:export && npm run e2e:structure-recovery && npm run e2e:batch && npm run e2e:batch-documents && npm run e2e:public-metrics && npm run e2e:homepage-proof && npm run e2e:authenticated-extraction && npm run e2e:feedback && npm run e2e:ui && npm run e2e:direct-file && npm run e2e:analytics",
+    "e2e:full": "npm run e2e:extract && npm run e2e:export && npm run e2e:structure-recovery && npm run e2e:batch && npm run e2e:batch-documents && npm run e2e:public-metrics && npm run e2e:homepage-proof && npm run e2e:homepage-files && npm run e2e:authenticated-extraction && npm run e2e:feedback && npm run e2e:ui && npm run e2e:direct-file && npm run e2e:analytics",
     "e2e:brand-matrix": "node scripts/e2e-brand-matrix.mjs",
     "corpus:batch:refresh": "node scripts/refresh-batch-live-corpus.mjs",
     "research:lab:init": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/competitor-lab-bootstrap.ps1",

@@ -205,7 +205,7 @@
       "label": "RFC 9110 HTTP Semantics",
       "url": "https://www.rfc-editor.org/rfc/rfc9110.html",
       "contentType": "text/html",
-      "verificationMethod": "clearpage-html-fetch-signature",
+      "verificationMethod": "oleriq-html-fetch-signature",
       "verifiedAt": "2026-05-22T17:39:33.740Z"
     },
     {
@@ -213,7 +213,7 @@
       "label": "MDN HTML article element",
       "url": "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/article",
       "contentType": "text/html",
-      "verificationMethod": "clearpage-html-fetch-signature",
+      "verificationMethod": "oleriq-html-fetch-signature",
       "verifiedAt": "2026-05-22T17:39:34.959Z"
     },
     {
@@ -221,7 +221,7 @@
       "label": "IANA example domains explainer",
       "url": "https://www.iana.org/help/example-domains",
       "contentType": "text/html; charset=UTF-8",
-      "verificationMethod": "clearpage-html-fetch-signature",
+      "verificationMethod": "oleriq-html-fetch-signature",
       "verifiedAt": "2026-05-22T17:39:35.971Z"
     }
   ]

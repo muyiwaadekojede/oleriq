@@ -356,8 +356,42 @@ async function assertUiDocumentImageMode(fixtures, semanticFixtures) {
 
   try {
     await page.route('**/api/batch-jobs', async (route) => {
-      if (route.request().method() !== 'POST') {
-        await route.continue();
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            job: {
+              id: 'mock-job-1234',
+              status: 'queued',
+              phase: 'queued',
+              inputMode: 'document',
+              totalUrls: 2,
+              processedUrls: 0,
+              successCount: 0,
+              failureCount: 0,
+              degradedCount: 0,
+              usableCount: 0,
+              emptyOutputCount: 0,
+              partialOutputCount: 0,
+              averageDurationMs: null,
+              laneSummary: {
+                fast_text: 0,
+                deep_layout: 0,
+                ocr_layout: 0,
+                structured_text: 0,
+              },
+              itemsInProgress: 0,
+              throughputPerMinute: 0,
+              retryCount: 0,
+              startedAt: null,
+              completedAt: null,
+            },
+            estimatedRemainingMs: 10_000,
+            items: [],
+          }),
+        });
         return;
       }
 

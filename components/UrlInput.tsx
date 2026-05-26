@@ -7,7 +7,9 @@ type UrlInputProps = {
   url: string;
   onUrlChange: (url: string) => void;
   onSubmit: (urlValue?: string) => void;
+  onFileAction?: () => void;
   loading: boolean;
+  fileActionLoading?: boolean;
   subtitle: string;
   statusMessage?: string;
   progressLabel?: string;
@@ -26,7 +28,9 @@ export function UrlInput({
   url,
   onUrlChange,
   onSubmit,
+  onFileAction,
   loading,
+  fileActionLoading = false,
   subtitle,
   statusMessage,
   progressLabel,
@@ -84,6 +88,17 @@ export function UrlInput({
           >
             {loading ? 'Converting...' : 'Convert URL'}
           </button>
+
+          {onFileAction ? (
+            <button
+              type="button"
+              onClick={onFileAction}
+              disabled={loading || fileActionLoading}
+              className="h-16 min-w-48 rounded-xl border border-[var(--color-border)] bg-white px-8 text-base font-semibold text-[var(--color-ink)] transition hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {fileActionLoading ? 'Preparing files...' : 'Attach files'}
+            </button>
+          ) : null}
         </div>
 
         {!loading && proofContent ? (
