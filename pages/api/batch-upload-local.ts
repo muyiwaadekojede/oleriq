@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { prepareDocumentBatchWorkers } from '@/lib/batchQueue';
 import { saveLocalUploadedFile, getBatchUploadStorageMode } from '@/lib/batchStorage';
 import { isSupportedDocumentFilename, MAX_DOCUMENT_FILE_BYTES } from '@/lib/documentConversion';
 
@@ -34,6 +35,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, error: 'Method not allowed.' });
   }
 
+  const workerWarmup = prepareDocumentBatchWorkers();
+
   if (getBatchUploadStorageMode() !== 'filesystem') {
     return res.status(400).json({ success: false, error: 'Local upload endpoint is disabled in this environment.' });
   }
@@ -58,6 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       contentType,
       bytes,
     });
+    await workerWarmup;
 
     return res.status(200).json({
       success: true,

@@ -1,4 +1,5 @@
 import type { ConversionSource } from '@/lib/documentConversion';
+import { getPdfJsRuntime } from '@/lib/pdfjsRuntime';
 import { recoverDocumentFromHtml } from '@/lib/recoveredStructure';
 
 type Matrix = [number, number, number, number, number, number];
@@ -118,8 +119,8 @@ async function getPdfRuntime() {
   globals.ImageData ??= canvas.ImageData;
   globals.Path2D ??= canvas.Path2D;
 
-  const pdfjs: any = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  return { canvas, pdfjs };
+  const { pdfjs, standardFontDataUrl, cMapUrl, wasmUrl } = await getPdfJsRuntime();
+  return { canvas, pdfjs, standardFontDataUrl, cMapUrl, wasmUrl };
 }
 
 function buildTextBlocks(viewport: any, textItems: any[]): PdfTextBlock[] {
@@ -511,11 +512,15 @@ export async function buildPdfConversionSource(input: {
   title: string;
   maxPages: number;
 }): Promise<ConversionSource | null> {
-  const { canvas, pdfjs } = await getPdfRuntime();
+  const { canvas, pdfjs, standardFontDataUrl, cMapUrl, wasmUrl } = await getPdfRuntime();
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(input.bytes),
-    disableFontFace: true,
-    useSystemFonts: false,
+    standardFontDataUrl,
+    cMapUrl,
+    cMapPacked: true,
+    wasmUrl,
+    disableFontFace: false,
+    useSystemFonts: true,
     isEvalSupported: false,
     useWorkerFetch: false,
   });

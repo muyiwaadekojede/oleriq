@@ -17,6 +17,11 @@ export type BatchItemResult = {
   contentType?: string;
   byteSize?: number;
   sourceObjectKey?: string;
+  processingLane?: 'fast_text' | 'deep_layout' | 'ocr_layout' | 'structured_text';
+  confidenceScore?: number;
+  escalated?: boolean;
+  pageCount?: number;
+  attemptCount?: number;
   outputObjectKey?: string;
   outputFilename?: string;
   outputFormat?: string;

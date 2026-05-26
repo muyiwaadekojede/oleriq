@@ -276,6 +276,31 @@ export function BatchReviewList({
                     </div>
                   ) : null}
 
+                  {item.processingLane || item.pageCount || item.attemptCount ? (
+                    <div className="flex flex-wrap gap-2 text-xs text-[var(--color-muted)]">
+                      {item.processingLane ? (
+                        <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
+                          lane: {item.processingLane.replace(/_/g, ' ')}
+                        </span>
+                      ) : null}
+                      {typeof item.pageCount === 'number' ? (
+                        <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
+                          {item.pageCount.toLocaleString()} pages
+                        </span>
+                      ) : null}
+                      {typeof item.attemptCount === 'number' && item.attemptCount > 0 ? (
+                        <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
+                          attempts: {item.attemptCount.toLocaleString()}
+                        </span>
+                      ) : null}
+                      {item.escalated ? (
+                        <span className="rounded-full border border-[var(--color-border)] px-3 py-1">
+                          escalated
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : null}
+
                   <div className="flex flex-wrap items-center gap-3 text-sm">
                     {canDownload(item) ? (
                       <button

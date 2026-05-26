@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+import { primeDocumentBatchWorkers } from '@/lib/batchQueue';
 import { completeBlobUploadedFile, registerCompletedUpload } from '@/lib/batchStorage';
 import { persistDurableUploadRecord } from '@/lib/durableDocumentBatch';
 import { LEGACY_SESSION_HEADER, SESSION_HEADER, readHeaderValue } from '@/lib/internalIdentifiers';
@@ -14,6 +15,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed.' });
   }
+
+  primeDocumentBatchWorkers();
 
   const sessionId = sessionFromHeader(req);
   const body = req.body as

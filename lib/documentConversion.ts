@@ -1,6 +1,9 @@
 import { posix as pathPosix } from 'node:path';
 
+import { chooseDocumentProcessingLane, type DocumentProcessingLane } from '@/lib/documentBatchRouter';
+import { buildPdfDocumentFingerprint } from '@/lib/pdfDocumentFingerprint';
 import { buildMarkdownExport } from '@/lib/exportMarkdown';
+import { buildPdfFastTextConversionSource } from '@/lib/pdfFastTextConversion';
 import { buildPdfConversionSource } from '@/lib/pdfConversion';
 import { buildTxtExport } from '@/lib/exportTxt';
 import {
@@ -60,6 +63,19 @@ export type ConversionSource = {
   recoveredDocument: RecoveredDocument;
   diagnosticReasons?: BatchDiagnosticReason[];
   warnings?: string[];
+  pageCount?: number | null;
+  processingLane?: DocumentProcessingLane;
+  confidenceScore?: number | null;
+  escalated?: boolean;
+};
+
+export type DocumentConversionPlan = {
+  fileKind: FileKind;
+  title: string;
+  pageCount: number | null;
+  processingLane: DocumentProcessingLane;
+  confidenceScore: number;
+  escalated: boolean;
 };
 
 async function getMammoth() {
@@ -484,15 +500,53 @@ export async function buildConversionSource(input: {
   bytes: Buffer;
   contentType: string;
   rawFilename: string;
+  targetFormat?: ExportFormat;
+  imagesMode?: ImageMode;
+  plan?: DocumentConversionPlan;
 }): Promise<ConversionSource | null> {
   const title = stripExtension(input.rawFilename) || 'Untitled Document';
+  const plan =
+    input.plan ||
+    (input.fileKind === 'pdf'
+      ? await analyzeDocumentConversion({
+          fileKind: input.fileKind,
+          bytes: input.bytes,
+          rawFilename: input.rawFilename,
+          targetFormat: input.targetFormat || 'md',
+          imagesMode: input.imagesMode,
+        })
+      : null);
 
   if (input.fileKind === 'pdf') {
-    return await buildPdfConversionSource({
+    if (plan?.processingLane === 'fast_text') {
+      const source = await buildPdfFastTextConversionSource({
+        bytes: input.bytes,
+        title,
+        maxPages: MAX_PDF_CONVERSION_PAGES,
+      });
+      if (!source) return null;
+      return {
+        ...source,
+        pageCount: plan.pageCount,
+        processingLane: plan.processingLane,
+        confidenceScore: plan.confidenceScore,
+        escalated: plan.escalated,
+      };
+    }
+
+    const source = await buildPdfConversionSource({
       bytes: input.bytes,
       title,
       maxPages: MAX_PDF_CONVERSION_PAGES,
     });
+    if (!source) return null;
+    return {
+      ...source,
+      pageCount: plan?.pageCount ?? null,
+      processingLane: plan?.processingLane ?? 'deep_layout',
+      confidenceScore: plan?.confidenceScore ?? 0.82,
+      escalated: plan?.escalated ?? true,
+    };
   }
 
   if (input.fileKind === 'docx') {
@@ -552,6 +606,7 @@ export async function convertDocumentBuffer(input: {
   imagesMode?: ImageMode;
   sourceLabel: string;
   settings: ReaderSettings;
+  plan?: DocumentConversionPlan;
 }): Promise<{
   success: true;
   buffer: Buffer;
@@ -561,6 +616,10 @@ export async function convertDocumentBuffer(input: {
   resultState: ExtractResultState;
   warnings: string[];
   diagnosticReasons: BatchDiagnosticReason[];
+  processingLane?: DocumentProcessingLane;
+  confidenceScore?: number | null;
+  escalated?: boolean;
+  pageCount?: number | null;
 } | {
   success: false;
 }> {
@@ -574,12 +633,24 @@ export async function convertDocumentBuffer(input: {
 
   const titleBase = stripExtension(safeFilename) || 'document';
   const filenameBase = sanitizeFilename(titleBase, 'document');
+  const plan =
+    input.plan ||
+    (await analyzeDocumentConversion({
+      fileKind,
+      bytes: input.bytes,
+      rawFilename: safeFilename,
+      targetFormat: input.format,
+      imagesMode: input.imagesMode,
+    }));
 
   const source = await buildConversionSource({
-    fileKind,
+    fileKind: plan.fileKind,
     bytes: input.bytes,
     contentType: safeContentType,
     rawFilename: safeFilename,
+    targetFormat: input.format,
+    imagesMode: input.imagesMode,
+    plan,
   });
 
   if (!source) {
@@ -644,6 +715,10 @@ export async function convertDocumentBuffer(input: {
       resultState,
       warnings,
       diagnosticReasons,
+      processingLane: source.processingLane,
+      confidenceScore: source.confidenceScore,
+      escalated: source.escalated,
+      pageCount: source.pageCount,
     };
   }
 
@@ -683,6 +758,10 @@ export async function convertDocumentBuffer(input: {
       resultState,
       warnings,
       diagnosticReasons,
+      processingLane: source.processingLane,
+      confidenceScore: source.confidenceScore,
+      escalated: source.escalated,
+      pageCount: source.pageCount,
     };
   }
 
@@ -720,6 +799,10 @@ export async function convertDocumentBuffer(input: {
       resultState,
       warnings,
       diagnosticReasons,
+      processingLane: source.processingLane,
+      confidenceScore: source.confidenceScore,
+      escalated: source.escalated,
+      pageCount: source.pageCount,
     };
   }
 
@@ -756,5 +839,45 @@ export async function convertDocumentBuffer(input: {
     resultState,
     warnings,
     diagnosticReasons,
+    processingLane: source.processingLane,
+    confidenceScore: source.confidenceScore,
+    escalated: source.escalated,
+    pageCount: source.pageCount,
+  };
+}
+
+export async function analyzeDocumentConversion(input: {
+  fileKind: FileKind;
+  bytes: Buffer;
+  rawFilename: string;
+  targetFormat: ExportFormat;
+  imagesMode?: ImageMode;
+}): Promise<DocumentConversionPlan> {
+  const title = stripExtension(input.rawFilename) || 'Untitled Document';
+
+  if (input.fileKind === 'pdf') {
+    const fingerprint = await buildPdfDocumentFingerprint({
+      bytes: input.bytes,
+      outputFormat: input.targetFormat,
+      imagesMode: input.imagesMode || 'off',
+    });
+    const laneDecision = chooseDocumentProcessingLane(fingerprint);
+    return {
+      fileKind: input.fileKind,
+      title,
+      pageCount: fingerprint.pageCount,
+      processingLane: laneDecision.lane,
+      confidenceScore: laneDecision.confidenceScore,
+      escalated: laneDecision.escalated,
+    };
+  }
+
+  return {
+    fileKind: input.fileKind,
+    title,
+    pageCount: null,
+    processingLane: input.fileKind === 'text' ? 'structured_text' : 'deep_layout',
+    confidenceScore: input.fileKind === 'text' ? 0.94 : 0.82,
+    escalated: input.fileKind !== 'text',
   };
 }

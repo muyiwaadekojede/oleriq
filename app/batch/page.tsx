@@ -18,6 +18,7 @@ type BatchJobStatus = 'idle' | 'queued' | 'running' | 'completed' | 'failed' | '
 type BatchJobApi = {
   id: string;
   status: Exclude<BatchJobStatus, 'idle'>;
+  phase: 'queued' | 'classifying' | 'converting' | 'assembling' | 'review' | 'failed';
   inputMode: BatchInputMode;
   totalUrls: number;
   processedUrls: number;
@@ -28,6 +29,15 @@ type BatchJobApi = {
   emptyOutputCount: number;
   partialOutputCount: number;
   averageDurationMs: number | null;
+  laneSummary: {
+    fast_text: number;
+    deep_layout: number;
+    ocr_layout: number;
+    structured_text: number;
+  };
+  itemsInProgress: number;
+  throughputPerMinute: number;
+  retryCount: number;
   startedAt: string | null;
   completedAt: string | null;
 };
@@ -47,6 +57,11 @@ type BatchItemApi = {
   contentType: string | null;
   byteSize: number | null;
   sourceObjectKey: string | null;
+  processingLane: 'fast_text' | 'deep_layout' | 'ocr_layout' | 'structured_text' | null;
+  confidenceScore: number | null;
+  escalated: boolean;
+  pageCount: number | null;
+  attemptCount: number;
   outputObjectKey: string | null;
   outputFilename: string | null;
   outputFormat: string | null;
@@ -193,6 +208,11 @@ function mapBatchItem(item: BatchItemApi): BatchItemResult {
     contentType: item.contentType || undefined,
     byteSize: item.byteSize === null || item.byteSize === undefined ? undefined : Number(item.byteSize),
     sourceObjectKey: item.sourceObjectKey || undefined,
+    processingLane: item.processingLane || undefined,
+    confidenceScore: item.confidenceScore === null || item.confidenceScore === undefined ? undefined : Number(item.confidenceScore),
+    escalated: item.escalated || undefined,
+    pageCount: item.pageCount === null || item.pageCount === undefined ? undefined : Number(item.pageCount),
+    attemptCount: Number(item.attemptCount || 0) || undefined,
     outputObjectKey: item.outputObjectKey || undefined,
     outputFilename: item.outputFilename || undefined,
     outputFormat: item.outputFormat || undefined,
@@ -411,7 +431,7 @@ export default function BatchPage() {
       });
     } else if (json.job.status === 'running' || json.job.status === 'queued') {
       handlers.setRunMessage(
-        `Processed ${Number(json.job.processedUrls || 0).toLocaleString()} of ${Number(json.job.totalUrls || 0).toLocaleString()} (${json.job.status}).`,
+        `Processed ${Number(json.job.processedUrls || 0).toLocaleString()} of ${Number(json.job.totalUrls || 0).toLocaleString()} (${json.job.phase}). ${Number(json.job.itemsInProgress || 0).toLocaleString()} in progress at ${Number(json.job.throughputPerMinute || 0).toLocaleString()} items/min.`,
       );
     } else if (json.job.status === 'failed') {
       handlers.setRunMessage('Batch job failed before completion.');

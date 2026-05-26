@@ -6,9 +6,11 @@ import {
   MAX_DOCUMENT_BATCH_FILES,
   MAX_DOCUMENT_FILE_BYTES,
 } from '@/lib/documentConversion';
+import { primeDocumentBatchWorkers } from '@/lib/batchQueue';
 import { getBatchUploadStorageMode } from '@/lib/batchStorage';
 
 export default function handler(_req: NextApiRequest, res: NextApiResponse) {
+  primeDocumentBatchWorkers();
   return res.status(200).json({
     success: true,
     mode: getBatchUploadStorageMode(),

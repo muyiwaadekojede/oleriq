@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 
+import { prepareDocumentBatchWorkers } from '@/lib/batchQueue';
 import { getBatchUploadStorageMode } from '@/lib/batchStorage';
 import { isSupportedDocumentFilename, MAX_DOCUMENT_FILE_BYTES } from '@/lib/documentConversion';
 
@@ -35,6 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    const workerWarmup = prepareDocumentBatchWorkers();
     const body = req.body as HandleUploadBody;
     const result = await handleUpload({
       body,
@@ -66,6 +68,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         // The client explicitly finalizes uploads via /api/batch-upload-complete.
       },
     });
+    await workerWarmup;
 
     if (result.type === 'blob.generate-client-token') {
       return res.status(200).json({ clientToken: result.clientToken });

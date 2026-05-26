@@ -297,6 +297,7 @@ db.exec(`
     session_id TEXT,
     auth_session_id TEXT,
     status TEXT NOT NULL,
+    phase TEXT NOT NULL DEFAULT 'queued',
     input_mode TEXT NOT NULL DEFAULT 'url',
     export_format TEXT NOT NULL,
     images_mode TEXT NOT NULL,
@@ -330,6 +331,11 @@ db.exec(`
     content_type TEXT,
     byte_size INTEGER,
     source_object_key TEXT,
+    processing_lane TEXT,
+    confidence_score REAL,
+    escalated INTEGER NOT NULL DEFAULT 0,
+    page_count INTEGER,
+    attempt_count INTEGER NOT NULL DEFAULT 0,
     output_object_key TEXT,
     output_filename TEXT,
     output_format TEXT,
@@ -356,11 +362,17 @@ db.exec(`
 `);
 
 ensureColumn('batch_jobs', 'auth_session_id', 'TEXT');
+ensureColumn('batch_jobs', 'phase', "TEXT NOT NULL DEFAULT 'queued'");
 ensureColumn('batch_jobs', 'input_mode', "TEXT NOT NULL DEFAULT 'url'");
 ensureColumn('batch_job_items', 'original_filename', 'TEXT');
 ensureColumn('batch_job_items', 'content_type', 'TEXT');
 ensureColumn('batch_job_items', 'byte_size', 'INTEGER');
 ensureColumn('batch_job_items', 'source_object_key', 'TEXT');
+ensureColumn('batch_job_items', 'processing_lane', 'TEXT');
+ensureColumn('batch_job_items', 'confidence_score', 'REAL');
+ensureColumn('batch_job_items', 'escalated', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumn('batch_job_items', 'page_count', 'INTEGER');
+ensureColumn('batch_job_items', 'attempt_count', 'INTEGER NOT NULL DEFAULT 0');
 ensureColumn('batch_job_items', 'output_object_key', 'TEXT');
 ensureColumn('batch_job_items', 'output_filename', 'TEXT');
 ensureColumn('batch_job_items', 'output_format', 'TEXT');
