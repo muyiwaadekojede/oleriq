@@ -233,6 +233,14 @@ async function assertUiPlacement() {
       throw new Error('Could not measure homepage active surface or advanced drawer placement.');
     }
 
+    const activeSurfaceCenter = activeSurfaceBox.x + activeSurfaceBox.width / 2;
+    const disclosureButtonCenter = disclosureButtonBox.x + disclosureButtonBox.width / 2;
+    if (Math.abs(activeSurfaceCenter - disclosureButtonCenter) > 80) {
+      throw new Error(
+        `Homepage advanced drawer trigger should stay visually centered under the active surface. Got centers ${activeSurfaceCenter} and ${disclosureButtonCenter}.`,
+      );
+    }
+
     const proofCount = await proof.count();
     if (proofCount > 0) {
       const proofBox = await proof.first().boundingBox();
@@ -245,8 +253,17 @@ async function assertUiPlacement() {
       if (disclosureButtonBox.y <= proofBox.y + proofBox.height) {
         throw new Error('Homepage advanced drawer trigger should render below the public proof line.');
       }
-    } else if (disclosureButtonBox.y <= activeSurfaceBox.y + activeSurfaceBox.height) {
-      throw new Error('Homepage advanced drawer trigger should render below the active conversion surface.');
+    } else {
+      if (disclosureButtonBox.y <= activeSurfaceBox.y + activeSurfaceBox.height) {
+        throw new Error('Homepage advanced drawer trigger should render below the active conversion surface.');
+      }
+
+      const verticalGap = disclosureButtonBox.y - (activeSurfaceBox.y + activeSurfaceBox.height);
+      if (verticalGap > 36) {
+        throw new Error(
+          `Homepage advanced drawer trigger should stay visually tied to the active surface when proof is hidden. Gap was ${verticalGap}px.`,
+        );
+      }
     }
 
     await disclosureButton.click();
