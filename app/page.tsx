@@ -594,6 +594,13 @@ export default function Page() {
               errorCode: failure.errorCode,
             });
           }}
+          showProtectedPagesLink={
+            failure.errorCode === 'PAYWALL_DETECTED' ||
+            failure.errorCode === 'AUTH_SESSION_INVALID' ||
+            failure.errorCode === 'AUTH_SESSION_EXPIRED' ||
+            failure.errorCode === 'AUTH_SESSION_DOMAIN_MISMATCH' ||
+            failure.errorCode === 'AUTH_SESSION_NOT_FOUND'
+          }
           onClose={() => setFailure(null)}
         />
       ) : null}

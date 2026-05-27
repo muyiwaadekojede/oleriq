@@ -60,16 +60,16 @@ export function AuthenticatedSessionManager({
     >
       <div className="space-y-4">
         <div className="space-y-1">
-          <p className="text-sm font-semibold text-[var(--color-ink)]">Authenticated session</p>
+          <p className="text-sm font-semibold text-[var(--color-ink)]">Saved browser session</p>
           <p className="text-sm text-[var(--color-muted)]">
-            Import a saved browser session JSON if the page requires a login you already have elsewhere.
+            Use a saved session file from your own browser only if you already have access to the page there.
           </p>
         </div>
 
         <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-end">
           <div className="space-y-2">
             <label className="block text-sm font-medium text-[var(--color-ink)]" htmlFor="auth-session-select">
-              Current selection
+              Current saved session
             </label>
             <select
               id="auth-session-select"
@@ -77,7 +77,7 @@ export function AuthenticatedSessionManager({
               onChange={(event) => onSelectSession(event.target.value || null)}
               className="h-11 w-full rounded-xl border border-[var(--color-border)] bg-white px-3 text-sm text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
             >
-              <option value="">No authenticated session selected</option>
+              <option value="">No saved session selected</option>
               {sessions.map((session) => (
                 <option key={session.id} value={session.id}>
                   {session.label}
@@ -92,7 +92,7 @@ export function AuthenticatedSessionManager({
             disabled={importing}
             className="h-11 rounded-xl border border-[var(--color-border)] bg-white px-4 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {importing ? 'Importing...' : 'Import session'}
+            {importing ? 'Importing...' : 'Import session file'}
           </button>
 
           <button
@@ -128,7 +128,7 @@ export function AuthenticatedSessionManager({
               type="text"
               value={labelDraft}
               onChange={(event) => onLabelDraftChange(event.target.value)}
-              placeholder="Example: Financial Times account"
+              placeholder="Example: My newspaper account"
               className="h-11 w-full rounded-xl border border-[var(--color-border)] bg-white px-3 text-sm text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)]"
             />
           </div>
@@ -156,7 +156,7 @@ export function AuthenticatedSessionManager({
 
         {!selectedSession && !loading ? (
           <p className="text-sm text-[var(--color-muted)]">
-            No authenticated session selected. Public extraction remains the default path.
+            No saved session selected yet.
           </p>
         ) : null}
 

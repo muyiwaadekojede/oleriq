@@ -47,6 +47,7 @@ type FailureModalProps = {
   sessionId?: string;
   onSubmitted?: () => void;
   onClose: () => void;
+  showProtectedPagesLink?: boolean;
 };
 
 export function FailureModal({
@@ -59,6 +60,7 @@ export function FailureModal({
   sessionId,
   onSubmitted,
   onClose,
+  showProtectedPagesLink = false,
 }: FailureModalProps) {
   const [selectedReasons, setSelectedReasons] = useState<string[]>([]);
   const [freeText, setFreeText] = useState('');
@@ -117,6 +119,16 @@ export function FailureModal({
           <p className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm text-[var(--color-ink)]">
             Next step: {nextStep}
           </p>
+        ) : null}
+        {showProtectedPagesLink ? (
+          <div className="mt-3">
+            <a
+              href="/pages-behind-login"
+              className="inline-flex rounded-xl border border-[var(--color-border)] bg-white px-4 py-2 text-sm font-semibold text-[var(--color-ink)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
+            >
+              Open Pages behind login
+            </a>
+          </div>
         ) : null}
         {attemptedExtractionPath || pageComplexitySignal === 'dynamic_page_likely' || browserAttempted ? (
           <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-ink)]">

@@ -54,7 +54,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         eventName: 'authenticated_session_import',
         eventGroup: 'extract',
         status: 'success',
-        pagePath: '/',
+        pagePath: '/pages-behind-login',
         metadata: {
           authSessionId: session.id,
           importKind: session.importKind,
@@ -74,7 +74,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         eventName: 'authenticated_session_import',
         eventGroup: 'extract',
         status: 'failure',
-        pagePath: '/',
+        pagePath: '/pages-behind-login',
         errorCode: error instanceof AuthenticatedSessionError ? error.code : 'AUTH_SESSION_IMPORT_FAILED',
         errorMessage: message,
       });
@@ -101,7 +101,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       eventName: 'authenticated_session_delete',
       eventGroup: 'extract',
       status: deleted ? 'success' : 'success',
-      pagePath: '/',
+      pagePath: '/pages-behind-login',
       metadata: {
         authSessionId: id,
         deleted,

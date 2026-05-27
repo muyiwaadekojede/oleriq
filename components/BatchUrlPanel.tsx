@@ -10,6 +10,7 @@ import type { BatchInputMode, ExportFormat } from '@/lib/types';
 type BatchUrlPanelProps = {
   mode: BatchInputMode;
   onModeChange: (mode: BatchInputMode) => void;
+  showModeSwitch?: boolean;
   urlsInput: string;
   onUrlsInputChange: (value: string) => void;
   onSubmit: () => void;
@@ -55,6 +56,7 @@ function currentStage(processing: boolean, results: BatchItemResult[]): BatchSur
 export function BatchUrlPanel({
   mode,
   onModeChange,
+  showModeSwitch = true,
   urlsInput,
   onUrlsInputChange,
   onSubmit,
@@ -110,7 +112,7 @@ export function BatchUrlPanel({
       className="mt-7 rounded-[2rem] border border-[var(--color-border)] bg-white p-6 text-left shadow-[0_1px_0_rgba(15,23,42,0.03)]"
     >
       <div className="space-y-6">
-        <BatchModeSwitch mode={mode} onModeChange={onModeChange} />
+        {showModeSwitch ? <BatchModeSwitch mode={mode} onModeChange={onModeChange} /> : null}
 
         {stage === 'setup' ? (
           <>

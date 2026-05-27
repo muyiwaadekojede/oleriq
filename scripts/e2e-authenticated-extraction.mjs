@@ -236,6 +236,29 @@ async function assertUiPlacement() {
     if ((await page.locator('body').innerText()).includes('Authenticated session')) {
       throw new Error('Batch document mode must not render authenticated-session UI.');
     }
+
+    await page.goto(`${baseUrl}/pages-behind-login`, { waitUntil: 'networkidle' });
+    const title = await page.title();
+    if (title !== 'Pages behind login | Oleriq') {
+      throw new Error(`Expected protected route title, got ${title}`);
+    }
+
+    const protectedSurface = page.locator('[data-protected-pages-surface="true"]');
+    await protectedSurface.waitFor({ timeout: 30_000 });
+    const protectedText = await page.locator('body').innerText();
+    if (!protectedText.includes('Pages behind login')) {
+      throw new Error('Protected route must explain itself in plain language.');
+    }
+    if (!protectedText.includes('Saved browser session')) {
+      throw new Error('Protected route must expose the saved browser session manager.');
+    }
+
+    await page.getByRole('button', { name: 'Batch URLs' }).click();
+    await page.getByRole('button', { name: 'Start Batch' }).waitFor({ timeout: 30_000 });
+    const protectedBatchText = await protectedSurface.innerText();
+    if (!protectedBatchText.includes('Saved browser session')) {
+      throw new Error('Protected batch mode must keep the saved browser session manager visible.');
+    }
   } finally {
     await page.close();
     await browser.close();
