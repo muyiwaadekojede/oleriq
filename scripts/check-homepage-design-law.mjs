@@ -81,14 +81,6 @@ if (!appPageSource.includes('showFileWorkspace={heroMode === \'file\'}')) {
   failures.push('Homepage must replace the hero with the file workspace only in File mode.');
 }
 
-if (!appPageSource.includes('showAdvancedDisclosure={showAuthDisclosure}')) {
-  failures.push('Homepage must pass the advanced-disclosure state into UrlInput.');
-}
-
-if (!appPageSource.includes('advancedContent={')) {
-  failures.push('Homepage must pass one shared advancedContent block into UrlInput.');
-}
-
 if (appPageSource.includes('secondaryContent={')) {
   failures.push('Homepage must not use the old secondaryContent homepage slot.');
 }
@@ -141,20 +133,16 @@ if (urlInputSource.includes(forbiddenZeroProof)) {
   failures.push('Homepage hero must not hard-render a zero-value proof line.');
 }
 
-if (!urlInputSource.includes('Advanced options')) {
-  failures.push('Homepage hero must expose an Advanced options drawer.');
+if (appPageSource.includes('AuthenticatedSessionManager') || appPageSource.includes('useAuthenticatedSessions')) {
+  failures.push('Homepage must not expose authenticated-session UI wiring.');
 }
 
-if (!urlInputSource.includes('Use authenticated session')) {
-  failures.push('Homepage hero must keep the authenticated-session control inside the advanced drawer.');
+if (urlInputSource.includes('Advanced options') || urlInputSource.includes('Use authenticated session')) {
+  failures.push('Homepage hero must not render authenticated-session controls or an advanced drawer.');
 }
 
 if (!urlInputSource.includes('showFileWorkspace?: boolean')) {
   failures.push('Homepage hero component must accept a showFileWorkspace mode flag.');
-}
-
-if (!urlInputSource.includes('advancedContent?: ReactNode')) {
-  failures.push('Homepage hero component must accept one advancedContent slot.');
 }
 
 if (urlInputSource.includes('secondaryContent?: ReactNode')) {
@@ -163,6 +151,10 @@ if (urlInputSource.includes('secondaryContent?: ReactNode')) {
 
 if (urlInputSource.includes('proofContent?: ReactNode')) {
   failures.push('Homepage hero component must not expose the old proofContent slot.');
+}
+
+if (urlInputSource.includes('advancedContent?: ReactNode') || urlInputSource.includes('showAdvancedDisclosure?: boolean')) {
+  failures.push('Homepage hero component must not expose advanced auth slots.');
 }
 
 if (failures.length > 0) {

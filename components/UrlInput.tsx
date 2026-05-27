@@ -23,9 +23,6 @@ type UrlInputProps = {
   showFileWorkspace?: boolean;
   fileWorkspace?: ReactNode;
   publicProof?: ReactNode;
-  showAdvancedDisclosure?: boolean;
-  onToggleAdvancedDisclosure?: () => void;
-  advancedContent?: ReactNode;
 };
 
 export function UrlInput({
@@ -48,9 +45,6 @@ export function UrlInput({
   showFileWorkspace = false,
   fileWorkspace,
   publicProof,
-  showAdvancedDisclosure = false,
-  onToggleAdvancedDisclosure,
-  advancedContent,
 }: UrlInputProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -194,27 +188,6 @@ export function UrlInput({
         </div>
 
         {!loading && publicProof ? <div className="mt-3 text-center empty:hidden">{publicProof}</div> : null}
-
-        {advancedContent ? (
-          <div className="mx-auto mt-4 max-w-3xl">
-            <div className="flex justify-center">
-              <button
-                type="button"
-                aria-expanded={showAdvancedDisclosure ? 'true' : 'false'}
-                onClick={() => onToggleAdvancedDisclosure?.()}
-                className="text-sm font-medium text-[var(--color-muted)] underline-offset-2 hover:text-[var(--color-ink)] hover:underline"
-              >
-                Advanced options
-              </button>
-            </div>
-            {showAdvancedDisclosure ? (
-              <div className="mt-3 rounded-2xl border border-[var(--color-border)] bg-white p-4 text-left">
-                <p className="mb-3 text-sm font-semibold text-[var(--color-ink)]">Use authenticated session</p>
-                {advancedContent}
-              </div>
-            ) : null}
-          </div>
-        ) : null}
       </div>
     </div>
   );

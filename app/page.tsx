@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { AuthenticatedSessionManager } from '@/components/AuthenticatedSessionManager';
 import { FailureModal } from '@/components/FailureModal';
 import { HomepageFileWorkspace } from '@/components/HomepageFileWorkspace';
 import { HomepagePublicProof } from '@/components/HomepagePublicProof';
@@ -10,8 +9,7 @@ import { ReadingPreview } from '@/components/ReadingPreview';
 import { SettingsSidebar } from '@/components/SettingsSidebar';
 import { UrlInput } from '@/components/UrlInput';
 import { getClientSessionId, trackClientEvent } from '@/lib/clientAnalytics';
-import { AUTH_SESSION_HEADER, FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
-import { useAuthenticatedSessions } from '@/lib/useAuthenticatedSessions';
+import { FALLBACK_FORMAT_HEADER, SESSION_HEADER } from '@/lib/internalIdentifiers';
 import type {
   ExportFormat,
   ExtractErrorCode,
@@ -67,10 +65,8 @@ export default function Page() {
   const [directFileFormat, setDirectFileFormat] = useState<ExportFormat>('md');
   const [directFileDownloading, setDirectFileDownloading] = useState(false);
   const [progressStageIndex, setProgressStageIndex] = useState(0);
-  const [showAuthDisclosure, setShowAuthDisclosure] = useState(false);
 
   const sessionIdRef = useRef<string>('');
-  const authSessions = useAuthenticatedSessions(clientSessionId);
 
   useEffect(() => {
     setSettings((current) => ({ ...current, colorTheme: initialThemeFromSystem() }));
@@ -111,7 +107,6 @@ export default function Page() {
     return {
       'Content-Type': 'application/json',
       ...(sessionIdRef.current ? { [SESSION_HEADER]: sessionIdRef.current } : {}),
-      ...(authSessions.selectedSessionId ? { [AUTH_SESSION_HEADER]: authSessions.selectedSessionId } : {}),
     };
   }
 
@@ -545,25 +540,6 @@ export default function Page() {
             showFileWorkspace={heroMode === 'file'}
             fileWorkspace={<HomepageFileWorkspace sessionId={clientSessionId} compactLayout={true} />}
             publicProof={<HomepagePublicProof />}
-            showAdvancedDisclosure={showAuthDisclosure}
-            onToggleAdvancedDisclosure={() => setShowAuthDisclosure((current) => !current)}
-            advancedContent={
-              <AuthenticatedSessionManager
-                sessions={authSessions.sessions}
-                selectedSessionId={authSessions.selectedSessionId}
-                labelDraft={authSessions.labelDraft}
-                loading={authSessions.loading}
-                importing={authSessions.importing}
-                deletingSessionId={authSessions.deletingSessionId}
-                errorMessage={authSessions.errorMessage}
-                onLabelDraftChange={authSessions.setLabelDraft}
-                onSelectSession={authSessions.setSelectedSessionId}
-                onImportFile={authSessions.importSessionFile}
-                onClearSelection={authSessions.clearSelection}
-                onDeleteSession={authSessions.deleteSession}
-                compact={true}
-              />
-            }
           />
         </div>
       ) : (

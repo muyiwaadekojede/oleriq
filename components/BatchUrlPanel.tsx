@@ -1,6 +1,5 @@
 'use client';
 
-import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 import { BatchModeSwitch } from '@/components/BatchModeSwitch';
@@ -36,7 +35,6 @@ type BatchUrlPanelProps = {
   onDownloadAll: () => void;
   onRetryFailed: () => void;
   retryingFailed: boolean;
-  authSessionContent?: ReactNode;
 };
 
 const EXPORT_FORMATS: ExportFormat[] = ['pdf', 'txt', 'md', 'docx'];
@@ -81,7 +79,6 @@ export function BatchUrlPanel({
   onDownloadAll,
   onRetryFailed,
   retryingFailed,
-  authSessionContent,
 }: BatchUrlPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showMoreOptions, setShowMoreOptions] = useState(false);
@@ -209,12 +206,6 @@ export function BatchUrlPanel({
                   </div>
 
                   <p className="text-sm text-[var(--color-muted)]">Limit {maxUrls.toLocaleString()} URLs</p>
-
-                  {authSessionContent ? (
-                    <div data-batch-auth-session className="pt-1">
-                      {authSessionContent}
-                    </div>
-                  ) : null}
                 </div>
               </div>
             </div>

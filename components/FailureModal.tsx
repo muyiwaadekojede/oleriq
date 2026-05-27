@@ -19,17 +19,17 @@ const ERROR_MESSAGES: Record<ExtractErrorCode, string> = {
   FETCH_FAILED:
     'This URL could not be reached. It may be offline, private, or blocking automated requests.',
   AUTH_SESSION_INVALID:
-    'The imported authenticated session did not unlock this page. Re-import a fresh session and retry.',
+    'This page still could not be opened. Use a public version of the page if one exists.',
   AUTH_SESSION_EXPIRED:
-    'The selected authenticated session expired. Import it again to continue.',
+    'This page could not be opened anymore. Use a public version of the page if one exists.',
   AUTH_SESSION_DOMAIN_MISMATCH:
-    'The selected authenticated session does not match this site.',
+    'This page could not be opened from the current site context.',
   AUTH_SESSION_NOT_FOUND:
-    'The selected authenticated session is no longer available. Select or import it again.',
+    'This page could not be opened from the current site context.',
   EXTRACTION_FAILED:
     "We reached the page but couldn't identify the main article content. This sometimes happens with homepages, login pages, or highly dynamic layouts.",
   PAYWALL_DETECTED:
-    'This page appears to be behind a paywall or requires a login. Use a public version of the page, or import an authenticated session if you already have access.',
+    'This page appears to be behind a paywall or requires a login. Use a public version of the page if one exists.',
   EMPTY_CONTENT: 'The page loaded but contained no readable text content.',
   TIMEOUT:
     'The page took too long to load. This can happen with very slow servers or heavily JavaScript-dependent pages.',

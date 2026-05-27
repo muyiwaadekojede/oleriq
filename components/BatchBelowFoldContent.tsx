@@ -61,19 +61,29 @@ function ProofArtifact({
   caption,
   section,
   sizes,
+  loading = 'lazy',
 }: {
   src: string;
   alt: string;
   caption: string;
   section: string;
   sizes: string;
+  loading?: 'eager' | 'lazy';
 }) {
   return (
     <figure
       data-batch-guide-artifact={section}
       className="overflow-hidden rounded-[30px] border border-[var(--color-border)] bg-[var(--color-surface)]"
     >
-      <Image src={src} alt={alt} width={1440} height={1080} className="h-auto w-full" sizes={sizes} />
+      <Image
+        src={src}
+        alt={alt}
+        width={1440}
+        height={1080}
+        className="h-auto w-full"
+        sizes={sizes}
+        loading={loading}
+      />
       <figcaption className="border-t border-[var(--color-border)] px-5 py-4 text-sm leading-6 text-[var(--color-muted)]">
         {caption}
       </figcaption>
@@ -155,6 +165,7 @@ export function BatchBelowFoldContent() {
               alt="Real /batch review state showing one shared working surface, compact counts, and collapsed rows."
               caption="Real route state: the completed run stays quiet, but the rows that need attention still rise first."
               sizes="(min-width: 1280px) 58vw, (min-width: 1024px) 54vw, 100vw"
+              loading="eager"
             />
           </div>
 

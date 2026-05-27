@@ -60,9 +60,9 @@ async function main() {
     if (!summaryText.includes('1 usable')) {
       fail(`Expected homepage file summary to include 1 usable result, got: ${summaryText}`);
     }
-
-    await hero.locator('button', { hasText: 'Advanced options' }).click();
-    await page.locator('[data-auth-session-manager="true"]').waitFor({ timeout: 60_000 });
+    if ((await hero.innerText()).includes('Advanced options')) {
+      fail('Homepage file mode must not show Advanced options.');
+    }
 
     const showCleanRows = page.getByRole('button', { name: /Show clean rows/i }).first();
     await showCleanRows.waitFor({ timeout: 60_000 });

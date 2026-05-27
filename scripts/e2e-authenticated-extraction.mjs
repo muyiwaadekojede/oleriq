@@ -218,71 +218,23 @@ async function assertUiPlacement() {
     const hero = page.locator('[data-homepage-hero="primary"]').first();
     await hero.waitFor({ timeout: 30_000 });
 
-    const activeSurface = hero.locator('[data-homepage-active-surface="url"]').first();
-    const disclosureButton = hero.getByRole('button', { name: 'Advanced options' });
-    const disclosureState = await disclosureButton.getAttribute('aria-expanded');
-    if (disclosureState !== 'false') {
-      throw new Error(`Expected homepage advanced drawer to be closed by default, got ${disclosureState}`);
+    if (await hero.getByRole('button', { name: 'Advanced options' }).count()) {
+      throw new Error('Homepage must not render an Advanced options trigger.');
     }
-
-    const proof = page.locator('[data-homepage-public-proof]');
-    const activeSurfaceBox = await activeSurface.boundingBox();
-    const disclosureButtonBox = await disclosureButton.boundingBox();
-
-    if (!activeSurfaceBox || !disclosureButtonBox) {
-      throw new Error('Could not measure homepage active surface or advanced drawer placement.');
+    if ((await hero.innerText()).includes('Authenticated session')) {
+      throw new Error('Homepage must not render authenticated-session copy.');
     }
-
-    const activeSurfaceCenter = activeSurfaceBox.x + activeSurfaceBox.width / 2;
-    const disclosureButtonCenter = disclosureButtonBox.x + disclosureButtonBox.width / 2;
-    if (Math.abs(activeSurfaceCenter - disclosureButtonCenter) > 80) {
-      throw new Error(
-        `Homepage advanced drawer trigger should stay visually centered under the active surface. Got centers ${activeSurfaceCenter} and ${disclosureButtonCenter}.`,
-      );
-    }
-
-    const proofCount = await proof.count();
-    if (proofCount > 0) {
-      const proofBox = await proof.first().boundingBox();
-      if (!proofBox) {
-        throw new Error('Could not measure homepage public proof placement.');
-      }
-      if (proofBox.y <= activeSurfaceBox.y + activeSurfaceBox.height) {
-        throw new Error('Homepage proof line should render below the active conversion surface.');
-      }
-      if (disclosureButtonBox.y <= proofBox.y + proofBox.height) {
-        throw new Error('Homepage advanced drawer trigger should render below the public proof line.');
-      }
-    } else {
-      if (disclosureButtonBox.y <= activeSurfaceBox.y + activeSurfaceBox.height) {
-        throw new Error('Homepage advanced drawer trigger should render below the active conversion surface.');
-      }
-
-      const verticalGap = disclosureButtonBox.y - (activeSurfaceBox.y + activeSurfaceBox.height);
-      if (verticalGap > 36) {
-        throw new Error(
-          `Homepage advanced drawer trigger should stay visually tied to the active surface when proof is hidden. Gap was ${verticalGap}px.`,
-        );
-      }
-    }
-
-    await disclosureButton.click();
-    await page.getByText('Use authenticated session', { exact: true }).waitFor({ timeout: 30_000 });
-    await page.locator('[data-auth-session-manager]').waitFor({ timeout: 30_000 });
 
     await page.goto(`${baseUrl}/batch`, { waitUntil: 'networkidle' });
-    const batchAuthManager = page.locator('[data-batch-auth-session-manager]');
-    if (await batchAuthManager.isVisible().catch(() => false)) {
-      throw new Error('Batch auth manager should stay hidden until URL-mode More options is opened.');
-    }
-
     await page.getByRole('button', { name: 'More options' }).click();
-    await batchAuthManager.waitFor({ state: 'visible', timeout: 30_000 });
+    if ((await page.locator('body').innerText()).includes('Authenticated session')) {
+      throw new Error('Batch URL mode must not render authenticated-session UI.');
+    }
 
     await page.getByRole('button', { name: 'Documents' }).click();
     await page.getByRole('button', { name: 'More options' }).click();
-    if (await page.locator('[data-batch-auth-session-manager]').isVisible().catch(() => false)) {
-      throw new Error('Batch auth manager must not appear in document mode.');
+    if ((await page.locator('body').innerText()).includes('Authenticated session')) {
+      throw new Error('Batch document mode must not render authenticated-session UI.');
     }
   } finally {
     await page.close();
